@@ -1,0 +1,238 @@
+/* ─── Showreel Section — Happy Dogs Reel ─────────────────────────────────── */
+.showreel-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-black-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.showreel__content {
+  text-align: center;
+}
+
+.showreel__title {
+  font-family: "Epilogue", sans-serif;
+  font-size: 5rem;
+  font-weight: 900;
+  letter-spacing: -3px;
+  color: var(--color-white);
+  margin-bottom: 1rem;
+}
+
+.showreel__subtitle {
+  font-family: "DM Sans", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ── Reel stage — same rounded full-bleed frame as the video hero ── */
+.showreel-reel {
+  position: relative;
+  width: calc(100% - 24px);
+  height: calc(100vh - 24px);
+  margin: 12px auto;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: var(--color-black-soft);
+}
+
+/* ── Slides: crossfade + Ken Burns ──
+   Non-active slides rest at the animation's END transform, so the
+   outgoing image never snaps while it fades out. */
+.showreel-reel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.1s ease;
+  z-index: 1;
+}
+
+.showreel-reel__slide.is-active {
+  opacity: 1;
+  z-index: 2;
+}
+
+/* Blurred cover copy fills the stage edges behind the photo */
+.showreel-reel__bg {
+  position: absolute;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  object-fit: cover;
+  filter: blur(30px) brightness(0.5);
+  display: block;
+}
+
+/* Foreground photo is fully visible — never cropped */
+.showreel-reel__fg {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.showreel-reel__slide--in .showreel-reel__fg {
+  transform: scale(1.05);
+}
+
+.showreel-reel__slide--out .showreel-reel__fg {
+  transform: scale(1);
+}
+
+.showreel-reel__slide--in.is-active .showreel-reel__fg {
+  animation: reel-kenburns-in 6.5s ease-out forwards;
+}
+
+.showreel-reel__slide--out.is-active .showreel-reel__fg {
+  animation: reel-kenburns-out 6.5s ease-out forwards;
+}
+
+.showreel-reel.is-paused .showreel-reel__fg {
+  animation-play-state: paused;
+}
+
+@keyframes reel-kenburns-in {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes reel-kenburns-out {
+  from {
+    transform: scale(1.06);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+/* ── Per-slide caption, bottom left ── */
+.showreel-reel__caption {
+  position: absolute;
+  left: 32px;
+  bottom: 64px;
+  z-index: 4;
+  font-family: "DM Sans", sans-serif;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--color-white);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Readability gradient ── */
+.showreel-reel__fade {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.45) 0%,
+    transparent 32%,
+    transparent 62%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* ── Title overlay ── */
+.showreel-reel__overlay {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.showreel-reel__overlay .showreel__title {
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  margin-bottom: 0.4rem;
+}
+
+.showreel-reel__overlay .showreel__subtitle {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Paw stickers ── */
+.showreel-reel__paw {
+  position: absolute;
+  width: clamp(64px, 7vw, 110px);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.showreel-reel__paw--left {
+  left: 4%;
+  top: 10%;
+  transform: rotate(-14deg);
+}
+
+.showreel-reel__paw--right {
+  right: 4%;
+  bottom: 12%;
+  transform: rotate(12deg);
+}
+
+/* ── Progress dots ── */
+.showreel-reel__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.showreel-reel__dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition:
+    background 0.3s ease,
+    transform 0.3s ease;
+  cursor:
+    url("/assets/Cursor SVG/cursor-pointer.svg") 12 12,
+    pointer;
+}
+
+.showreel-reel__dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.showreel-reel__dot.is-active {
+  background: var(--color-orange);
+  transform: scale(1.3);
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .showreel-reel__overlay .showreel__title {
+    font-size: 2.6rem;
+    letter-spacing: -1px;
+  }
+
+  .showreel-reel__caption {
+    left: 20px;
+    bottom: 56px;
+    font-size: 0.85rem;
+  }
+}
