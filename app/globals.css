@@ -21,6 +21,8 @@
 /* Footer layout, credits, stickers         */
 @import "./styles/vimeo-hero.css";
 /* Vimeo hero video player + headline       */
+@import "./styles/animated-hero.css";
+/* Coded animated hero scene (aurora + paws) */
 @import "./styles/cozy-hero.css";
 /* CozyPaws pet-store hero (top of page)    */
 @import "./styles/shop.css";

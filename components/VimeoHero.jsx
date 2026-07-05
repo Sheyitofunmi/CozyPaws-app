@@ -3,20 +3,312 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 
-export default function VimeoHero() {
+/* Reusable paw-print glyph (main pad + 4 toes) */
+function PawGlyph() {
+  return (
+    <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">
+      <ellipse cx="256" cy="352" rx="120" ry="96" />
+      <ellipse cx="118" cy="220" rx="52" ry="70" />
+      <ellipse cx="212" cy="140" rx="48" ry="66" />
+      <ellipse cx="300" cy="140" rx="48" ry="66" />
+      <ellipse cx="394" cy="220" rx="52" ry="70" />
+    </svg>
+  );
+}
+
+/* ── Brand-flat animal glyphs ──────────────────────────────────────────────
+   Each animal nests: .animal__click > .animal__pose > .animal__bob so the CSS
+   can drive bounce / hover-reaction / body-bob on separate wrappers, while
+   legs + tail carry their own keyframes. Dog faces right, cat faces left.    */
+
+function DogGlyph() {
+  return (
+    <div className="animal__click">
+      <div className="animal__pose">
+        <div className="animal__bob">
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            {/* far legs (behind, lighter) */}
+            <rect
+              className="animal__leg animal__leg--b"
+              x="60"
+              y="80"
+              width="13"
+              height="36"
+              rx="6"
+              fill="#d94f22"
+            />
+            <rect
+              className="animal__leg animal__leg--a"
+              x="128"
+              y="80"
+              width="13"
+              height="36"
+              rx="6"
+              fill="#d94f22"
+            />
+            {/* tail */}
+            <path
+              className="animal__tail"
+              d="M44 60 C24 52 18 40 22 30 C30 40 40 46 50 52 Z"
+              fill="var(--color-orange)"
+            />
+            {/* body */}
+            <rect
+              x="42"
+              y="46"
+              width="112"
+              height="46"
+              rx="23"
+              fill="var(--color-orange)"
+            />
+            {/* head */}
+            <circle cx="164" cy="54" r="25" fill="var(--color-orange)" />
+            <path
+              d="M150 34 q-6 -16 8 -18 q2 12 -2 22 Z"
+              fill="var(--color-orange)"
+            />
+            <rect x="180" y="52" width="18" height="16" rx="7" fill="#d94f22" />
+            <circle cx="170" cy="50" r="3.4" fill="#3a1608" />
+            <circle cx="195" cy="58" r="2.6" fill="#3a1608" />
+            {/* near legs (front, darker) */}
+            <rect
+              className="animal__leg animal__leg--a"
+              x="74"
+              y="80"
+              width="14"
+              height="38"
+              rx="7"
+              fill="#b53c17"
+            />
+            <rect
+              className="animal__leg animal__leg--b"
+              x="140"
+              y="80"
+              width="14"
+              height="38"
+              rx="7"
+              fill="#b53c17"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CatGlyph() {
+  return (
+    <div className="animal__click">
+      <div className="animal__pose">
+        <div className="animal__bob">
+          {/* drawn facing left */}
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            {/* far legs */}
+            <rect
+              className="animal__leg animal__leg--b"
+              x="128"
+              y="82"
+              width="11"
+              height="34"
+              rx="5"
+              fill="#6f8ce0"
+            />
+            <rect
+              className="animal__leg animal__leg--a"
+              x="66"
+              y="82"
+              width="11"
+              height="34"
+              rx="5"
+              fill="#6f8ce0"
+            />
+            {/* long curved tail (back = right side) */}
+            <path
+              className="animal__tail"
+              d="M156 66 C182 62 186 40 176 26 C190 40 190 66 168 78 Z"
+              fill="var(--color-lightblue)"
+            />
+            {/* body */}
+            <rect
+              x="54"
+              y="52"
+              width="104"
+              height="38"
+              rx="19"
+              fill="var(--color-lightblue)"
+            />
+            {/* head (left) */}
+            <circle cx="52" cy="58" r="22" fill="var(--color-lightblue)" />
+            {/* pointy ears */}
+            <path d="M36 40 L30 20 L48 34 Z" fill="var(--color-lightblue)" />
+            <path d="M60 36 L64 16 L74 38 Z" fill="var(--color-lightblue)" />
+            <circle cx="46" cy="56" r="3" fill="#20305e" />
+            <circle cx="36" cy="60" r="2" fill="#20305e" />
+            {/* near legs */}
+            <rect
+              className="animal__leg animal__leg--a"
+              x="78"
+              y="82"
+              width="12"
+              height="36"
+              rx="6"
+              fill="#4b69f0"
+            />
+            <rect
+              className="animal__leg animal__leg--b"
+              x="114"
+              y="82"
+              width="12"
+              height="36"
+              rx="6"
+              fill="#4b69f0"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BirdGlyph() {
+  return (
+    <svg viewBox="0 0 62 46" aria-hidden="true">
+      <ellipse cx="31" cy="26" rx="15" ry="10" fill="var(--color-pink)" />
+      <circle cx="46" cy="20" r="7" fill="var(--color-pink)" />
+      <path d="M52 18 l8 -2 l-7 5 Z" fill="var(--color-orange)" />
+      <circle cx="47" cy="19" r="1.6" fill="#5a2740" />
+      <path
+        className="dio-bird__wing dio-bird__wing--left"
+        d="M28 24 L6 12 L26 28 Z"
+        fill="#e79ff2"
+      />
+      <path
+        className="dio-bird__wing dio-bird__wing--right"
+        d="M34 24 L56 12 L36 28 Z"
+        fill="#e79ff2"
+      />
+    </svg>
+  );
+}
+
+/* Rolling tree / bush silhouette (two depth bands) */
+function TreesGlyph() {
+  return (
+    <svg
+      viewBox="0 0 1200 300"
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+    >
+      {/* back band */}
+      <path
+        className="tree-fill--back"
+        d="M0 300 V170 Q90 120 180 165 Q250 90 340 150 Q430 100 520 160 Q640 110 760 160 Q880 110 1000 165 Q1100 130 1200 170 V300 Z"
+      />
+      {/* front band + round bushes */}
+      <path
+        className="tree-fill"
+        d="M0 300 V210 Q120 170 250 205 Q360 160 480 205 Q600 165 720 205 Q850 165 980 205 Q1100 175 1200 210 V300 Z"
+      />
+      <circle className="tree-fill" cx="150" cy="205" r="52" />
+      <circle className="tree-fill" cx="470" cy="200" r="60" />
+      <circle className="tree-fill" cx="820" cy="205" r="50" />
+      <circle className="tree-fill" cx="1080" cy="210" r="46" />
+    </svg>
+  );
+}
+
+/* Deterministic (SSR-safe) scene data */
+const CLOUDS = [1, 2, 3, 4];
+const PAW_PRINTS = Array.from({ length: 7 }, (_, i) => ({
+  id: i,
+  left: 8 + i * 12,
+  delay: i * 0.6,
+  flip: i % 2 === 0,
+}));
+const STARS = Array.from({ length: 26 }, (_, i) => ({
+  id: i,
+  left: (i * 53.13) % 100,
+  top: (i * 29.7 + 3) % 46,
+  delay: (i % 6) * 0.5,
+}));
+
+export default function VimeoHero({ onAnimalClick } = {}) {
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
   const bubbleRef = useRef(null);
   const titleRef = useRef(null);
   const controlsRef = useRef(null);
+  const sceneRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Native video loads immediately enough that we don't need a heavy ready listener.
-  // We already handle `setIsLoaded(true)` directly on the <video onLoadedData={...}> element.
+  /* Diorama state: night flag (auto by clock) + per-animal click bounce.
+     Both start at their SSR-safe defaults and are corrected on the client. */
+  const [isNight, setIsNight] = useState(false);
+  const [bounced, setBounced] = useState({});
+
+  /* ── Auto day/night by the visitor's local clock (night 18:00–05:59) ── */
+  useEffect(() => {
+    const applyTime = () => {
+      const h = new Date().getHours();
+      setIsNight(h < 6 || h >= 18);
+    };
+    applyTime();
+    // re-check hourly in case the hero stays open across the boundary
+    const id = setInterval(applyTime, 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  /* ── Parallax on scroll: rAF-throttled, translateY-only via CSS vars ──
+     Sky slowest → ground fastest. Skipped entirely under reduced-motion. */
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mq.matches) return;
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const y = window.scrollY || window.pageYOffset || 0;
+      scene.style.setProperty("--p-sky", `${y * 0.08}px`);
+      scene.style.setProperty("--p-clouds", `${y * 0.18}px`);
+      scene.style.setProperty("--p-trees", `${y * 0.34}px`);
+      scene.style.setProperty("--p-ground", `${y * 0.52}px`);
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+
+    update(); // set initial offsets
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* ── Animal activation: bounce + fire onAnimalClick(category). Works for
+     mouse, keyboard (Enter/Space) and touch (onClick fires on tap). ── */
+  const activateAnimal = (category) => {
+    setBounced((b) => ({ ...b, [category]: true }));
+    window.setTimeout(
+      () => setBounced((b) => ({ ...b, [category]: false })),
+      600,
+    );
+    onAnimalClick?.(category);
+  };
+
+  const animalKeyDown = (category) => (e) => {
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      activateAnimal(category);
+    }
+  };
 
   /* ────────────────────────────────────────────────────
        ④ Hover mute bubble — same GSAP elastic spring as CursorBubble
@@ -222,21 +514,120 @@ export default function VimeoHero() {
         ref={playerRef}
         onClick={toggleMute}
       >
-        {/* 
-                  Video Placeholder: 
-                  Currently left blank to display a solid black background while you work on text, SVGs, and the navbar.
-                  Once you have your personal video file in the `public/` folder, uncomment and update the src below!
+        {/* ── Coded animated hero: parallax nature diorama (replaces the video) ──
+            Layers back→front. Decorative layers are aria-hidden; the dog and cat
+            are interactive (role=button + label). Motion respects reduced-motion
+            via CSS, day/night is auto by local clock, parallax via JS scroll. */}
+        <div
+          className={`anim-hero ${isNight ? "is-night" : "is-day"}`}
+          ref={sceneRef}
+        >
+          {/* ① Sky (static gradient, day/night) + sun/moon + stars */}
+          <div className="dio-layer dio-sky" aria-hidden="true">
+            <div className="dio-celestial" />
+            {STARS.map((s) => (
+              <span
+                key={s.id}
+                className="dio-star"
+                style={{
+                  left: `${s.left}%`,
+                  top: `${s.top}%`,
+                  animationDelay: `${s.delay}s`,
+                }}
+              />
+            ))}
+          </div>
+
+          {/* ② Far clouds — slow horizontal drift */}
+          <div className="dio-layer dio-clouds" aria-hidden="true">
+            {CLOUDS.map((n) => (
+              <span key={n} className={`dio-cloud dio-cloud--${n}`} />
+            ))}
+          </div>
+
+          {/* ③ Mid — trees / bushes silhouette */}
+          <div className="dio-layer dio-trees" aria-hidden="true">
+            <TreesGlyph />
+          </div>
+
+          {/* ④ Ground — grass + dirt path */}
+          <div className="dio-layer dio-ground" aria-hidden="true">
+            <div className="dio-path" />
+          </div>
+
+          {/* ⑤ Foreground — bird, paw prints, dog + cat (interactive) */}
+          <div className="dio-foreground">
+            {/* Bird — decorative, flies past periodically, no interaction */}
+            <div className="dio-bird" aria-hidden="true">
+              <BirdGlyph />
+            </div>
+
+            {/* Paw prints trailing along the path — decorative */}
+            {PAW_PRINTS.map((p) => (
+              <span
+                key={p.id}
+                className="dio-paw"
+                aria-hidden="true"
+                style={{
+                  left: `${p.left}%`,
+                  animationDelay: `${p.delay}s`,
+                  transform: p.flip ? "scaleX(-1)" : "none",
+                }}
+              >
+                <PawGlyph />
+              </span>
+            ))}
+
+            {/* Dog — interactive: runs L→R, sits & wags on hover, bounces on tap */}
+            <div
+              className={`animal animal--dog ${bounced.dogs ? "is-bounced" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-label="Playful dog — shop for dogs"
+              onClick={(e) => {
+                e.stopPropagation();
+                activateAnimal("dogs");
+              }}
+              onKeyDown={animalKeyDown("dogs")}
+            >
+              <DogGlyph />
+            </div>
+
+            {/* Cat — interactive: walks R→L slower, stretches on hover */}
+            <div
+              className={`animal animal--cat ${bounced.cats ? "is-bounced" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-label="Strolling cat — shop for cats"
+              onClick={(e) => {
+                e.stopPropagation();
+                activateAnimal("cats");
+              }}
+              onKeyDown={animalKeyDown("cats")}
+            >
+              <CatGlyph />
+            </div>
+          </div>
+        </div>
+
+        {/*
+                  Video Placeholder:
+                  The animated scene above stands in for a video (loads instantly,
+                  loops forever, no licensing). When you have a real video file in
+                  `public/`, uncomment below and it will layer on top of the scene.
                 */}
+        {/*
         <video
           ref={iframeRef}
-          // src="/your-personal-video.mp4"
+          src="/your-personal-video.mp4"
           autoPlay
           loop
           muted
           playsInline
           className="vimeo-hero__iframe"
-          style={{ objectFit: "cover", backgroundColor: "#111" }}
+          style={{ objectFit: "cover", backgroundColor: "transparent" }}
         />
+        */}
 
         {/* Gradient fade */}
         <div className="vimeo-hero__fade" />
