@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 
 const SLIDES = [
-  { src: "/assets/pets/dog1.avif", caption: "fresh flowers, free tail wags" },
-  { src: "/assets/pets/cat2.avif", caption: "too cool for the catwalk" },
-  { src: "/assets/pets/gromming.avif", caption: "spa day, best day" },
-  { src: "/assets/pets/house3.avif", caption: "cozy is a lifestyle" },
-  { src: "/assets/pets/toy2.avif", caption: "new wheels, who dis?" },
-  { src: "/assets/pets/dog2.avif", caption: "denim season is here" },
-  { src: "/assets/pets/moon-dog.jpg", caption: "goodnight, good dog" },
+  {
+    src: "/assets/pets/reel-flowers.jpg",
+    caption: "fresh flowers, free tail wags",
+  },
+  { src: "/assets/pets/reel-catwalk.jpg", caption: "too cool for the catwalk" },
+  { src: "/assets/pets/reel-spa.jpg", caption: "spa day, best day" },
+  { src: "/assets/pets/reel-cozy.jpg", caption: "cozy is a lifestyle" },
+  { src: "/assets/pets/reel-toy.jpg", caption: "new wheels, who dis?" },
+  { src: "/assets/pets/reel-denim.jpg", caption: "denim season is here" },
+  { src: "/assets/pets/reel-goodnight.jpg", caption: "goodnight, good dog" },
 ];
 
 const SLIDE_MS = 4200;
