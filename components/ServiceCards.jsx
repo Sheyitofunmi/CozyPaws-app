@@ -78,6 +78,65 @@ export default function ServiceCards() {
     return () => el.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Auto-play the carousel below DESKTOP_MIN: advance one card at a time,
+  // pausing whenever the user swipes/scrolls it themselves.
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const mq = window.matchMedia(`(max-width: ${DESKTOP_MIN - 1}px)`);
+    let intervalId = null;
+    let resumeTimeout = null;
+
+    const scrollToIndex = (index) => {
+      const card = el.children[index];
+      if (!card) return;
+      el.scrollTo({
+        left: card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2,
+        behavior: "smooth",
+      });
+    };
+
+    const advance = () => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll <= 0) return;
+      const currentIndex = Math.round(
+        (el.scrollLeft / maxScroll) * (CARDS_DATA.length - 1),
+      );
+      scrollToIndex((currentIndex + 1) % CARDS_DATA.length);
+    };
+
+    const stop = () => {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = null;
+    };
+
+    const start = () => {
+      stop();
+      if (mq.matches) intervalId = setInterval(advance, 3500);
+    };
+
+    const handleUserInteraction = () => {
+      stop();
+      clearTimeout(resumeTimeout);
+      resumeTimeout = setTimeout(start, 4000);
+    };
+
+    el.addEventListener("pointerdown", handleUserInteraction);
+    el.addEventListener("wheel", handleUserInteraction, { passive: true });
+    mq.addEventListener("change", start);
+
+    start();
+
+    return () => {
+      stop();
+      clearTimeout(resumeTimeout);
+      el.removeEventListener("pointerdown", handleUserInteraction);
+      el.removeEventListener("wheel", handleUserInteraction);
+      mq.removeEventListener("change", start);
+    };
+  }, []);
+
   return (
     <>
       {/* ─── "Call us if you need:" Heading ─── */}

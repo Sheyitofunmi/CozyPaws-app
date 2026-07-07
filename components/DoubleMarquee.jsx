@@ -51,7 +51,7 @@ function assignColorsNoAdjacent(count, colorPool) {
   return result;
 }
 
-function buildMarqueeItems(isMobile) {
+function buildMarqueeItems() {
   const tracks = [[], []];
   for (let t = 0; t < 2; t++) {
     const shuffledBrands = shuffleNoAdjacentSrc(brands);
@@ -63,21 +63,18 @@ function buildMarqueeItems(isMobile) {
       brand,
       color: assignedColors[i],
     }));
-    tracks[t] = isMobile ? items : [...items, ...items]; // duplicate for seamless loop
+    tracks[t] = [...items, ...items]; // duplicate for seamless loop
   }
   return tracks;
 }
 
 export default function DoubleMarquee() {
   const [tracks, setTracks] = useState([[], []]);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    const mobile = window.matchMedia("(max-width: 768px)").matches;
-    setIsMobile(mobile);
-    setTracks(buildMarqueeItems(mobile));
+    setTracks(buildMarqueeItems());
 
     // Arrow path animation
     gsap.set(".marquee-left .marquee-svg-item:nth-child(2) path", {

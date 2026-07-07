@@ -220,40 +220,54 @@
     width: 70px;
   }
 
-  /* ── Logo columns → 2-row horizontal scroll grid ── */
+  /* ── Logo columns → 2-row auto-scrolling marquee ── */
   .marquee-right {
-    display: grid;
-    grid-template-rows: 130px 130px;
-    grid-auto-flow: column;
-    grid-auto-columns: 130px;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
     width: 100%;
     height: auto;
     margin-right: 0;
-    padding: 20px 24px 32px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .marquee-right::-webkit-scrollbar {
-    display: none;
+    padding: 20px 0 32px;
+    overflow: hidden;
   }
 
   .marquee-column {
-    display: contents;
+    height: 130px;
+    overflow: hidden;
   }
 
   .marquee-column::before,
   .marquee-column::after {
-    display: none;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: auto;
   }
 
-  .marquee-column:nth-child(1) .marquee-track,
+  .marquee-column::before {
+    background: linear-gradient(to right, var(--bg-color) 0%, transparent 100%);
+  }
+
+  .marquee-column::after {
+    left: auto;
+    right: 0;
+    background: linear-gradient(to left, var(--bg-color) 0%, transparent 100%);
+  }
+
+  .marquee-track {
+    flex-direction: row;
+    height: 100%;
+    gap: 8px;
+  }
+
+  .marquee-column:nth-child(1) .marquee-track {
+    animation: marqueeLeft 18s linear infinite;
+  }
+
   .marquee-column:nth-child(2) .marquee-track {
-    display: contents;
-    animation: none;
+    animation: marqueeRight 18s linear infinite;
   }
 
   .marquee-item {
