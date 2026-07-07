@@ -41,13 +41,13 @@
   top: 0;
   bottom: 0;
   transform: translate3d(0, var(--p-sky), 0);
-  background: linear-gradient(
+  /* background: linear-gradient(
     180deg,
     #8ec5ff 0%,
     #bfe0ff 42%,
     #e9f6ff 72%,
     #f3fbe9 100%
-  );
+  ); */
   transition: background 1.2s ease;
 }
 

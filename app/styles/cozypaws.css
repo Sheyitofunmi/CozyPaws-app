@@ -175,6 +175,37 @@
   }
 }
 
+/* Small phones: five 40px buttons + logo don't fit a 360px row — tighten the
+   whole strip so it never pushes past the viewport edge. */
+@media (max-width: 480px) {
+  .site-header {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+  .site-header__logo {
+    width: 112px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+  .site-header__actions {
+    gap: 0.35rem;
+  }
+  .site-header__actions .cozy-icon-btn,
+  .site-header__actions .account-menu__trigger {
+    width: 34px;
+    height: 34px;
+  }
+  .site-header__actions .cozy-icon {
+    width: 16px;
+    height: 16px;
+  }
+  .site-header__actions .cozy-badge {
+    width: 17px;
+    height: 17px;
+    font-size: 9px;
+  }
+}
+
 @media (min-width: 1024px) {
   .site-header {
     padding: 1rem 3rem;

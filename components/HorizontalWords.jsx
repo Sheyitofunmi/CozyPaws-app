@@ -19,6 +19,10 @@ const HorizontalWords = () => {
   const sectionRef = useRef(null);
 
   useIsomorphicLayoutEffect(() => {
+    // Reduced motion: skip the pin + scrub entirely; the CSS fallback in
+    // horizontal-words.css shows the message as static wrapped text.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     const ctx = gsap.context(() => {
       const container = sectionRef.current;
       const textRef = container.querySelector(".horizontal-words__relative");
@@ -52,17 +56,22 @@ const HorizontalWords = () => {
           scrollTrigger: {
             trigger: container,
             start: "top top", // Begin the pinning when the container reaches the top
-            end: "+=3000", // The scroll duration distance
+            // Scroll distance scales with the viewport — 3000px of scrubbing
+            // suits desktop but feels endless on a phone.
+            end: () =>
+              `+=${Math.max(1200, Math.min(window.innerWidth * 2.5, 3000))}`,
             scrub: 1,
             pin: true,
           },
         },
       );
 
-      // Bounce each letter randomly
+      // Bounce each letter randomly — gentler on phones, where the full
+      // ±250% fling overlaps the paragraph below the headline.
+      const bounce = window.innerWidth <= 768 ? 220 : 500;
       letters.forEach((letter) => {
         gsap.from(letter, {
-          yPercent: (Math.random() - 0.5) * 500,
+          yPercent: (Math.random() - 0.5) * bounce,
           rotation: (Math.random() - 0.5) * 60,
           ease: "elastic.out(1.2, 1)",
           scrollTrigger: {

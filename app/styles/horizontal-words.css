@@ -3,8 +3,11 @@
 .horizontal-words-section {
   position: relative;
   width: 100%;
-  /* Keep section nicely sized so it takes up full viewport */
+  /* Keep section nicely sized so it takes up full viewport.
+     svh = small viewport height, so the mobile URL bar collapsing/expanding
+     doesn't resize the pinned section mid-scroll (which makes GSAP jump). */
   height: 100vh;
+  height: 100svh;
   background-color: var(--bg-color);
   overflow: hidden;
   /* Removed flex to control absolute positioning manually */
@@ -153,5 +156,53 @@
 
   .horizontal-words__sticker-watch {
     width: 4.5em;
+  }
+
+  /* 8vw is only ~29px on a phone — let the headline read big while it
+     scrolls past. */
+  .horizontal-words__h2 {
+    font-size: 13vw;
+  }
+}
+
+/* ─── Reduced motion: static, wrapped message (no pin, no scrub) ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .horizontal-words-section {
+    height: auto;
+    padding: 96px 24px;
+  }
+
+  .horizontal-words__relative {
+    position: static;
+    transform: none;
+    white-space: normal;
+    display: block;
+    padding: 0;
+    text-align: center;
+  }
+
+  .horizontal-words__h2 {
+    white-space: normal;
+    font-size: clamp(2rem, 7vw, 5rem);
+  }
+
+  /* The h2 lives inside .horizontal-words__sticker-svg, so hide only the
+     decorative svg children, not the wrapper itself. */
+  .horizontal-words__sticker-svg {
+    width: auto;
+    position: static;
+  }
+
+  .horizontal-words__sticker-svg > svg,
+  .horizontal-words__arrow-end-svg,
+  .horizontal-words__placeholder-left-svg {
+    display: none;
+  }
+
+  .horizontal-words__bottom-text {
+    position: static;
+    transform: none;
+    width: 100%;
+    margin-top: 2rem;
   }
 }

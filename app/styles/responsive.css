@@ -1,26 +1,8 @@
 /* ─── Tablet (769px – 1200px) ────────────────────────────────────────────── */
 @media (min-width: 769px) and (max-width: 1200px) {
-  .cards-wrapper {
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 50px;
-    padding-bottom: 50px;
-    gap: 30px;
-    overflow: visible;
-  }
-
-  .card {
-    position: relative;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-    width: 90%;
-    max-width: 400px;
-    height: auto;
-    min-height: 400px;
-    margin-bottom: 20px;
+  /* 200px of top padding per section reads as dead space on tablets */
+  .content-section {
+    padding: 90px 20px 0;
   }
 }
 
@@ -97,27 +79,93 @@
   .title-container {
     margin-bottom: 50px;
   }
+}
 
-  /* ── Cards (GSAP-controlled) ─────── */
+/* ─── Cards — swipe carousel, ≤ 1200px. Keep the breakpoint in sync with
+   DESKTOP_MIN in ServiceCards.jsx (desktop fan needs ~1400px). ───────────── */
+@media (max-width: 1200px) {
   .cards-wrapper {
-    position: relative !important;
-    display: block !important;
-    width: 100% !important;
-    margin: 0 auto !important;
-    overflow: visible !important;
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: auto;
+    margin: 24px auto 0;
+    /* top padding keeps the stickers (which poke ~50px above each card)
+       inside the scroll container, where overflow would otherwise clip them */
+    padding: 64px 24px 32px;
+    gap: 20px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .cards-wrapper::-webkit-scrollbar {
+    display: none;
   }
 
   .card {
-    width: 82vw;
-    max-width: 340px;
+    position: relative;
+    left: auto;
+    top: auto;
+    flex: 0 0 auto;
+    width: min(78vw, 340px);
     min-height: 420px;
     height: auto;
+    scroll-snap-align: center;
+  }
+
+  /* gentle alternating tilt keeps the hand-placed look without the fan */
+  .card:nth-child(odd) {
+    transform: rotate(2deg);
+  }
+
+  .card:nth-child(even) {
+    transform: rotate(-2deg);
   }
 
   .card-sticker {
     pointer-events: none;
   }
 
+  .cards-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0 8px;
+  }
+}
+
+/* Larger phones / tablets: a 340px card looks lost above ~500px —
+   let it grow with the viewport. */
+@media (min-width: 500px) and (max-width: 1200px) {
+  .card {
+    width: min(56vw, 440px);
+  }
+}
+
+/* Carousel dots — only shown in carousel mode (≤ 1200px, rule above) */
+@media (min-width: 1201px) {
+  .cards-dots {
+    display: none;
+  }
+}
+
+.cards-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  transition: background 0.25s ease;
+}
+
+.cards-dot.is-active {
+  background: var(--color-dark, #333);
+}
+
+/* ─── Mobile (≤ 768px) continued ─────────────────────────────────────────── */
+@media (max-width: 768px) {
   /* ── Double Marquee ─────────────── */
   .Double-marquee {
     flex-direction: column;
@@ -222,7 +270,9 @@
   .footer-inner {
     padding: 50px 20px 30px;
     border-radius: 14px;
-    min-height: 100svh;
+    /* Let content size the footer — forcing a full viewport height left a
+       huge empty blue block between the links and the wordmark. */
+    min-height: 0;
   }
 
   .footer-top {
@@ -291,7 +341,8 @@
 
   /* ── Footer wordmark ────────────── */
   .footer-bottom {
-    margin-top: 200px;
+    /* Just enough head-room for the sticker cluster above the wordmark */
+    margin-top: 130px;
   }
 
   .footer-logo__svg {

@@ -31,7 +31,7 @@ export default function Home() {
         <div className="content-section motion-cards-wrapper">
           <MotionCards />
         </div>
-        <Showreel />
+        {/* <Showreel /> */}
         <div className="content-section service-cards-wrapper">
           <ServiceCards />
         </div>

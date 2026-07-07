@@ -6,7 +6,9 @@
 .cozy-hero {
   position: relative;
   z-index: 1;
+  /* svh: stable height on mobile while the URL bar shows/hides */
   height: 100vh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -607,43 +609,45 @@
 }
 
 @media (min-width: 768px) {
+  .cozy-header__nav {
+    display: flex;
+  }
+}
+
+/* Tablet (600–1023px): keep the stacked mobile layout — the absolute-
+   positioned desktop stage leaves a huge empty hole in portrait — but give
+   it breathing room and cap content width so it doesn't stretch edge-to-edge. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .cozy-mobile__top {
+    max-width: 560px;
+    margin: 0 auto;
+    padding-top: 1.5rem;
+  }
+
+  .cozy-mobile__title {
+    font-size: clamp(40px, 6.5vw, 56px);
+  }
+
+  .cozy-mobile__subtitle {
+    font-size: 1rem;
+  }
+
+  .cozy-mobile__cards {
+    max-width: 620px;
+    margin: 0 auto;
+    width: 100%;
+    gap: 1rem;
+  }
+}
+
+/* Desktop (≥1024px): the full stage with side cards + bottom photo strip */
+@media (min-width: 1024px) {
   .cozy-hero__stage {
     display: block;
   }
 
   .cozy-mobile {
     display: none;
-  }
-
-  .cozy-header__nav {
-    display: flex;
-  }
-}
-
-/* Tablet: smaller side cards, tighter photo heights */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .cozy-hero__heading-wrap {
-    padding-top: 3.5rem;
-  }
-
-  .cozy-card--product {
-    top: 80px;
-    left: 1rem;
-    width: 160px;
-  }
-
-  .cozy-card--video {
-    top: 80px;
-    right: 1rem;
-    width: 120px;
-  }
-
-  .cozy-photos__item--side img {
-    max-height: 60vh;
-  }
-
-  .cozy-photos__item--center img {
-    max-height: 75vh;
   }
 }
 
