@@ -11,7 +11,6 @@ const formatPrice = (price) => `$${price.toFixed(2)}`;
 export default function CartDrawer() {
   const { items, setQty, removeItem, isOpen, closeCart } = useCart();
 
-  // Close on Escape while open.
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => e.key === "Escape" && closeCart();

@@ -36,7 +36,6 @@ export default function Footer() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    // ─── Map link underline draw/undraw ───
     document.querySelectorAll(".footer-map-link").forEach((footerMapLink) => {
       const mapSvgPaths = footerMapLink.querySelectorAll(".draw-btn__svg path");
       mapSvgPaths.forEach((path) => {
@@ -66,13 +65,11 @@ export default function Footer() {
       footerMapLink.addEventListener("mouseleave", onLeave);
     });
 
-    // ─── Credits pop-out ───
     const creditsWrapper = document.querySelector(".footer-credits-wrapper");
     if (creditsWrapper) {
       const creditsBox = creditsWrapper.querySelector(".credits-box");
       const creditsItems = creditsBox.querySelectorAll(".credits-item");
 
-      // Temporarily make the box visible to measure full dimensions
       gsap.set(creditsBox, {
         visibility: "visible",
         width: "auto",
@@ -84,12 +81,9 @@ export default function Footer() {
       const fullHeight = boxRect.height;
       const boxHeight = boxRect.height; // for text Y translation
 
-      // Distance from box's final position down to behind the credits button
       const creditsBtn = creditsWrapper.querySelector(".footer-credits");
       const startY = creditsBtn.offsetHeight + 15;
 
-      // Set precise initial states for box and text
-      // Box starts collapsed rather than 0 scale
       gsap.set(creditsBox, {
         visibility: "hidden",
         width: 0,
@@ -104,7 +98,6 @@ export default function Footer() {
         gsap.killTweensOf(creditsBox);
         gsap.killTweensOf(creditsItems);
 
-        // Box physically grows to full dimensions instead of scaling
         gsap.to(creditsBox, {
           width: fullWidth,
           height: fullHeight,
@@ -114,7 +107,6 @@ export default function Footer() {
           ease: "power3.out",
         });
 
-        // Text slides up smoothly, slightly delayed
         gsap.to(creditsItems, {
           y: 0,
           duration: 0.5,
@@ -128,7 +120,6 @@ export default function Footer() {
         gsap.killTweensOf(creditsBox);
         gsap.killTweensOf(creditsItems);
 
-        // Box physically shrinks to 0x0
         gsap.to(creditsBox, {
           width: 0,
           height: 0,
@@ -139,8 +130,6 @@ export default function Footer() {
           onComplete: () => gsap.set(creditsBox, { visibility: "hidden" }),
         });
 
-        // Text sits perfectly still while the box begins crushing it,
-        // and then slowly slides back down in reverse order (`stagger: -0.03`) so the rightmost column clears first
         gsap.to(creditsItems, {
           y: boxHeight,
           duration: 0.4,
@@ -154,7 +143,6 @@ export default function Footer() {
       creditsWrapper.addEventListener("mouseleave", onLeave);
     }
 
-    // ─── Footer sticker pop-up on scroll ───
     const footerStickers = gsap.utils.toArray(".footer-sticker");
     const stickerRotations = [12, -10, 8, -12, 10, -8];
     gsap.set(footerStickers, {
@@ -182,7 +170,6 @@ export default function Footer() {
       },
     });
 
-    // ─── Sticker cursor-velocity push ───
     footerStickers.forEach((sticker, i) => {
       const baseRotation = stickerRotations[i % stickerRotations.length] * 0.7;
       const PROXIMITY_RADIUS = 180,
@@ -209,7 +196,6 @@ export default function Footer() {
           e.clientY <= rect.bottom;
         const speed = Math.hypot(dx, dy);
 
-        // Disable proximity push if the mouse is hovering over the open credits popup box
         const isOverCreditsBox = e.target.closest(".credits-box") !== null;
 
         if (
@@ -243,7 +229,6 @@ export default function Footer() {
       // No cleanup stored here to match original behaviour (lives for page lifetime)
     });
 
-    // ─── Wiggle on footer interactive elements ───
     const wiggleTargets = [
       { selector: ".footer-column:first-child h3", key: "jobHeading" },
       { selector: ".footer-map-link span", key: "googleMap" },
@@ -257,7 +242,6 @@ export default function Footer() {
         .forEach((el) => initWiggle(el, WIGGLE_CONFIG[key]));
     });
 
-    // ─── Social icon wiggle ───
     document
       .querySelectorAll(".single-social")
       .forEach((el) => initWiggle(el, WIGGLE_CONFIG.socials));
@@ -266,7 +250,6 @@ export default function Footer() {
   return (
     <div className="footer-inner">
       <div className="footer-top">
-        {/* Jobs */}
         <div className="footer-column">
           <span className="footer-badge">wanna join the pack?</span>
           <h3>not hiring right now :(</h3>
@@ -296,7 +279,6 @@ export default function Footer() {
             </svg>
           </a>
         </div>
-        {/* Office */}
         <div className="footer-column">
           <span className="footer-badge">office</span>
           <address>
@@ -330,7 +312,6 @@ export default function Footer() {
             </svg>
           </a>
         </div>
-        {/* Contact */}
         <div className="footer-column">
           <span className="footer-badge">contact</span>
           <a href="mailto:hello@cozypaws.co" className="footer-email">
@@ -358,7 +339,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Big COZYPAWS wordmark */}
       <div className="footer-bottom">
         <div className="footer-big-text">
           <svg
@@ -412,7 +392,6 @@ export default function Footer() {
           </svg>
         </div>
 
-        {/* Stickers */}
         <div className="footer-stickers">
           <div className="footer-sticker sticker-smiley">
             <img
@@ -468,48 +447,6 @@ export default function Footer() {
             />
           </div>
         </div>
-
-        {/* Bottom row: credits */}
-        {/* <div className="footer-bottom-row">
-          <div></div>
-          <div className="footer-credits-wrapper">
-            <div className="credits-box">
-              <div className="credits-content">
-                <div className="credits-item credit-wiggle">
-                  <div className="overflow-wrapper">
-                    <span className="credits-label">design by</span>
-                  </div>
-                  <div className="overflow-wrapper">
-                    <a
-                      href="#"
-                      className="credits-name"
-                      data-wiggle-target="true"
-                    >
-                      Jordan
-                    </a>
-                  </div>
-                </div>
-                <div className="credits-item credit-wiggle">
-                  <div className="overflow-wrapper">
-                    <span className="credits-label">code by</span>
-                  </div>
-                  <div className="overflow-wrapper">
-                    <a
-                      href="#"
-                      className="credits-name"
-                      data-wiggle-target="true"
-                    >
-                      Dennis
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <a href="#" className="footer-credits">
-              credits
-            </a>
-          </div>
-        </div> */}
       </div>
     </div>
   );

@@ -13,7 +13,6 @@ export default function SmoothScroll() {
     // shows/hides — that "resize" made pinned sections jump mid-scroll.
     ScrollTrigger.config({ ignoreMobileResize: true });
 
-    // Respect reduced-motion: native scrolling, no smoothing layer at all.
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -36,7 +35,6 @@ export default function SmoothScroll() {
       gsap.ticker.lagSmoothing(0);
     }
 
-    // Dynamic Tab Title Change
     const originalTitle = document.title;
     const handleVisibility = () => {
       document.title = document.hidden
@@ -45,7 +43,6 @@ export default function SmoothScroll() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // Store lenis on window so other components can access it
     if (lenis) window.__lenis = lenis;
 
     return () => {

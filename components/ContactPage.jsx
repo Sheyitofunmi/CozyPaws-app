@@ -102,7 +102,6 @@ export default function ContactPage() {
       </section>
 
       <section className="contact-body">
-        {/* ─── Info cards ─── */}
         <div className="contact-cards">
           {CONTACT_CARDS.map((card) => (
             <a
@@ -127,7 +126,6 @@ export default function ContactPage() {
           </p>
         </div>
 
-        {/* ─── Form ─── */}
         <div className="contact-form-wrap" data-reveal data-reveal-delay="0.1">
           {status === "success" ? (
             <div className="contact-success" role="status">

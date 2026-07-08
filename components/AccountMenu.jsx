@@ -18,12 +18,10 @@ export default function AccountMenu() {
   const { openWishlist, count: wishlistCount } = useWishlist();
   const { openCart, count: cartCount } = useCart();
 
-  // Restore the mock "signed-in" name after mount.
   useEffect(() => {
     setName(window.localStorage.getItem(STORAGE_KEY) || null);
   }, []);
 
-  // Close on outside click / Escape.
   useEffect(() => {
     if (!open) return;
     const onDown = (e) => {

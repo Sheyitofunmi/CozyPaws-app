@@ -38,7 +38,6 @@ export default function Navbar() {
     const contentSection = document.querySelector(".content-section");
     const footerEl = document.querySelector(".main-footer");
 
-    // ② Start white (on-dark) — video is dark background
     if (navbar) {
       navbar.classList.add("on-dark");
       navbar.classList.remove("on-light");
@@ -92,7 +91,6 @@ export default function Navbar() {
     window.addEventListener("scroll", updateNavbarColor);
     updateNavbarColor();
 
-    // Wiggle on logo and whatsapp
     const cleanups = [];
     const logoTruus = document.querySelector(".logo-truus");
     if (logoTruus)
@@ -119,7 +117,6 @@ export default function Navbar() {
       }
     };
 
-    // ─── Navbar Left (Work) Hover ───
     const navLeft = document.querySelector(".nav-left");
     const workBox = document.querySelector(".nav-work-box");
     const workBlob = document.querySelector(".nav-bar__work-blob-svg");
@@ -128,16 +125,13 @@ export default function Navbar() {
       const workInner = workBox.querySelector(".nav-popout-inner");
       const workItems = workInner ? Array.from(workInner.children) : [];
 
-      // Temporarily show to measure both the box AND the blob icon center
       gsap.set(workBox, { visibility: "visible", scale: 1, opacity: 1 });
       const boxRect = workBox.getBoundingClientRect();
       const blobRect = workBlob.getBoundingClientRect();
-      // Icon center relative to the box's own top-left
       const originX = blobRect.left + blobRect.width / 2 - boxRect.left;
       const originY = blobRect.top + blobRect.height / 2 - boxRect.top;
       const workOrigin = `${originX}px ${originY}px`;
 
-      // Start collapsed, scaling FROM the icon center
       gsap.set(workBox, {
         visibility: "hidden",
         scale: 0,
@@ -153,7 +147,6 @@ export default function Navbar() {
         gsap.killTweensOf(workBlob);
         showOverlay();
 
-        // Fast 360 blob spin — like it's spinning then releasing the box
         gsap.to(workBlob, {
           rotation: "+=360",
           duration: 0.7,
@@ -161,13 +154,11 @@ export default function Navbar() {
         });
 
         gsap.set(workBox, { visibility: "visible" });
-        // Box grows out smoothly from the icon center
         gsap.fromTo(
           workBox,
           { scale: 0, opacity: 0 },
           { scale: 1, opacity: 1, duration: 0.8, ease: "expo.out" },
         );
-        // Items emerge while box is growing
         gsap.to(workItems, {
           y: 0,
           opacity: 1,
@@ -186,14 +177,12 @@ export default function Navbar() {
 
         gsap.to(workBlob, { rotation: 0, duration: 0.5, ease: "power2.out" });
 
-        // Items fade quickly
         gsap.to(workItems, {
           y: 10,
           opacity: 0,
           duration: 0.15,
           ease: "power2.in",
         });
-        // Box shrinks back into icon smoothly
         gsap.to(workBox, {
           scale: 0,
           opacity: 0,
@@ -212,7 +201,6 @@ export default function Navbar() {
       });
     }
 
-    // ─── Navbar Right (WhatsApp) Hover ───
     const navRight = document.querySelector(".nav-right");
     const waBox = document.querySelector(".nav-wa-box");
     const waSvgPath = document.querySelector(".nav-bar__whatsapp-svg path");
@@ -222,16 +210,13 @@ export default function Navbar() {
       const waItems = waInner ? Array.from(waInner.children) : [];
       const waIcon = document.querySelector(".nav-bar__whatsapp-svg");
 
-      // Temporarily show to measure both the box AND the WA icon center
       gsap.set(waBox, { visibility: "visible", scale: 1, opacity: 1 });
       const waBoxRect = waBox.getBoundingClientRect();
       const waIconRect = waIcon ? waIcon.getBoundingClientRect() : waBoxRect;
-      // Icon center relative to the box's own top-left
       const waOriginX = waIconRect.left + waIconRect.width / 2 - waBoxRect.left;
       const waOriginY = waIconRect.top + waIconRect.height / 2 - waBoxRect.top;
       const waOrigin = `${waOriginX}px ${waOriginY}px`;
 
-      // Start collapsed, scaling FROM the WA icon center
       gsap.set(waBox, {
         visibility: "hidden",
         scale: 0,
@@ -247,13 +232,11 @@ export default function Navbar() {
         if (waSvgPath) gsap.to(waSvgPath, { fill: "#0e6634ff", duration: 0.3 }); // Darker WA green
 
         gsap.set(waBox, { visibility: "visible" });
-        // Box grows out smoothly from the WA icon center
         gsap.fromTo(
           waBox,
           { scale: 0, opacity: 0 },
           { scale: 1, opacity: 1, duration: 0.8, ease: "expo.out" },
         );
-        // Items emerge while box is growing
         gsap.to(waItems, {
           y: 0,
           opacity: 1,
@@ -271,14 +254,12 @@ export default function Navbar() {
         if (waSvgPath)
           gsap.to(waSvgPath, { fill: "currentColor", duration: 0.3 });
 
-        // Items fade quickly
         gsap.to(waItems, {
           y: 10,
           opacity: 0,
           duration: 0.15,
           ease: "power2.in",
         });
-        // Box shrinks back into WA icon smoothly
         gsap.to(waBox, {
           scale: 0,
           opacity: 0,
@@ -297,7 +278,6 @@ export default function Navbar() {
       });
     }
 
-    // ─── Work Item: badge wiggle + image tilt on hover ───
     const workItems = document.querySelectorAll(".nav-work-item");
     workItems.forEach((item) => {
       const badge = item.querySelector(".nav-work-badge");
@@ -305,7 +285,6 @@ export default function Navbar() {
       let wiggleTween;
 
       const onItemEnter = () => {
-        // Wiggle badge intensity 2
         if (badge) {
           gsap.set(badge, { transformOrigin: "center center" });
           wiggleTween = gsap.to(badge, {
@@ -316,7 +295,6 @@ export default function Navbar() {
             ease: "steps(1)",
           });
         }
-        // Tilt image slightly right
         if (img)
           gsap.to(img, {
             rotation: 16,
@@ -347,7 +325,6 @@ export default function Navbar() {
       });
     });
 
-    // ─── All Our Work btn: wiggle intensity 4 (bubble handled by CursorBubble) ───
     const workBtn = document.querySelector(".nav-work-btn");
     if (workBtn) {
       let btnWiggle;
@@ -413,7 +390,6 @@ export default function Navbar() {
               <span className="logo-work-text">shop</span>
             </div>
 
-            {/* Pop-out Box for Left Side */}
             <div className="nav-popout nav-work-box">
               <div className="nav-popout-inner">
                 <div className="nav-work-item">
@@ -553,7 +529,6 @@ export default function Navbar() {
               </svg>
             </div>
 
-            {/* Pop-out Box for Right Side */}
             <div className="nav-popout nav-wa-box">
               <div className="nav-popout-inner">
                 <img

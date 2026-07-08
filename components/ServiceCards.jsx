@@ -5,15 +5,11 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CARDS_DATA } from "@/lib/data";
 
-// GSAP tweens must be reverted synchronously before React unmounts these nodes
-// on navigation, otherwise React throws "node to be removed is not a child of
-// this node". A layout effect cleanup runs in time; a plain useEffect does not.
+
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// The desktop fan spans ~1400px (leftmost card at 50% - 700px), so anything
-// narrower gets the static grid instead. Keep in sync with the
-// @media (max-width: 1440px) card rules in responsive.css / cards.css.
+
 const DESKTOP_MIN = 1441;
 
 export default function ServiceCards() {
@@ -35,7 +31,6 @@ export default function ServiceCards() {
           return;
         }
 
-        // Animate underline SVG paths on scroll (from HeroSection)
         gsap.to(".title-underline-svg path", {
           strokeDashoffset: 0,
           duration: 1.2,
@@ -48,8 +43,6 @@ export default function ServiceCards() {
           },
         });
 
-        // Below DESKTOP_MIN the cards render as a static grid — no GSAP
-        // involvement, nothing to set up.
         if (isDesktop) return initDesktopHover();
       },
     );
@@ -59,7 +52,6 @@ export default function ServiceCards() {
 
   return (
     <>
-      {/* ─── "Call us if you need:" Heading ─── */}
       <div className="title-container">
         <h2 className="main-title">
           everything your dog <span className="italic-text">needs:</span>
@@ -88,7 +80,6 @@ export default function ServiceCards() {
         </svg>
       </div>
 
-      {/* ─── Service Cards ─── */}
       <div className="cards-wrapper" id="cards-wrapper">
         {CARDS_DATA.map((card) => (
           <div key={card.color} className={`card card-${card.color}`}>
@@ -133,7 +124,6 @@ export default function ServiceCards() {
   );
 }
 
-// ─── Desktop (≥ DESKTOP_MIN): fanned cards that spread apart on hover ───────
 function initDesktopHover() {
   const cards = gsap.utils.toArray(".card");
   if (!cards.length) return;

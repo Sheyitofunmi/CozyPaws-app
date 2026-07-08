@@ -5,7 +5,6 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { brands, colors } from "@/lib/data";
 
-// ─── Shuffle helpers ─────────────────────────────────────────────────────────
 function shuffleArray(array) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -76,7 +75,6 @@ export default function DoubleMarquee() {
 
     setTracks(buildMarqueeItems());
 
-    // Arrow path animation
     gsap.set(".marquee-left .marquee-svg-item:nth-child(2) path", {
       strokeDashoffset: 1000,
     });
@@ -122,7 +120,6 @@ export default function DoubleMarquee() {
 
   return (
     <>
-      {/* Left: Text + Blob */}
       <div className="marquee-left">
         <div className="marquee-text-container">
           <h2>
@@ -188,7 +185,6 @@ export default function DoubleMarquee() {
         </div>
       </div>
 
-      {/* Right: Two scrolling columns */}
       <div className="marquee-right">
         {tracks.map((trackItems, colIndex) => (
           <div key={colIndex} className="marquee-column">

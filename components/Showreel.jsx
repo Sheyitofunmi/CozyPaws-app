@@ -59,7 +59,6 @@ export default function Showreel() {
           </div>
         ))}
 
-        {/* Bottom gradient so title/caption/dots stay readable */}
         <div className="showreel-reel__fade" />
 
         <div className="showreel__content showreel-reel__overlay">

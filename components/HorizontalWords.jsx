@@ -19,44 +19,33 @@ const HorizontalWords = () => {
   const sectionRef = useRef(null);
 
   useIsomorphicLayoutEffect(() => {
-    // Reduced motion: skip the pin + scrub entirely; the CSS fallback in
-    // horizontal-words.css shows the message as static wrapped text.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    // Grab the animated elements once; both breakpoints share the same nodes.
     const getEls = () => {
       const container = sectionRef.current;
       return {
         container,
         textRef: container.querySelector(".horizontal-words__relative"),
         letters: container.querySelectorAll(".letter"),
-        // Select the individual stickers rather than the wrapper.
         stickers: container.querySelectorAll(
           ".horizontal-words__sticker-watch, .horizontal-words__sticker-cursor, .horizontal-words__sticker-phone",
         ),
-        // The SVGs are inlined below, so their <path>s can be drawn with
-        // strokeDashoffset directly.
         arrows: container.querySelectorAll(
           ".horizontal-words__arrow-svg path, .horizontal-words__arrow-end-svg path",
         ),
       };
     };
 
-    // matchMedia scopes each animation set to its breakpoint and auto-reverts
-    // the other one when the viewport crosses 1024px, so nothing leaks between
-    // the pinned desktop layout and the static mobile layout.
     const mm = gsap.matchMedia(sectionRef);
 
-    // ── Desktop (≥1025px): the original pinned horizontal scroll ────────────
     mm.add("(min-width: 1025px)", () => {
       const { container, textRef, letters, stickers, arrows } = getEls();
 
-      // Horizontal movement of the whole text block while the section is pinned.
       const scrollTween = gsap.fromTo(
         textRef,
-        { xPercent: 50 }, // Start far right so it slides in naturally
+        { xPercent: 50 },
         {
-          xPercent: -100, // End with the paragraph settled in view
+          xPercent: -100,
           ease: "none",
           scrollTrigger: {
             trigger: container,
@@ -69,7 +58,6 @@ const HorizontalWords = () => {
         },
       );
 
-      // Bounce each letter as it crosses the pinned track.
       letters.forEach((letter) => {
         gsap.from(letter, {
           yPercent: (Math.random() - 0.5) * 500,
@@ -101,7 +89,6 @@ const HorizontalWords = () => {
         });
       });
 
-      // Draw the hand-drawn arrows as they scroll past.
       arrows.forEach((arrowPath) => {
         if (arrowPath.getTotalLength) {
           const pathLen = arrowPath.getTotalLength();
@@ -124,11 +111,6 @@ const HorizontalWords = () => {
       });
     });
 
-    // ── Mobile & tablet (≤1024px): vertical stagger reveal, no pin ──────────
-    // The section is a normal auto-height block (see the CSS). As it scrolls
-    // into view the wrapped headline's letters rise + fade in staggered, then
-    // the stickers pop and the arrows draw. Reversing on scroll-up keeps it
-    // replayable without ever locking the page.
     mm.add("(max-width: 1024px)", () => {
       const { container, letters, stickers, arrows } = getEls();
 

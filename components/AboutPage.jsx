@@ -67,7 +67,6 @@ export default function AboutPage() {
     <div className="cozy-page about-page">
       <SiteHeader />
 
-      {/* ─── Hero ─── */}
       <section className="about-hero">
         <div className="about-hero__text">
           <span className="about-hero__eyebrow cozy-fade-up cozy-delay-100">
@@ -104,7 +103,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ─── Stats ─── */}
       <section className="about-stats" aria-label="By the numbers">
         {STATS.map((stat) => (
           <div
@@ -119,7 +117,6 @@ export default function AboutPage() {
         ))}
       </section>
 
-      {/* ─── Story ─── */}
       <section className="about-story">
         <div className="about-story__media" data-reveal>
           <img
@@ -144,7 +141,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ─── Values ─── */}
       <section className="about-values">
         <h2 className="about-section-title about-values__title" data-reveal>
           What we believe
@@ -167,7 +163,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ─── Team ─── */}
       <section className="about-team">
         <h2 className="about-section-title about-team__title" data-reveal>
           The humans (and their bosses)
@@ -187,7 +182,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ─── CTA band ─── */}
       <section className="about-cta" data-reveal>
         <h2>Ready to spoil your best friend?</h2>
         <Link href="/shop" className="about-cta__btn">

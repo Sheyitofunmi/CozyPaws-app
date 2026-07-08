@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
 
-// Demo contact endpoint — validates the payload and echoes a confirmation.
-// No email is sent; this is a design showcase with real request plumbing.
-
 const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 export async function POST(request) {
@@ -30,7 +27,6 @@ export async function POST(request) {
     return NextResponse.json({ ok: false, errors }, { status: 422 });
   }
 
-  // In a real store this is where we'd send an email / create a ticket.
   console.log("[contact] new message", { name, email, topic: body.topic });
 
   return NextResponse.json({

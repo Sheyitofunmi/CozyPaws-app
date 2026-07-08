@@ -13,7 +13,6 @@ export default function MotionCards() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Inertia on cards
       const cards = document.querySelectorAll(".motion-card__card");
       cards.forEach((card) => {
         let lastX = 0;
@@ -54,7 +53,6 @@ export default function MotionCards() {
         card.addEventListener("mouseleave", onLeave);
       });
 
-      // Inertia on floating labels
       const labels = document.querySelectorAll(".motion-card__floating-label");
       labels.forEach((label) => {
         let lastX = 0;
@@ -95,7 +93,6 @@ export default function MotionCards() {
         label.addEventListener("mouseleave", onLeave);
       });
 
-      // Entry Animations: Sticker Pop & Underline Draw
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -148,7 +145,6 @@ export default function MotionCards() {
       className="motion-card-section"
       id="motion-card-section"
     >
-      {/* ─── Part 1: Bold Heading Text with SVG Sticker Placeholders ─── */}
       <div className="motion-card__heading">
         <h2 className="motion-card__title">
           a store built
@@ -157,7 +153,6 @@ export default function MotionCards() {
         </h2>
         <p className="motion-card__subtitle">
           from pup to senior.
-          {/* SVG sticker placeholder — top-right area */}
           <span className="motion-card__sticker motion-card__sticker--top">
             <img
               src="/assets/Footer-Sticker SVG/footer-sticker-hands.svg"
@@ -184,9 +179,7 @@ export default function MotionCards() {
         </svg>
       </div>
 
-      {/* ─── Part 2: Cards with Colorful Bars & Blue Blob ─── */}
       <div className="motion-card__cards-area">
-        {/* Blue SVG blob behind everything */}
         <div className="motion-card__blob">
           <img
             src="/assets/MotionCard SVG/motion-card-blob.svg"
@@ -195,7 +188,6 @@ export default function MotionCards() {
           />
         </div>
 
-        {/* 4 Photo Cards */}
         <div ref={containerRef} className="motion-card__cards">
           <div className="motion-card__card motion-card__card--1">
             <div className="motion-card__card-image">
@@ -250,7 +242,6 @@ export default function MotionCards() {
           </div>
         </div>
 
-        {/* Floating labels — positioned freely over the cards area */}
         <div ref={containerRef} className="motion-card__floating-labels">
           <div className="motion-card__floating-label motion-card__floating-label--pink">
             <p className="motion-card__floating-text">
@@ -270,7 +261,6 @@ export default function MotionCards() {
         </div>
       </div>
 
-      {/* ─── Part 3: Bottom Paragraph Text ─── */}
       <div className="motion-card__footer-text">
         <p className="motion-card__description">
           To make a dog happy you need to know what makes them tick. We stock

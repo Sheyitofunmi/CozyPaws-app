@@ -13,7 +13,6 @@ import { IconPlus, IconArrowUpRight, IconStar } from "@/components/icons";
 
 const CATEGORIES = ["all", ...CARDS_DATA.map((card) => card.title)];
 
-// One playful accent color per category, drawn from the marquee palette.
 const CATEGORY_ACCENT = {
   "food & treats": "var(--color-green)",
   "toys & play": "var(--color-darkblue)",
@@ -60,7 +59,6 @@ export default function ShopPage() {
     <div className="shop-page cozy-page">
       <SiteHeader />
 
-      {/* ─── Hero strip ─── */}
       <section className="shop-hero">
         <span
           className="shop-hero__blob shop-hero__blob--1"
@@ -87,7 +85,6 @@ export default function ShopPage() {
         </p>
       </section>
 
-      {/* ─── Category filter ─── */}
       <nav
         className="shop-filters cozy-fade-up cozy-delay-400"
         aria-label="Product categories"
@@ -113,7 +110,6 @@ export default function ShopPage() {
         ))}
       </nav>
 
-      {/* ─── Search status ─── */}
       {query && (
         <div className="shop-search-status">
           <p>
@@ -127,7 +123,6 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* ─── Product grid ─── */}
       {visibleProducts.length === 0 ? (
         <div className="shop-empty">
           <img src="/assets/pets/paw-sticker.svg" alt="" aria-hidden="true" />

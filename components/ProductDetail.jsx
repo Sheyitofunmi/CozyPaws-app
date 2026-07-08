@@ -27,8 +27,6 @@ const CATEGORY_ACCENT = {
   "grooming & care": "var(--color-pink)",
 };
 
-// Category-driven marketing copy so every product reads well without
-// hand-authoring 12 descriptions.
 const CATEGORY_COPY = {
   "food & treats": {
     blurb:
@@ -206,7 +204,6 @@ export default function ProductDetail({ product }) {
         </div>
       </section>
 
-      {/* ─── You may also like ─── */}
       <section className="product-related">
         <h2 className="product-related__title" data-reveal>
           you may also like

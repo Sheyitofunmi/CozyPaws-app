@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { PRODUCTS } from "@/lib/data";
 
-// Demo checkout endpoint — validates the shipping details and cart, then
-// returns a fake order confirmation. No payment is processed.
-
 const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const SHIPPING = 4.99;
 const FREE_SHIPPING_THRESHOLD = 50;

@@ -83,7 +83,6 @@ export default function SiteHeader() {
         </button>
       </div>
 
-      {/* Mobile dropdown */}
       <nav
         className={`site-header__mobile ${menuOpen ? "is-open" : ""}`}
         aria-label="Mobile"

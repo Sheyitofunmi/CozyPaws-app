@@ -1,6 +1,3 @@
-// ─── Shared inline Lucide-style icons (stroke-based, currentColor) ──────────
-// Used across the CozyPaws shop, cart, product, about and contact pages.
-
 const base = {
   viewBox: "0 0 24 24",
   fill: "none",

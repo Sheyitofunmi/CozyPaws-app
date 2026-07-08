@@ -82,7 +82,6 @@ export default function CartPage() {
     }
   };
 
-  // ─── Order confirmation ───
   if (status === "done" && order) {
     return (
       <div className="cozy-page cart-page">
@@ -112,7 +111,6 @@ export default function CartPage() {
     );
   }
 
-  // ─── Empty cart ───
   if (lines.length === 0) {
     return (
       <div className="cozy-page cart-page">
@@ -138,7 +136,6 @@ export default function CartPage() {
         <h1 className="cart-main__title">your cart</h1>
 
         <div className="cart-layout">
-          {/* ─── Left: items + shipping ─── */}
           <div className="cart-left">
             <ul className="cart-lines">
               {lines.map((line) => (
@@ -220,7 +217,6 @@ export default function CartPage() {
             </form>
           </div>
 
-          {/* ─── Right: summary ─── */}
           <aside className="cart-summary">
             <h2 className="cart-summary__title">order summary</h2>
 

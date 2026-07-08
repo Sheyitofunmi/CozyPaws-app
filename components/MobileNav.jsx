@@ -20,7 +20,6 @@ const NAV_LINKS = [
 export default function MobileNav({ className = "" }) {
   const [open, setOpen] = useState(false);
 
-  // Lock body scroll while the menu is open
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {

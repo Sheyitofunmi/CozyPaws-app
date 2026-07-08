@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 
-/* Reusable paw-print glyph (main pad + 4 toes) */
 function PawGlyph() {
   return (
     <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">
@@ -27,7 +26,6 @@ function DogGlyph() {
       <div className="animal__pose">
         <div className="animal__bob">
           <svg viewBox="0 0 200 130" aria-hidden="true">
-            {/* far legs (behind, lighter) */}
             <rect
               className="animal__leg animal__leg--b"
               x="60"
@@ -46,13 +44,11 @@ function DogGlyph() {
               rx="6"
               fill="#d94f22"
             />
-            {/* tail */}
             <path
               className="animal__tail"
               d="M44 60 C24 52 18 40 22 30 C30 40 40 46 50 52 Z"
               fill="var(--color-orange)"
             />
-            {/* body */}
             <rect
               x="42"
               y="46"
@@ -61,7 +57,6 @@ function DogGlyph() {
               rx="23"
               fill="var(--color-orange)"
             />
-            {/* head */}
             <circle cx="164" cy="54" r="25" fill="var(--color-orange)" />
             <path
               d="M150 34 q-6 -16 8 -18 q2 12 -2 22 Z"
@@ -70,7 +65,6 @@ function DogGlyph() {
             <rect x="180" y="52" width="18" height="16" rx="7" fill="#d94f22" />
             <circle cx="170" cy="50" r="3.4" fill="#3a1608" />
             <circle cx="195" cy="58" r="2.6" fill="#3a1608" />
-            {/* near legs (front, darker) */}
             <rect
               className="animal__leg animal__leg--a"
               x="74"
@@ -101,9 +95,7 @@ function CatGlyph() {
     <div className="animal__click">
       <div className="animal__pose">
         <div className="animal__bob">
-          {/* drawn facing left */}
           <svg viewBox="0 0 200 130" aria-hidden="true">
-            {/* far legs */}
             <rect
               className="animal__leg animal__leg--b"
               x="128"
@@ -122,13 +114,11 @@ function CatGlyph() {
               rx="5"
               fill="#6f8ce0"
             />
-            {/* long curved tail (back = right side) */}
             <path
               className="animal__tail"
               d="M156 66 C182 62 186 40 176 26 C190 40 190 66 168 78 Z"
               fill="var(--color-lightblue)"
             />
-            {/* body */}
             <rect
               x="54"
               y="52"
@@ -137,14 +127,11 @@ function CatGlyph() {
               rx="19"
               fill="var(--color-lightblue)"
             />
-            {/* head (left) */}
             <circle cx="52" cy="58" r="22" fill="var(--color-lightblue)" />
-            {/* pointy ears */}
             <path d="M36 40 L30 20 L48 34 Z" fill="var(--color-lightblue)" />
             <path d="M60 36 L64 16 L74 38 Z" fill="var(--color-lightblue)" />
             <circle cx="46" cy="56" r="3" fill="#20305e" />
             <circle cx="36" cy="60" r="2" fill="#20305e" />
-            {/* near legs */}
             <rect
               className="animal__leg animal__leg--a"
               x="78"
@@ -191,7 +178,6 @@ function BirdGlyph() {
   );
 }
 
-/* Rolling tree / bush silhouette (two depth bands) */
 function TreesGlyph() {
   return (
     <svg
@@ -199,12 +185,10 @@ function TreesGlyph() {
       preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
     >
-      {/* back band */}
       <path
         className="tree-fill--back"
         d="M0 300 V170 Q90 120 180 165 Q250 90 340 150 Q430 100 520 160 Q640 110 760 160 Q880 110 1000 165 Q1100 130 1200 170 V300 Z"
       />
-      {/* front band + round bushes */}
       <path
         className="tree-fill"
         d="M0 300 V210 Q120 170 250 205 Q360 160 480 205 Q600 165 720 205 Q850 165 980 205 Q1100 175 1200 210 V300 Z"
@@ -250,20 +234,16 @@ export default function VimeoHero({ onAnimalClick } = {}) {
   const [isNight, setIsNight] = useState(false);
   const [bounced, setBounced] = useState({});
 
-  /* ── Auto day/night by the visitor's local clock (night 18:00–05:59) ── */
   useEffect(() => {
     const applyTime = () => {
       const h = new Date().getHours();
       setIsNight(h < 6 || h >= 18);
     };
     applyTime();
-    // re-check hourly in case the hero stays open across the boundary
     const id = setInterval(applyTime, 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
-  /* ── Parallax on scroll: rAF-throttled, translateY-only via CSS vars ──
-     Sky slowest → ground fastest. Skipped entirely under reduced-motion. */
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
@@ -287,13 +267,10 @@ export default function VimeoHero({ onAnimalClick } = {}) {
       }
     };
 
-    update(); // set initial offsets
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ── Animal activation: bounce + fire onAnimalClick(category). Works for
-     mouse, keyboard (Enter/Space) and touch (onClick fires on tap). ── */
   const activateAnimal = (category) => {
     setBounced((b) => ({ ...b, [category]: true }));
     window.setTimeout(
@@ -310,9 +287,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     }
   };
 
-  /* ────────────────────────────────────────────────────
-       ④ Hover mute bubble — same GSAP elastic spring as CursorBubble
-    ──────────────────────────────────────────────────── */
   useEffect(() => {
     const bubble = bubbleRef.current;
     const hero = playerRef.current;
@@ -414,7 +388,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     };
   }, []);
 
-  /* ── Controls ── */
   const togglePlay = (e) => {
     if (e) e.stopPropagation();
     if (!iframeRef.current) return;
@@ -446,20 +419,17 @@ export default function VimeoHero({ onAnimalClick } = {}) {
 
   return (
     <>
-      {/* ④ Hover mute bubble — follows cursor over the video */}
       <div
         ref={bubbleRef}
         className={`vimeo-mute-bubble ${isMuted ? "is--muted" : "is--unmuted"}`}
         style={{ pointerEvents: "none" }}
       >
         <div className="vimeo-mute-bubble__blob">
-          {/* Blob shape */}
           <img
             src="/assets/VimeoHero SVG/mute-bubble-blob.svg"
             alt=""
             className="vimeo-mute-bubble__blob-svg"
           />
-          {/* Mute icon (shown when sound is ON → click to mute) */}
           <div className="vimeo-mute-bubble__icon vimeo-mute-bubble__mute">
             <svg
               viewBox="0 0 54 54"
@@ -484,7 +454,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
               />
             </svg>
           </div>
-          {/* Unmute icon (shown when muted → click to unmute) */}
           <div className="vimeo-mute-bubble__icon vimeo-mute-bubble__unmute">
             <svg
               viewBox="0 0 54 54"
@@ -508,21 +477,15 @@ export default function VimeoHero({ onAnimalClick } = {}) {
         </div>
       </div>
 
-      {/* ── Main hero container ── */}
       <div
         className={`vimeo-hero ${isPlaying ? "is-playing" : "is-paused"} ${isMuted ? "is-muted" : "is-unmuted"}`}
         ref={playerRef}
         onClick={toggleMute}
       >
-        {/* ── Coded animated hero: parallax nature diorama (replaces the video) ──
-            Layers back→front. Decorative layers are aria-hidden; the dog and cat
-            are interactive (role=button + label). Motion respects reduced-motion
-            via CSS, day/night is auto by local clock, parallax via JS scroll. */}
         <div
           className={`anim-hero ${isNight ? "is-night" : "is-day"}`}
           ref={sceneRef}
         >
-          {/* ① Sky (static gradient, day/night) + sun/moon + stars */}
           <div className="dio-layer dio-sky" aria-hidden="true">
             <div className="dio-celestial" />
             {STARS.map((s) => (
@@ -538,31 +501,25 @@ export default function VimeoHero({ onAnimalClick } = {}) {
             ))}
           </div>
 
-          {/* ② Far clouds — slow horizontal drift */}
           <div className="dio-layer dio-clouds" aria-hidden="true">
             {CLOUDS.map((n) => (
               <span key={n} className={`dio-cloud dio-cloud--${n}`} />
             ))}
           </div>
 
-          {/* ③ Mid — trees / bushes silhouette */}
           <div className="dio-layer dio-trees" aria-hidden="true">
             <TreesGlyph />
           </div>
 
-          {/* ④ Ground — grass + dirt path */}
           <div className="dio-layer dio-ground" aria-hidden="true">
             <div className="dio-path" />
           </div>
 
-          {/* ⑤ Foreground — bird, paw prints, dog + cat (interactive) */}
           <div className="dio-foreground">
-            {/* Bird — decorative, flies past periodically, no interaction */}
             <div className="dio-bird" aria-hidden="true">
               <BirdGlyph />
             </div>
 
-            {/* Paw prints trailing along the path — decorative */}
             {PAW_PRINTS.map((p) => (
               <span
                 key={p.id}
@@ -578,7 +535,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
               </span>
             ))}
 
-            {/* Dog — interactive: runs L→R, sits & wags on hover, bounces on tap */}
             <div
               className={`animal animal--dog ${bounced.dogs ? "is-bounced" : ""}`}
               role="button"
@@ -593,7 +549,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
               <DogGlyph />
             </div>
 
-            {/* Cat — interactive: walks R→L slower, stretches on hover */}
             <div
               className={`animal animal--cat ${bounced.cats ? "is-bounced" : ""}`}
               role="button"
@@ -629,20 +584,16 @@ export default function VimeoHero({ onAnimalClick } = {}) {
         />
         */}
 
-        {/* Gradient fade */}
         <div className="vimeo-hero__fade" />
 
-        {/* ① Headline — bottom left, word-by-word layout */}
         <div className="home-header__title">
           <h1
             className="vimeo-hero__title"
             ref={titleRef}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* "we" */}
             <span className="vimeo-hero__word">we </span>
 
-            {/* "make" + ⑤ smiley (no animation) */}
             <span className="vimeo-hero__word is--relative">
               <span>make </span>
               <div className="home-header__smiley">
@@ -654,12 +605,10 @@ export default function VimeoHero({ onAnimalClick } = {}) {
               </div>
             </span>
 
-            {/* "shopping" italic */}
             <span className="vimeo-hero__word">
               <em>shopping </em>
             </span>
 
-            {/* "fun" */}
             <span className="vimeo-hero__word">fun </span>
 
             <div style={{ flexBasis: "100%", height: 0 }} />
@@ -667,7 +616,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
             <span className="vimeo-hero__word">for </span>
             <span className="vimeo-hero__word">your </span>
 
-            {/* "dog" + ⑤ pink star (no spin) + oval underline */}
             <span className="vimeo-hero__word is--relative">
               <div className="home-header__star">
                 <div className="home-header__star-inner">
@@ -678,7 +626,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
                   />
                 </div>
               </div>
-              {/* Oval underline */}
               <img
                 src="/assets/VimeoHero SVG/oval-underline.svg"
                 alt=""
@@ -689,13 +636,11 @@ export default function VimeoHero({ onAnimalClick } = {}) {
           </h1>
         </div>
 
-        {/* ① Controls — bottom LEFT: pause/play + fullscreen */}
         <div
           className="vimeo-hero__controls"
           ref={controlsRef}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Play / Pause */}
           <button
             className="vimeo-hero__btn"
             onClick={togglePlay}
@@ -728,7 +673,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
             )}
           </button>
 
-          {/* Fullscreen */}
           <button
             className="vimeo-hero__btn"
             onClick={toggleFullscreen}
@@ -766,7 +710,6 @@ export default function VimeoHero({ onAnimalClick } = {}) {
           </button>
         </div>
 
-        {/* Loading spinner removed because native HTML video loads silently in background */}
       </div>
     </>
   );

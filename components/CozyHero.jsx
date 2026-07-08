@@ -25,7 +25,6 @@ const POINTER_CURSOR = {
   cursor: "url('/assets/Cursor SVG/cursor-pointer.svg') 12 12, pointer",
 };
 
-/* ─── Inline Lucide icons (stroke-based, currentColor) ─── */
 function IconSearch(props) {
   return (
     <svg
@@ -137,7 +136,6 @@ function IconPlus(props) {
   );
 }
 
-/* ─── Shared overlay fragments ─── */
 function StatOverlay({ className = "" }) {
   return (
     <div className={`cozy-stat ${className}`}>
@@ -199,7 +197,6 @@ export default function CozyHero() {
 
   return (
     <section className="cozy-hero" ref={heroRef}>
-      {/* ─── Header ─── */}
       <header className="cozy-header cozy-fade-in cozy-delay-100">
         <img src={ASSETS.logo} alt="CozyPaws" className="cozy-header__logo" />
         <nav className="cozy-header__nav">
@@ -255,7 +252,6 @@ export default function CozyHero() {
         </div>
       </header>
 
-      {/* ─── Search overlay ─── */}
       {searchOpen && (
         <div
           className="cozy-search"
@@ -288,7 +284,6 @@ export default function CozyHero() {
         </div>
       )}
 
-      {/* ─── Desktop / tablet stage ─── */}
       <div className="cozy-hero__stage">
         <div className="cozy-hero__heading-wrap">
           <h1 className="cozy-hero__heading">
@@ -303,7 +298,6 @@ export default function CozyHero() {
           </h1>
         </div>
 
-        {/* Left product card */}
         <div className="cozy-card cozy-card--product cozy-slide-in-left cozy-delay-600">
           <div className="cozy-card__img-wrap">
             <img src={ASSETS.productCard} alt="Cozy Dog House" />
@@ -320,7 +314,6 @@ export default function CozyHero() {
           <p className="cozy-card__price">$49.99</p>
         </div>
 
-        {/* Right video card */}
         <div className="cozy-card cozy-card--video cozy-slide-in-right cozy-delay-700">
           <div className="cozy-card__img-wrap cozy-card__img-wrap--video">
             <img src={ASSETS.videoCard} alt="Product review videos" />
@@ -337,7 +330,6 @@ export default function CozyHero() {
           </div>
         </div>
 
-        {/* Bottom photos */}
         <div className="cozy-photos">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
             <img src={ASSETS.bottomLeft} alt="Happy dog" />
@@ -370,7 +362,6 @@ export default function CozyHero() {
         </div>
       </div>
 
-      {/* ─── Mobile layout ─── */}
       <div className="cozy-mobile">
         <div className="cozy-mobile__top">
           <h1 className="cozy-mobile__title cozy-fade-up cozy-delay-200">
