@@ -1,8 +1,36 @@
 /* ─── Tablet (769px – 1200px) ────────────────────────────────────────────── */
 @media (min-width: 769px) and (max-width: 1200px) {
-  /* 200px of top padding per section reads as dead space on tablets */
+  /* The wrapped sections (MotionCards, ServiceCards) bring their own padding,
+     so the 200px wrapper padding just stacks into dead space. Zero it and let
+     the inner sections own the rhythm. */
   .content-section {
-    padding: 90px 20px 0;
+    padding: 0 20px;
+  }
+
+  /* The marquee only had desktop + phone rules, so on tablets it kept
+     min-height:100vh, a 120px heading gap and an 850px fixed column — all of
+     which read as dead space. Size it to content instead. */
+  .Double-marquee {
+    min-height: 0;
+    padding: 56px 40px;
+    gap: 32px;
+  }
+
+  .marquee-left h2 {
+    margin-bottom: 48px;
+  }
+
+  .marquee-right {
+    height: 560px;
+    margin-right: 0;
+  }
+
+  /* Full-viewport hero reads as too tall once tablet chrome (nav, address
+     bar) eats into the vertical space — shrink it so content below is
+     reachable without a huge scroll. */
+  .vimeo-hero {
+    height: calc(80vh - 24px);
+    height: calc(80svh - 24px);
   }
 }
 
@@ -10,7 +38,7 @@
 @media (max-width: 900px) {
   .footer-top {
     flex-direction: column;
-    gap: 60px;
+    gap: 40px;
   }
 
   .footer-column h3,
@@ -61,8 +89,10 @@
   }
 
   /* ── Content / Hero Title ───────── */
+  /* Inner sections pad themselves — drop the wrapper's top padding so it
+     doesn't stack into a big empty band above each section. */
   .content-section {
-    padding: 80px 0 0;
+    padding: 0;
     overflow: visible;
   }
 
@@ -81,43 +111,37 @@
   }
 }
 
-/* ─── Cards — swipe carousel, ≤ 1440px. Keep the breakpoint in sync with
-   DESKTOP_MIN in ServiceCards.jsx (desktop fan needs ~1400px). ───────────── */
+/* ─── Cards — static 2-column grid, ≤ 1440px. Keep the breakpoint in sync
+   with DESKTOP_MIN in ServiceCards.jsx (desktop fan needs ~1400px). All
+   cards render in normal document flow — no scroll container, no autoplay,
+   no scroll-triggered animation. ─────────────────────────────────────────── */
 @media (max-width: 1440px) {
   .cards-wrapper {
     position: relative;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     width: 100%;
     height: auto;
     margin: 24px auto 0;
     /* top padding keeps the stickers (which poke ~50px above each card)
-       inside the scroll container, where overflow would otherwise clip them */
+       inside the wrapper, where overflow would otherwise clip them */
     padding: 64px 24px 32px;
-    gap: 20px;
-    justify-content: flex-start;
-    overflow-x: auto;
-    /* start-aligned snapping: center-align + mandatory made the browser
-       re-snap during load (as fonts/images shift layout) and the container
-       arrived pre-scrolled with the first card clipped off the left edge */
-    scroll-snap-type: x mandatory;
-    scroll-padding-left: 24px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .cards-wrapper::-webkit-scrollbar {
-    display: none;
+    gap: 24px 16px;
   }
 
   .card {
     position: relative;
     left: auto;
     top: auto;
-    flex: 0 0 auto;
-    width: min(78vw, 340px);
-    min-height: 420px;
+    width: 100%;
+    min-height: 380px;
     height: auto;
-    scroll-snap-align: start;
+  }
+
+  /* Only show 5 cards on the large-screen fan (DESKTOP_MIN) — below that,
+     hide the 5th so the grid stays a clean 4-card, 2-column layout. */
+  .card:nth-child(5) {
+    display: none;
   }
 
   /* gentle alternating tilt keeps the hand-placed look without the fan */
@@ -132,40 +156,15 @@
   .card-sticker {
     pointer-events: none;
   }
+}
 
-  .cards-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin: 20px 0 8px;
+/* Single column on phones — a 2-up grid squeezes the list text and wraps
+   awkwardly (e.g. "Puzzle Feeders", "Slow Feeders") even on larger phones
+   like iPhone 14 Pro Max (430px). Keep 2-up for tablet and up. */
+@media (max-width: 768px) {
+  .cards-wrapper {
+    grid-template-columns: 1fr;
   }
-}
-
-/* Larger phones / tablets: a 340px card looks lost above ~500px —
-   let it grow with the viewport. */
-@media (min-width: 500px) and (max-width: 1440px) {
-  .card {
-    width: min(56vw, 440px);
-  }
-}
-
-/* Carousel dots — only shown in carousel mode (≤ 1440px, rule above) */
-@media (min-width: 1441px) {
-  .cards-dots {
-    display: none;
-  }
-}
-
-.cards-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
-  transition: background 0.25s ease;
-}
-
-.cards-dot.is-active {
-  background: var(--color-dark, #333);
 }
 
 /* ─── Mobile (≤ 768px) continued ─────────────────────────────────────────── */
@@ -412,7 +411,11 @@
 /* ─── MotionCards — tablet ───────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .motion-card-section {
-    padding: 100px 32px 80px;
+    padding: 56px 32px 48px;
+  }
+
+  .motion-card__heading {
+    margin-bottom: 36px;
   }
 
   .motion-card__title {
@@ -438,7 +441,7 @@
   .motion-card__blob {
     width: 60vw;
     height: 52vw;
-    transform: translate(-70%, -45%);
+    transform: translate(-50%, -50%);
   }
 
   .motion-card__floating-text {
@@ -449,11 +452,11 @@
 /* ─── MotionCards — mobile ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .motion-card-section {
-    padding: 70px 20px 50px;
+    padding: 40px 20px 32px;
   }
 
   .motion-card__heading {
-    margin-bottom: 30px;
+    margin-bottom: 24px;
   }
 
   .motion-card__title {
@@ -535,6 +538,11 @@
   .home-header__title {
     bottom: 56px;
     padding: 0 24px;
+  }
+
+  .vimeo-hero {
+    height: calc(65vh - 24px);
+    height: calc(65svh - 24px);
   }
 
   .vimeo-hero__controls {

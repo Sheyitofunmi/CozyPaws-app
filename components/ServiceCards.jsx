@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CARDS_DATA } from "@/lib/data";
@@ -12,14 +12,11 @@ const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 // The desktop fan spans ~1400px (leftmost card at 50% - 700px), so anything
-// narrower gets the swipe carousel instead. Keep in sync with the
+// narrower gets the static grid instead. Keep in sync with the
 // @media (max-width: 1440px) card rules in responsive.css / cards.css.
 const DESKTOP_MIN = 1441;
 
 export default function ServiceCards() {
-  const wrapperRef = useRef(null);
-  const [activeDot, setActiveDot] = useState(0);
-
   useIsomorphicLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
@@ -51,90 +48,13 @@ export default function ServiceCards() {
           },
         });
 
-        // Below DESKTOP_MIN the cards are a pure-CSS scroll-snap carousel —
-        // no GSAP involvement, nothing to set up.
+        // Below DESKTOP_MIN the cards render as a static grid — no GSAP
+        // involvement, nothing to set up.
         if (isDesktop) return initDesktopHover();
       },
     );
 
     return () => mm.revert();
-  }, []);
-
-  // Track which card is snapped so the carousel dots stay in sync. Attached
-  // natively (not via React's onScroll) because Lenis swallows the delegated
-  // event before it reaches React's root listener.
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const handleScroll = () => {
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      if (maxScroll <= 0) return;
-      const index = Math.round(
-        (el.scrollLeft / maxScroll) * (CARDS_DATA.length - 1),
-      );
-      setActiveDot((prev) => (prev === index ? prev : index));
-    };
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    return () => el.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Auto-play the carousel below DESKTOP_MIN: advance one card at a time,
-  // pausing whenever the user swipes/scrolls it themselves.
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-
-    const mq = window.matchMedia(`(max-width: ${DESKTOP_MIN - 1}px)`);
-    let intervalId = null;
-    let resumeTimeout = null;
-
-    const scrollToIndex = (index) => {
-      const card = el.children[index];
-      if (!card) return;
-      el.scrollTo({
-        left: card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2,
-        behavior: "smooth",
-      });
-    };
-
-    const advance = () => {
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      if (maxScroll <= 0) return;
-      const currentIndex = Math.round(
-        (el.scrollLeft / maxScroll) * (CARDS_DATA.length - 1),
-      );
-      scrollToIndex((currentIndex + 1) % CARDS_DATA.length);
-    };
-
-    const stop = () => {
-      if (intervalId) clearInterval(intervalId);
-      intervalId = null;
-    };
-
-    const start = () => {
-      stop();
-      if (mq.matches) intervalId = setInterval(advance, 3500);
-    };
-
-    const handleUserInteraction = () => {
-      stop();
-      clearTimeout(resumeTimeout);
-      resumeTimeout = setTimeout(start, 4000);
-    };
-
-    el.addEventListener("pointerdown", handleUserInteraction);
-    el.addEventListener("wheel", handleUserInteraction, { passive: true });
-    mq.addEventListener("change", start);
-
-    start();
-
-    return () => {
-      stop();
-      clearTimeout(resumeTimeout);
-      el.removeEventListener("pointerdown", handleUserInteraction);
-      el.removeEventListener("wheel", handleUserInteraction);
-      mq.removeEventListener("change", start);
-    };
   }, []);
 
   return (
@@ -169,12 +89,7 @@ export default function ServiceCards() {
       </div>
 
       {/* ─── Service Cards ─── */}
-      <div
-        className="cards-wrapper"
-        id="cards-wrapper"
-        ref={wrapperRef}
-        data-lenis-prevent
-      >
+      <div className="cards-wrapper" id="cards-wrapper">
         {CARDS_DATA.map((card) => (
           <div key={card.color} className={`card card-${card.color}`}>
             <div className={`card-sticker sticker-${card.sticker}`}>
@@ -212,16 +127,6 @@ export default function ServiceCards() {
               ))}
             </ul>
           </div>
-        ))}
-      </div>
-
-      {/* Carousel position dots — only visible in the ≤1200px carousel mode */}
-      <div className="cards-dots" aria-hidden="true">
-        {CARDS_DATA.map((card, i) => (
-          <span
-            key={card.color}
-            className={`cards-dot${i === activeDot ? " is-active" : ""}`}
-          />
         ))}
       </div>
     </>

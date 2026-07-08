@@ -537,6 +537,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -608,7 +609,7 @@
 
 .cozy-photos--mobile {
   position: relative;
-  margin-top: auto;
+  margin-top: clamp(0.75rem, 3vh, 1.5rem);
 }
 
 .cozy-photos--mobile .cozy-photos__item img {
