@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
+import MobileNav from "@/components/MobileNav";
 
 const ASSETS = {
   logo: "https://polo-pecan-73837341.figma.site/_assets/v11/0ae29d6d9628bede667f90d57bebe81b8f1ec2bf.svg",
@@ -249,6 +250,8 @@ export default function CozyHero() {
             {cartCount > 0 && <span className="cozy-badge">{cartCount}</span>}
           </button>
           <AccountMenu />
+          {/* Mobile menu — the nav links above are hidden below 768px */}
+          <MobileNav className="nav-burger--cozy" />
         </div>
       </header>
 

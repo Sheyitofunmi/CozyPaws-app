@@ -23,41 +23,44 @@ const HorizontalWords = () => {
     // horizontal-words.css shows the message as static wrapped text.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const ctx = gsap.context(() => {
+    // Grab the animated elements once; both breakpoints share the same nodes.
+    const getEls = () => {
       const container = sectionRef.current;
-      const textRef = container.querySelector(".horizontal-words__relative");
-      const letters = container.querySelectorAll(".letter");
+      return {
+        container,
+        textRef: container.querySelector(".horizontal-words__relative"),
+        letters: container.querySelectorAll(".letter"),
+        // Select the individual stickers rather than the wrapper.
+        stickers: container.querySelectorAll(
+          ".horizontal-words__sticker-watch, .horizontal-words__sticker-cursor, .horizontal-words__sticker-phone",
+        ),
+        // The SVGs are inlined below, so their <path>s can be drawn with
+        // strokeDashoffset directly.
+        arrows: container.querySelectorAll(
+          ".horizontal-words__arrow-svg path, .horizontal-words__arrow-end-svg path",
+        ),
+      };
+    };
 
-      // Select the individual stickers instead of just the wrapper
-      // or we select the images directly if they are the elements we want to animate.
-      // The original logic animated .horizontal-words__sticker-svg, but since you have multiple images:
-      const stickers = container.querySelectorAll(
-        ".horizontal-words__sticker-watch, .horizontal-words__sticker-cursor, .horizontal-words__sticker-phone",
-      );
+    // matchMedia scopes each animation set to its breakpoint and auto-reverts
+    // the other one when the viewport crosses 1024px, so nothing leaks between
+    // the pinned desktop layout and the static mobile layout.
+    const mm = gsap.matchMedia(sectionRef);
 
-      // Note: To animate SVG paths with strokeDashoffset, the SVG must be inlined in the HTML,
-      // not loaded via <img> tags. The current setup uses <img> tags, so direct path animation
-      // as written below will not work unless the SVGs are converted to inline <svg> elements.
-      // For the purpose of this exercise, we'll assume the intent is for inline SVGs or
-      // that the querySelectorAll will find nothing and the animation will gracefully skip.
-      const arrows = container.querySelectorAll(
-        ".horizontal-words__arrow-svg path, .horizontal-words__arrow-end-svg path",
-      );
+    // ── Desktop (≥1025px): the original pinned horizontal scroll ────────────
+    mm.add("(min-width: 1025px)", () => {
+      const { container, textRef, letters, stickers, arrows } = getEls();
 
-      // ScrollTween for horizontal movement of the text block
+      // Horizontal movement of the whole text block while the section is pinned.
       const scrollTween = gsap.fromTo(
         textRef,
+        { xPercent: 50 }, // Start far right so it slides in naturally
         {
-          xPercent: 50, // Start far right so it slides in naturally
-        },
-        {
-          xPercent: -100, // Make sure the ending frame stops in view for the paragraph
+          xPercent: -100, // End with the paragraph settled in view
           ease: "none",
           scrollTrigger: {
             trigger: container,
-            start: "top top", // Begin the pinning when the container reaches the top
-            // Scroll distance scales with the viewport — 3000px of scrubbing
-            // suits desktop but feels endless on a phone.
+            start: "top top",
             end: () =>
               `+=${Math.max(1200, Math.min(window.innerWidth * 2.5, 3000))}`,
             scrub: 1,
@@ -66,12 +69,10 @@ const HorizontalWords = () => {
         },
       );
 
-      // Bounce each letter randomly — gentler on phones, where the full
-      // ±250% fling overlaps the paragraph below the headline.
-      const bounce = window.innerWidth <= 768 ? 220 : 500;
+      // Bounce each letter as it crosses the pinned track.
       letters.forEach((letter) => {
         gsap.from(letter, {
-          yPercent: (Math.random() - 0.5) * bounce,
+          yPercent: (Math.random() - 0.5) * 500,
           rotation: (Math.random() - 0.5) * 60,
           ease: "elastic.out(1.2, 1)",
           scrollTrigger: {
@@ -84,7 +85,6 @@ const HorizontalWords = () => {
         });
       });
 
-      // Bounce stickers
       stickers.forEach((sticker) => {
         gsap.from(sticker, {
           scale: 0,
@@ -101,7 +101,7 @@ const HorizontalWords = () => {
         });
       });
 
-      // Animate Drawing SVG Arrows (Custom stroke-dashoffset alternative to DrawSVGPlugin)
+      // Draw the hand-drawn arrows as they scroll past.
       arrows.forEach((arrowPath) => {
         if (arrowPath.getTotalLength) {
           const pathLen = arrowPath.getTotalLength();
@@ -113,7 +113,7 @@ const HorizontalWords = () => {
             strokeDashoffset: 0,
             duration: 1,
             scrollTrigger: {
-              trigger: arrowPath.parentElement, // trigger on the SVG itself
+              trigger: arrowPath.parentElement,
               containerAnimation: scrollTween,
               start: "left 90%",
               end: "left 30%",
@@ -122,9 +122,69 @@ const HorizontalWords = () => {
           });
         }
       });
-    }, sectionRef);
+    });
 
-    return () => ctx.revert();
+    // ── Mobile & tablet (≤1024px): vertical stagger reveal, no pin ──────────
+    // The section is a normal auto-height block (see the CSS). As it scrolls
+    // into view the wrapped headline's letters rise + fade in staggered, then
+    // the stickers pop and the arrows draw. Reversing on scroll-up keeps it
+    // replayable without ever locking the page.
+    mm.add("(max-width: 1024px)", () => {
+      const { container, letters, stickers, arrows } = getEls();
+
+      gsap.from(letters, {
+        opacity: 0,
+        yPercent: 60,
+        rotation: () => (Math.random() - 0.5) * 40,
+        ease: "back.out(1.7)",
+        duration: 0.6,
+        stagger: { each: 0.03, from: "start" },
+        scrollTrigger: {
+          trigger: container,
+          start: "top 75%",
+          toggleActions: "play none none reverse",
+        },
+      });
+
+      gsap.from(stickers, {
+        opacity: 0,
+        scale: 0,
+        rotation: -30,
+        ease: "elastic.out(1, 0.6)",
+        duration: 0.8,
+        stagger: 0.12,
+        delay: 0.3,
+        scrollTrigger: {
+          trigger: container,
+          start: "top 70%",
+          toggleActions: "play none none reverse",
+        },
+      });
+
+      arrows.forEach((arrowPath) => {
+        if (arrowPath.getTotalLength) {
+          const pathLen = arrowPath.getTotalLength();
+          gsap.set(arrowPath, {
+            strokeDasharray: pathLen,
+            strokeDashoffset: pathLen,
+          });
+          gsap.to(arrowPath, {
+            strokeDashoffset: 0,
+            duration: 1.2,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: container,
+              start: "top 65%",
+              toggleActions: "play none none reverse",
+            },
+          });
+        }
+      });
+    });
+
+    // matchMedia.revert() runs synchronously here (layout effect cleanup),
+    // tearing the pin down before React unmounts the node — see the note above.
+    return () => mm.revert();
   }, []);
 
   return (

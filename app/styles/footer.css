@@ -10,7 +10,8 @@
     padding: 80px 40px 40px;
     position: relative;
     overflow: hidden;
-    min-height: 95vh;
+    /* min-height: 95vh; */
+    min-height: 50vh;
     display: flex;
     flex-direction: column;
     justify-content: space-between;

@@ -123,27 +123,64 @@
 /* ─── Responsive ─────────────────────────────────────────────────────────────
    Kept in THIS file (not responsive.css) because the component imports this
    stylesheet directly, so it loads last and wins the cascade.                 */
+/* Mobile & tablet (≤1024px): the JSX swaps the pinned horizontal scroll for a
+   vertical stagger reveal, so the layout here is a normal auto-height block with
+   the headline wrapped onto multiple centered lines. No pin, no scroll-jacking. */
 @media (max-width: 1024px) {
-  .horizontal-words__bottom-text-l {
-    font-size: 1.15rem;
+  .horizontal-words-section {
+    height: auto;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 24px;
   }
-}
 
-@media (max-width: 768px) {
-  /* The paragraph was a `width: max-content` block, so its long lines spilled
-       off both edges. Pin it to the viewport and let the text wrap.           */
-  .horizontal-words__bottom-text {
+  /* Drop the absolute track positioning and let the words wrap. */
+  .horizontal-words__relative {
+    position: static;
+    transform: none;
+    white-space: normal;
+    padding: 0;
     width: 100%;
-    left: 50%;
-    transform: translate(-50%, 7em);
+    justify-content: center;
+  }
+
+  .horizontal-words__h2 {
+    white-space: normal;
+    font-size: 12vw;
+    line-height: 1.05;
+    text-align: center;
+  }
+
+  /* The arrow is anchored to fly off to the left on the wide track — rein it
+     in so it stays on-screen above the wrapped headline. */
+  .horizontal-words__arrow-svg {
+    width: 12em;
+    transform: translate(-55%, -15%);
+  }
+
+  /* Flow the paragraph below the headline instead of absolute-positioning it. */
+  .horizontal-words__bottom-text {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: 40em;
+    margin: 2.5rem auto 0;
     padding: 0 22px;
     box-sizing: border-box;
   }
 
   .horizontal-words__bottom-text-l {
     max-width: 100%;
-    font-size: 0.9rem;
+    font-size: 1.15rem;
     line-height: 1.5;
+  }
+}
+
+@media (max-width: 768px) {
+  .horizontal-words__bottom-text-l {
+    font-size: 0.9rem;
   }
 
   .horizontal-words__sticker-cursor {
@@ -158,10 +195,9 @@
     width: 4.5em;
   }
 
-  /* 8vw is only ~29px on a phone — let the headline read big while it
-     scrolls past. */
+  /* Wrapped on a phone, the headline can afford to read big. */
   .horizontal-words__h2 {
-    font-size: 13vw;
+    font-size: 15vw;
   }
 }
 

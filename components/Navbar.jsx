@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { gsap } from "gsap";
 import { WIGGLE_CONFIG } from "@/lib/data";
+import MobileNav from "@/components/MobileNav";
 
 function initWiggle(element, intensity) {
   const target = element.querySelector("[data-wiggle-target]") || element;
@@ -594,6 +595,10 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+
+        {/* Tap target for touch / small screens (hover popouts don't work there).
+            Takes nav-right's place in the flex row so the logo stays centered. */}
+        <MobileNav className="nav-burger--navbar" />
       </nav>
     </>
   );

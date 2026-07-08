@@ -81,9 +81,9 @@
   }
 }
 
-/* ─── Cards — swipe carousel, ≤ 1200px. Keep the breakpoint in sync with
+/* ─── Cards — swipe carousel, ≤ 1440px. Keep the breakpoint in sync with
    DESKTOP_MIN in ServiceCards.jsx (desktop fan needs ~1400px). ───────────── */
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
   .cards-wrapper {
     position: relative;
     display: flex;
@@ -96,7 +96,11 @@
     gap: 20px;
     justify-content: flex-start;
     overflow-x: auto;
+    /* start-aligned snapping: center-align + mandatory made the browser
+       re-snap during load (as fonts/images shift layout) and the container
+       arrived pre-scrolled with the first card clipped off the left edge */
     scroll-snap-type: x mandatory;
+    scroll-padding-left: 24px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -113,7 +117,7 @@
     width: min(78vw, 340px);
     min-height: 420px;
     height: auto;
-    scroll-snap-align: center;
+    scroll-snap-align: start;
   }
 
   /* gentle alternating tilt keeps the hand-placed look without the fan */
@@ -139,14 +143,14 @@
 
 /* Larger phones / tablets: a 340px card looks lost above ~500px —
    let it grow with the viewport. */
-@media (min-width: 500px) and (max-width: 1200px) {
+@media (min-width: 500px) and (max-width: 1440px) {
   .card {
     width: min(56vw, 440px);
   }
 }
 
-/* Carousel dots — only shown in carousel mode (≤ 1200px, rule above) */
-@media (min-width: 1201px) {
+/* Carousel dots — only shown in carousel mode (≤ 1440px, rule above) */
+@media (min-width: 1441px) {
   .cards-dots {
     display: none;
   }

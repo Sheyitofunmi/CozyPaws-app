@@ -217,10 +217,10 @@
   transform: rotate(1deg);
 }
 
-/* ─── Compact layouts (≤ 1200px — keep in sync with DESKTOP_MIN in
+/* ─── Compact layouts (≤ 1440px — keep in sync with DESKTOP_MIN in
    ServiceCards.jsx). Layout lives in responsive.css (swipe carousel);
    here only the sticker tuning. ──────────────────────────────────────────── */
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
   /* Sticker offsets are tuned for a 320px card; on fluid-width cards use
        proportional offsets and cap widths so nothing hangs past the edge. */
   :root {

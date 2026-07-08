@@ -6,14 +6,28 @@
 .cozy-hero {
   position: relative;
   z-index: 1;
-  /* svh: stable height on mobile while the URL bar shows/hides */
-  height: 100vh;
-  height: 100svh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background-color: #effdf0;
   font-family: var(--font-inter), "Inter", sans-serif;
+}
+
+/* Mobile + tablet only: lock hero to the viewport height, using svh so the
+   URL bar showing/hiding doesn't resize it. */
+@media (max-width: 1023px) {
+  .cozy-hero {
+    height: 100vh;
+    height: 100svh;
+  }
+}
+
+/* Desktop keeps the same viewport-height sizing as before, just without the
+   svh fallback since desktop UI chrome doesn't shift. */
+@media (min-width: 1024px) {
+  .cozy-hero {
+    height: 100vh;
+  }
 }
 
 /* The site navbar is fixed; CozyHero toggles this class while the viewer

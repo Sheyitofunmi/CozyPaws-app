@@ -13,8 +13,8 @@ const useIsomorphicLayoutEffect =
 
 // The desktop fan spans ~1400px (leftmost card at 50% - 700px), so anything
 // narrower gets the swipe carousel instead. Keep in sync with the
-// @media (max-width: 1200px) card rules in responsive.css / cards.css.
-const DESKTOP_MIN = 1201;
+// @media (max-width: 1440px) card rules in responsive.css / cards.css.
+const DESKTOP_MIN = 1441;
 
 export default function ServiceCards() {
   const wrapperRef = useRef(null);
@@ -47,7 +47,7 @@ export default function ServiceCards() {
           scrollTrigger: {
             trigger: ".title-container",
             start: "top 70%",
-            toggleActions: "play none none reverse",
+            once: true,
           },
         });
 
