@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { REMOTE_ASSETS } from "@/lib/remote-assets";
 import {
   IconArrowRight,
   IconHeart,
@@ -11,8 +12,7 @@ import {
   IconShield,
 } from "@/components/icons";
 
-const unsplash = (id, w = 1000) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
+
 
 const STATS = [
   { value: "10k+", label: "happy dogs", color: "var(--color-green)" },
@@ -91,7 +91,7 @@ export default function AboutPage() {
         <div className="about-hero__media cozy-scale-in cozy-delay-300">
           <span className="about-hero__blob" aria-hidden="true" />
           <img
-            src={unsplash("photo-1587300003388-59208cc962cb")}
+            src={REMOTE_ASSETS.aboutHero}
             alt="Happy dogs"
           />
           <img
@@ -120,7 +120,7 @@ export default function AboutPage() {
       <section className="about-story">
         <div className="about-story__media" data-reveal>
           <img
-            src={unsplash("photo-1601758228041-f3b2795255f1")}
+            src={REMOTE_ASSETS.aboutWalk}
             alt="Dog on a walk"
           />
         </div>

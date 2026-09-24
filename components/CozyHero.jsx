@@ -6,19 +6,16 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
 import MobileNav from "@/components/MobileNav";
+import { REMOTE_ASSETS } from "@/lib/remote-assets";
 
 const ASSETS = {
-  logo: "https://polo-pecan-73837341.figma.site/_assets/v11/0ae29d6d9628bede667f90d57bebe81b8f1ec2bf.svg",
-  avatar:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/e62173d41f91350a59628e8a9a55ae078a886fb9.png?w=128",
+  logo: REMOTE_ASSETS.logo,
+  avatar: REMOTE_ASSETS.avatar,
   productCard: "/assets/pets/house1.avif",
   videoCard: "/assets/pets/dog2.avif",
-  bottomLeft:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/8d44b25186ef45a5789c74668fb781cea4e1ff49.png",
-  bottomCenter:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/96745c4e72ad5c5208e53a885df797fd82cd854a.png?h=1024",
-  bottomRight:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/81bd2e7a66b58f3d8f3ad78fd1ebf01af8dfdee1.png",
+  bottomLeft: REMOTE_ASSETS.heroBottomLeft,
+  bottomCenter: REMOTE_ASSETS.heroBottomCenter,
+  bottomRight: REMOTE_ASSETS.heroBottomRight,
 };
 
 const POINTER_CURSOR = {

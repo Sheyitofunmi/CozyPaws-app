@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
+import { REMOTE_ASSETS } from "@/lib/remote-assets";
 import { IconCart, IconStar, IconMenu, IconClose } from "@/components/icons";
 
-const LOGO_SRC =
-  "https://polo-pecan-73837341.figma.site/_assets/v11/0ae29d6d9628bede667f90d57bebe81b8f1ec2bf.svg";
+const LOGO_SRC = REMOTE_ASSETS.logo;
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },

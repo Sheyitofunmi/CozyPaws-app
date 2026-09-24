@@ -49,11 +49,6 @@ export default function Navbar() {
       const contentTop =
         contentSection.getBoundingClientRect().top + window.scrollY;
 
-      const showreelSection = document.querySelector("#showreel-section");
-      const showreelTop = showreelSection
-        ? showreelSection.getBoundingClientRect().top + window.scrollY
-        : Infinity;
-
       const serviceCardsSection = document.querySelector(
         ".service-cards-wrapper",
       );
@@ -76,9 +71,6 @@ export default function Navbar() {
       } else if (scrollPos >= serviceCardsTop) {
         navbar.classList.add("on-light");
         navbar.classList.remove("on-dark");
-      } else if (scrollPos >= showreelTop) {
-        navbar.classList.add("on-dark");
-        navbar.classList.remove("on-light");
       } else if (scrollPos >= contentTop) {
         navbar.classList.add("on-light");
         navbar.classList.remove("on-dark");
@@ -92,9 +84,9 @@ export default function Navbar() {
     updateNavbarColor();
 
     const cleanups = [];
-    const logoTruus = document.querySelector(".logo-truus");
-    if (logoTruus)
-      cleanups.push(initWiggle(logoTruus, WIGGLE_CONFIG.logoTruus));
+    const cozyLogo = document.querySelector(".cozy-logo");
+    if (cozyLogo)
+      cleanups.push(initWiggle(cozyLogo, WIGGLE_CONFIG.cozyLogo));
 
     const overlay = document.querySelector(".nav-overlay");
     if (overlay) {
@@ -453,7 +445,7 @@ export default function Navbar() {
           }}
         >
           <svg
-            className="logo-truus"
+            className="cozy-logo"
             width="150"
             height="40"
             viewBox="0 0 170 40"

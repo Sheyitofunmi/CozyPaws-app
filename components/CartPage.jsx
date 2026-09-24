@@ -22,9 +22,9 @@ const formatPrice = (price) => `$${price.toFixed(2)}`;
 const FIELDS = [
   { name: "name", label: "Full name", placeholder: "Jane Doe", span: 2 },
   { name: "email", label: "Email", placeholder: "you@example.com", span: 2 },
-  { name: "address", label: "Address", placeholder: "Papaverhof 21", span: 2 },
-  { name: "city", label: "City", placeholder: "Amsterdam", span: 1 },
-  { name: "zip", label: "Postal code", placeholder: "1032 LX", span: 1 },
+  { name: "address", label: "Address", placeholder: "12 Maple Street", span: 2 },
+  { name: "city", label: "City", placeholder: "London", span: 1 },
+  { name: "zip", label: "Postal code", placeholder: "N1 7GU", span: 1 },
 ];
 
 export default function CartPage() {
