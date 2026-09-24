@@ -1,105 +1,105 @@
-# 🐾 CozyPaws — Everything Your Pets Love
+# CozyPaws
 
-CozyPaws is a playful, richly-animated **online pet store for dogs**, built with **Next.js 15 + React 19**. Toys, treats, cozy beds and everything a good dog could want — wrapped in a bold, tactile interface with buttery motion design, a working cart & checkout, and a searchable catalog.
+A playful dog store built with Next.js 15 and React 19, used to explore one question:
 
-> A design-forward demo store: the storefront, cart, search and checkout are fully interactive, but no real payments are processed and no email is sent.
+**How do you make a checkout feel instant without ever being wrong about money?**
 
----
+Live: [cozy-paws-beta.vercel.app](https://cozy-paws-beta.vercel.app). Add `?demo=1` to the URL to get the demo controls (slow network, failed requests, price and stock changes).
 
-## ✨ Highlights
-
-- **Full storefront** — animated landing hero, product catalog, product detail pages, about, contact, and a cart/checkout flow.
-- **Working cart** — add/remove items, quantity steppers, a slide-over drawer, and a live count badge. Persists across reloads and tabs via `localStorage` and a shared React context.
-- **Real checkout plumbing** — the checkout form POSTs to a Next.js route handler that re-prices the order server-side from the catalog and returns an order confirmation.
-- **Live search** — the header search sends you to `/shop?q=…`, which filters the catalog by name and category, with result counts and a friendly empty state.
-- **One interaction language** — a unified "playful & bold" hover/active vocabulary across the whole site: links draw an orange underline, buttons lift and press, icon buttons pop, all respecting `prefers-reduced-motion`.
-- **Motion design** — GSAP-powered scroll reveals, inertia-flung motion cards, a page-transition scribble, an elastic cursor bubble, a Ken Burns "Happy Dogs" reel, and a hover-wiggle system.
+<!-- TODO: add a GIF of the cart → price-change → confirm flow here -->
 
 ---
 
-## 🗺️ Pages
+## The problem
 
-| Route        | What's there                                                                                          |
-| ------------ | ----------------------------------------------------------------------------------------------------- |
-| `/`          | Landing page — CozyPaws hero, video hero, motion cards, dog reel, product categories, marquee, footer |
-| `/shop`      | Product catalog with category-pill filters and search (`?q=` / `?category=`)                          |
-| `/shop/[id]` | Product detail — gallery, rating, quantity picker, add-to-cart / buy-now, "you may also like"         |
-| `/about`     | Brand story — stats, values, and the team (and their bosses)                                          |
-| `/contact`   | Contact form (POSTs to `/api/contact`) with topic picker and validation                               |
-| `/cart`      | Cart review + shipping form → checkout (POSTs to `/api/checkout`)                                     |
+Shopping flows have two jobs that pull against each other:
 
-### API routes
+- **Feel instant.** Waiting for a spinner on every "+" tap feels broken.
+- **Be correct.** Prices and stock change on the server. The customer should never be charged an amount they didn't see.
 
-- `POST /api/contact` — validates a message payload, returns a confirmation (no email sent).
-- `POST /api/checkout` — validates shipping details, re-prices the cart from `lib/data.js`, applies free shipping over $50, returns a mock order ID.
+The same tension shows up anywhere money moves: a wallet showing a pending transaction, or a swap quote that moves before you confirm.
 
----
+## Key decisions
 
-## 🛠️ Tech Stack
+### 1. Optimistic cart, but the server owns price and stock
 
-- **Next.js 15** (App Router) & **React 19**
-- **Plain, per-component CSS** imported through `app/globals.css` (no Tailwind — deliberately, to keep the hand-tuned animations intact)
-- **GSAP** (+ ScrollTrigger, InertiaPlugin) for motion
-- **Lenis** for smooth scrolling
-- **next/font** — Inter + DM Serif Display
+Every cart change updates the UI immediately, then `POST /api/cart` validates it against live stock.
 
----
+- **Confirmed**: the pending value becomes the real one.
+- **Out of stock**: the line drops back to what's actually available and a polite toast explains why ("Only 1 left…").
+- **Network failure**: full rollback plus an error toast. Nothing is persisted until the server agrees.
 
-## 🚀 Getting Started
+State is split into `confirmed` (persisted) and `pending` (in flight) in a pure reducer (`lib/cart-state.ts`). Rapid taps send **absolute** quantities with increasing sequence numbers, so responses that arrive out of order are ignored rather than overwriting newer state.
+
+*Rejected:* waiting for the server on every tap (slow), or trusting the client (wrong totals). Also rejected React's `useOptimistic`: it's scoped to a transition, and this cart needs optimistic state that outlives any one request and survives several of them overlapping.
+
+### 2. A stale-quote review instead of silently re-pricing
+
+The checkout sends what the customer **saw** (lines and total), never a price to charge. The server re-prices from its own catalog. If anything moved, it returns `409 quote_changed` with a per-line diff, and the UI shows **"Your total changed"** with `$49.99 → $57.49` and an explicit *confirm new total* button.
+
+Orders carry an `Idempotency-Key`, so a double-click or a retry after a network blip can't create two orders. The button is also locked synchronously on the first click.
+
+*Rejected:* charging the new price silently (breaks trust), or failing with a generic error (loses the order).
+
+### 3. Search with no network request
+
+The catalog is local, so live search filters on the client. `useDeferredValue` keeps typing responsive while the grid re-renders. The URL updates with `router.replace` on a 250ms debounce: links are shareable and back-button history stays clean. With a server-side catalog I'd debounce the fetch and cancel stale requests with `AbortController`; here that would be complexity for nothing.
+
+## Craft details
+
+- **No flicker on fast networks.** "Saving…" only appears if a request takes longer than 300ms (`useDelayedFlag`).
+- **Accessible drawers.** Real modal dialogs: focus moves in and returns to the trigger, Tab is trapped, Esc closes, and the page behind is `inert`.
+- **Announced changes.** Toasts, result counts and checkout errors use live regions. Validation errors set `aria-invalid` and focus the first bad field.
+- **Reduced motion.** Decorative motion (wiggles, marquee, inertia cards, custom cursor, smooth scroll) is skipped. Functional feedback stays, just without movement.
+- **Contrast.** Button and badge orange darkened slightly to reach WCAG AA (4.8:1).
+- **Money as integer cents**, formatted only at the edge with `Intl.NumberFormat`.
+
+## Testing
+
+| Layer | Tool | Covers |
+| --- | --- | --- |
+| Unit | Vitest | pricing, quote diffs, cart reducer (rollback, stale responses, races) |
+| End-to-end | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
+| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on `/shop`, product pages and `/cart` |
+
+GitHub Actions runs typecheck, unit and e2e tests on every PR.
+
+## What I'd do next
+
+- Move the rest of the homepage motion components to TypeScript and refs (they still coordinate across sections with `document.querySelector`).
+- Put the idempotency store and demo state somewhere shared (Redis) if this ran on real serverless traffic.
+- Measure INP on search and the cart stepper in the field rather than by feel.
+- Add Storybook stories for the cart line states (idle, pending, max stock, rolled back).
+
+## Stack
+
+Next.js 15 (App Router) · React 19 · TypeScript (strict, for the cart/checkout flow) · GSAP + ScrollTrigger + InertiaPlugin · Lenis · plain per-component CSS · Vitest · Playwright · axe-core
 
 ```bash
 npm install
-npm run dev
+npm run dev            # http://localhost:3000 (demo controls show in dev)
+npm run typecheck
+npm test               # unit
+npm run build && npm run test:e2e
+npm run assets:localize   # download hot-linked images into public/assets/remote/
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) (this project is usually run on `3001`).
-
-```bash
-npm run build   # production build
-npm run start   # serve the production build
-```
-
-### A note on the hero video
-
-The landing page's video hero uses a standard HTML5 `<video>` element with the `src` left blank (rendering a solid dark background). Drop your own `.mp4` in `public/` and set the source in `components/VimeoHero.jsx`.
-
----
-
-## 📁 Project Structure
+## Structure
 
 ```
 app/
-  layout.jsx            Root layout — fonts, <CartProvider>, shared <CartDrawer>
-  page.jsx              Landing page
-  icon.svg              Paw favicon
-  shop/                 /shop and /shop/[id]
-  about/  contact/  cart/
-  api/contact/  api/checkout/
-  styles/               Per-section CSS (globals.css imports them in order)
-components/
-  CozyHero, VimeoHero, MotionCards, Showreel, ServiceCards, DoubleMarquee, Footer …
-  SiteHeader, SiteFooter, CartDrawer, ShopPage, ProductDetail, AboutPage, ContactPage, CartPage
-  icons.jsx             Shared inline icons
+  api/cart/          validate one cart change against live stock
+  api/checkout/      re-price, detect stale quotes, idempotent orders
+  cart/ shop/ about/ contact/
+  styles/            per-section CSS; flow.css = cart/checkout states
+components/          CartDrawer, CartLineItem, CartPage, CartToast, ShopPage, DemoPanel, homepage motion sections…
 lib/
-  data.js               Products, categories, brands, socials
-  cart.js               Cart context (items + drawer state, localStorage)
-  useScrollReveal.js    GSAP reveal hook for [data-reveal] elements
-public/assets/          Dog photos, brand SVGs, cursors, stickers
+  types.ts money.ts catalog.ts pricing.ts cart-state.ts cart.tsx wishlist.tsx motion.ts
+  hooks/             useDialog, useDelayedFlag
+  server/            server catalog view + demo cookie
+tests/unit/  tests/e2e/
 ```
 
----
+## Credits
 
-## 🎨 Interaction & Motion Details
-
-- **Unified hovers** (`app/styles/interactions.css`) — text links draw an orange underline from the left; the active nav item keeps it; buttons lift with a soft shadow and press on `:active`; round icon buttons pop with a slight rotate. All motion is disabled under reduced-motion (color feedback stays).
-- **Scroll reveals** (`lib/useScrollReveal.js`) — any element tagged `data-reveal` fades/slides in as it enters the viewport, with optional `data-reveal-delay`.
-- **Motion cards** — track mouse velocity and fling with physics-based inertia on `mouseleave`, then snap back.
-- **Page-transition scribble** — a full-screen GSAP mask that draws/undraws on logo click, then scrolls to top.
-- **Elastic service cards**, **infinite double marquee** (no adjacent duplicate logos/colors), **custom cursor bubble**, and a **footer sticker proximity push**.
-
----
-
-## 🖼️ Assets & Credits
-
-Product and lifestyle photography is a mix of the project's own images in `public/assets/pets/` and a handful of hot-linked [Unsplash](https://unsplash.com) photos. Pet-brand logos in the marquee are fictional. CozyPaws is a demo project, not a real store.
-# CozyPaws
+Product photos are a mix of the project's own images and Unsplash photos. Pet-brand logos are fictional. CozyPaws is a demo store, not a real shop: no payments are taken.
