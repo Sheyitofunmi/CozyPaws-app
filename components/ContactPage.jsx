@@ -25,14 +25,14 @@ const CONTACT_CARDS = [
   {
     emoji: "💬",
     title: "WhatsApp",
-    detail: "we're millennials — please don't call",
+    detail: "messages only, we reply within a day",
     href: "#",
     color: "var(--color-darkblue)",
   },
   {
     emoji: "📍",
     title: "Visit",
-    detail: "papaverhof 21, 1032 LX amsterdam",
+    detail: "12 bark lane, london N1 7GU",
     href: "#",
     color: "var(--color-maroon)",
   },

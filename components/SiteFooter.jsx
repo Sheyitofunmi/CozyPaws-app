@@ -61,9 +61,9 @@ export default function SiteFooter() {
             <IconArrowUpRight className="site-footer__email-icon" />
           </a>
           <address className="site-footer__address">
-            papaverhof 21
+            12 bark lane
             <br />
-            1032 LX amsterdam
+            london N1 7GU
           </address>
           <div className="site-footer__socials">
             {SOCIAL_ICONS.map(({ href, label, svg }) => (
