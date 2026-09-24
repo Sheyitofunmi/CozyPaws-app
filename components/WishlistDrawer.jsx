@@ -1,28 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useRef } from "react";
 import Link from "next/link";
-import { PRODUCTS } from "@/lib/data";
+import { getProduct } from "@/lib/catalog";
+import { formatPrice } from "@/lib/money";
+import { useDialog } from "@/lib/hooks/useDialog";
 import { useWishlist } from "@/lib/wishlist";
 import { useCart } from "@/lib/cart";
 import { IconClose, IconStar, IconPlus } from "@/components/icons";
-
-const formatPrice = (price) => `$${price.toFixed(2)}`;
 
 export default function WishlistDrawer() {
   const { ids, remove, isOpen, closeWishlist } = useWishlist();
   const { addItem, openCart } = useCart();
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e) => e.key === "Escape" && closeWishlist();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, closeWishlist]);
+  const dialogRef = useRef(null);
+  useDialog(dialogRef, isOpen, closeWishlist);
 
-  const items = ids
-    .map((id) => PRODUCTS.find((p) => p.id === id))
-    .filter(Boolean);
+  const items = ids.map(getProduct).filter(Boolean);
 
   const moveToCart = (id) => {
     addItem(id);
@@ -32,18 +26,23 @@ export default function WishlistDrawer() {
   };
 
   return (
-    <>
+    <div className="drawer-root">
       <div
         className={`shop-cart-backdrop ${isOpen ? "is-open" : ""}`}
         onClick={closeWishlist}
+        aria-hidden="true"
       />
       <aside
+        ref={dialogRef}
         className={`shop-cart ${isOpen ? "is-open" : ""}`}
-        aria-label="Wishlist"
-        aria-hidden={!isOpen}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wishlist-drawer-title"
+        tabIndex={-1}
+        inert={!isOpen}
       >
         <div className="shop-cart__head">
-          <h2 className="shop-cart__title">your wishlist</h2>
+          <h2 id="wishlist-drawer-title" className="shop-cart__title">your wishlist</h2>
           <button
             className="cozy-icon-btn"
             aria-label="Close wishlist"
@@ -85,7 +84,7 @@ export default function WishlistDrawer() {
                     {item.name}
                   </Link>
                   <p className="shop-cart__line-price">
-                    {formatPrice(item.price)}
+                    {formatPrice(item.priceCents)}
                   </p>
                   <button
                     className="wl-move-btn"
@@ -106,6 +105,6 @@ export default function WishlistDrawer() {
           </ul>
         )}
       </aside>
-    </>
+    </div>
   );
 }

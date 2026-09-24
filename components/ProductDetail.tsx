@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PRODUCTS } from "@/lib/data";
+import { CATEGORY_ACCENT, PRODUCTS } from "@/lib/catalog";
+import { formatPrice } from "@/lib/money";
+import type { Category, Product } from "@/lib/types";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useScrollReveal } from "@/lib/useScrollReveal";
@@ -19,15 +21,7 @@ import {
   IconShield,
 } from "@/components/icons";
 
-const CATEGORY_ACCENT = {
-  "food & treats": "var(--color-green)",
-  "toys & play": "var(--color-darkblue)",
-  "comfy beds": "var(--color-orange)",
-  "walk & travel": "var(--color-maroon)",
-  "grooming & care": "var(--color-pink)",
-};
-
-const CATEGORY_COPY = {
+const CATEGORY_COPY: Record<Category, { blurb: string; features: string[] }> = {
   "food & treats": {
     blurb:
       "Wholesome, vet-approved nutrition your dog will do zoomies for. Made in small batches with real ingredients — nothing artificial, ever.",
@@ -81,22 +75,22 @@ const TRUST = [
   { icon: IconShield, label: "30-day easy returns" },
 ];
 
-const formatPrice = (price) => `$${price.toFixed(2)}`;
 
-export default function ProductDetail({ product }) {
+export default function ProductDetail({ product }: { product: Product }) {
   const router = useRouter();
-  const { addItem, openCart } = useCart();
+  const { addItem, openCart, items } = useCart();
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
   const [qty, setQty] = useState(1);
   useScrollReveal();
 
   const saved = isSaved(product.id);
 
-  const accent = CATEGORY_ACCENT[product.category] || "var(--color-orange)";
-  const copy = CATEGORY_COPY[product.category] || {
-    blurb: "A CozyPaws favorite your dog will love.",
-    features: [],
-  };
+  const accent = CATEGORY_ACCENT[product.category];
+  const copy = CATEGORY_COPY[product.category];
+  const inCart = items.find((line) => line.id === product.id)?.qty ?? 0;
+  // You can't pick more than the warehouse can still send you.
+  const maxQty = Math.max(0, product.stock - inCart);
+  const soldOutForYou = maxQty === 0;
 
   const related = PRODUCTS.filter(
     (p) => p.category === product.category && p.id !== product.id,
@@ -106,6 +100,7 @@ export default function ProductDetail({ product }) {
 
   const addToCart = () => {
     addItem(product.id, qty);
+    setQty(1);
     openCart();
   };
 
@@ -115,7 +110,7 @@ export default function ProductDetail({ product }) {
   };
 
   return (
-    <div className="cozy-page product-page" style={{ "--accent": accent }}>
+    <div className="cozy-page product-page" style={{ "--accent": accent } as CSSProperties}>
       <SiteHeader />
 
       <nav className="product-breadcrumb" aria-label="Breadcrumb">
@@ -150,7 +145,7 @@ export default function ProductDetail({ product }) {
             <span>4.8 · 214 reviews</span>
           </div>
 
-          <p className="product-info__price">{formatPrice(product.price)}</p>
+          <p className="product-info__price">{formatPrice(product.priceCents)}</p>
           <p className="product-info__blurb">{copy.blurb}</p>
 
           {copy.features.length > 0 && (
@@ -162,25 +157,36 @@ export default function ProductDetail({ product }) {
           )}
 
           <div className="product-info__buy">
-            <div className="product-qty" aria-label="Quantity">
+            <div className="product-qty" role="group" aria-label="Quantity">
               <button
+                type="button"
                 aria-label="Decrease quantity"
+                disabled={qty <= 1}
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
               >
                 <IconMinus />
               </button>
-              <span>{qty}</span>
+              <span aria-live="polite">{qty}</span>
               <button
+                type="button"
                 aria-label="Increase quantity"
-                onClick={() => setQty((q) => q + 1)}
+                disabled={qty >= maxQty}
+                onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
               >
                 <IconPlus />
               </button>
             </div>
-            <button className="cozy-btn-orange product-add" onClick={addToCart}>
-              add to cart · {formatPrice(product.price * qty)}
+            <button
+              type="button"
+              className="cozy-btn-orange product-add"
+              onClick={addToCart}
+              disabled={soldOutForYou}
+            >
+              {soldOutForYou
+                ? "all available stock is in your cart"
+                : `add to cart · ${formatPrice(product.priceCents * qty)}`}
             </button>
-            <button className="product-buy-now" onClick={buyNow}>
+            <button type="button" className="product-buy-now" onClick={buyNow} disabled={soldOutForYou}>
               buy now
             </button>
             <button
@@ -192,6 +198,12 @@ export default function ProductDetail({ product }) {
               <IconStar fill={saved ? "currentColor" : "none"} />
             </button>
           </div>
+
+          {product.stock <= 5 && (
+            <p className="product-info__stock">
+              Only {product.stock} left{inCart > 0 ? ` · ${inCart} in your cart` : ""}
+            </p>
+          )}
 
           <ul className="product-trust">
             {TRUST.map(({ icon: Icon, label }) => (
@@ -215,7 +227,7 @@ export default function ProductDetail({ product }) {
               href={`/shop/${item.id}`}
               className="related-card"
               data-reveal
-              style={{ "--accent": CATEGORY_ACCENT[item.category] }}
+              style={{ "--accent": CATEGORY_ACCENT[item.category] } as CSSProperties}
             >
               <div className="related-card__img">
                 <img src={item.img} alt={item.name} loading="lazy" />
@@ -224,7 +236,7 @@ export default function ProductDetail({ product }) {
                 </span>
               </div>
               <p className="related-card__name">{item.name}</p>
-              <p className="related-card__price">{formatPrice(item.price)}</p>
+              <p className="related-card__price">{formatPrice(item.priceCents)}</p>
             </Link>
           ))}
         </div>
