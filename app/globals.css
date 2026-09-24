@@ -11,7 +11,6 @@
 /* Content section title + underline SVG    */
 @import "./styles/motion-cards.css";
 /* MotionCard section (heading + cards + text)  */
-/* Showreel section placeholder                 */
 @import "./styles/cards.css";
 /* Service cards, stickers                  */
 @import "./styles/marquee.css";
@@ -34,3 +33,5 @@
 /* All media queries (tablet + mobile)      */
 @import "./styles/interactions.css";
 /* Unified hover/active language (loaded last) */
+@import "./styles/flow.css";
+/* Cart/checkout flow states, search, toast, demo panel (loaded last) */
