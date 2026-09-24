@@ -41,3 +41,8 @@ next-env.d.ts
 
 # AI tooling caches
 .openvisio
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
