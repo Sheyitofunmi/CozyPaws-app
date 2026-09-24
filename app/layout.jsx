@@ -4,6 +4,8 @@ import { CartProvider } from "@/lib/cart";
 import { WishlistProvider } from "@/lib/wishlist";
 import CartDrawer from "@/components/CartDrawer";
 import WishlistDrawer from "@/components/WishlistDrawer";
+import CartToast from "@/components/CartToast";
+import DemoPanelGate from "@/components/DemoPanelGate";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,7 +20,7 @@ const dmSerifDisplay = DM_Serif_Display({
 });
 
 export const metadata = {
-  title: "CozyPaws — Everything Your Pets Love",
+  title: "CozyPaws | Everything Your Dog Loves",
   description:
     "CozyPaws is a pet store for dogs — toys, treats, cozy houses and everything your best friend loves.",
 };
@@ -32,6 +34,8 @@ export default function RootLayout({ children }) {
             {children}
             <CartDrawer />
             <WishlistDrawer />
+            <CartToast />
+            <DemoPanelGate />
           </WishlistProvider>
         </CartProvider>
       </body>
