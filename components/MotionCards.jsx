@@ -12,7 +12,10 @@ export default function MotionCards() {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
+    // Physics fling + scroll entrances are decorative. Under reduced motion
+    // the cards simply render in place (the timeline below never sets them hidden).
+    const mm = gsap.matchMedia(sectionRef);
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
       const cards = document.querySelectorAll(".motion-card__card");
       cards.forEach((card) => {
         let lastX = 0;
@@ -134,9 +137,9 @@ export default function MotionCards() {
           0.2,
         );
       }
-    }, sectionRef);
+    });
 
-    return () => ctx.revert();
+    return () => mm.revert();
   }, []);
 
   return (

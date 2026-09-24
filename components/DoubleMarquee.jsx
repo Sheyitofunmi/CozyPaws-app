@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { brands, colors } from "@/lib/data";
 
@@ -110,6 +111,12 @@ export default function DoubleMarquee() {
         { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" },
         "-=0.3",
       );
+
+    // Reduced motion: show the finished state straight away.
+    if (prefersReducedMotion()) {
+      marqueeTl.scrollTrigger?.kill();
+      marqueeTl.progress(1);
+    }
 
     return () => {
       ScrollTrigger.getAll().forEach((t) => {

@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 
 export default function CursorBubble() {
+    const bubbleRef = useRef(null);
+
     useEffect(() => {
-        const cursorBubble = document.querySelector('.cursor-bubble');
+        // Only for a fine pointer (mouse) and users who are fine with motion.
+        const mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference) and (pointer: fine)', () => {
+        const cursorBubble = bubbleRef.current;
         if (!cursorBubble) return;
 
         const xTo = gsap.quickTo(cursorBubble, 'x', { duration: 0.5, ease: 'power3' });
@@ -54,7 +59,9 @@ export default function CursorBubble() {
             document.removeEventListener('mouseover', onMouseOver);
             document.removeEventListener('mouseleave', onMouseLeave);
         };
+        });
+        return () => mm.revert();
     }, []);
 
-    return <div className="cursor-bubble">click</div>;
+    return <div ref={bubbleRef} className="cursor-bubble" aria-hidden="true">click</div>;
 }

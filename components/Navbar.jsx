@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
 import { WIGGLE_CONFIG } from "@/lib/data";
 import MobileNav from "@/components/MobileNav";
 
 function initWiggle(element, intensity) {
+  // Looping wiggles are pure decoration: skip them for reduced-motion users.
+  if (prefersReducedMotion()) return () => {};
   const target = element.querySelector("[data-wiggle-target]") || element;
   gsap.set(target, { transformOrigin: "center center" });
   let tween;
@@ -277,6 +280,7 @@ export default function Navbar() {
       let wiggleTween;
 
       const onItemEnter = () => {
+        if (prefersReducedMotion()) return;
         if (badge) {
           gsap.set(badge, { transformOrigin: "center center" });
           wiggleTween = gsap.to(badge, {
@@ -321,6 +325,7 @@ export default function Navbar() {
     if (workBtn) {
       let btnWiggle;
       const onBtnEnter = () => {
+        if (prefersReducedMotion()) return;
         const btnText = workBtn.querySelector(".nav-work-btn__text");
         if (btnText) {
           gsap.set(btnText, {

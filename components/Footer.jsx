@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SOCIAL_ICONS, WIGGLE_CONFIG } from "@/lib/data";
 
 function initWiggle(element, intensity) {
+  // Looping wiggles are pure decoration: skip them for reduced-motion users.
+  if (prefersReducedMotion()) return () => {};
   const target = element.querySelector("[data-wiggle-target]") || element;
   gsap.set(target, { transformOrigin: "center center" });
   let tween;
@@ -144,6 +147,8 @@ export default function Footer() {
     }
 
     const footerStickers = gsap.utils.toArray(".footer-sticker");
+    const reduceMotion = prefersReducedMotion();
+    const stickerCleanups = [];
     const stickerRotations = [12, -10, 8, -12, 10, -8];
     gsap.set(footerStickers, {
       scale: 0,
@@ -159,6 +164,8 @@ export default function Footer() {
     gsap.to(footerStickers, {
       scale: 1,
       opacity: 1,
+      // Reduced motion: stickers simply appear, no pop or bounce.
+      ...(reduceMotion && { duration: 0, stagger: 0, ease: "none" }),
       rotation: (i) => stickerRotations[i % stickerRotations.length] * 0.7,
       duration: 0.7,
       ease: "back.out(1.7)",
@@ -171,6 +178,7 @@ export default function Footer() {
     });
 
     footerStickers.forEach((sticker, i) => {
+      if (reduceMotion) return; // no proximity "push" physics
       const baseRotation = stickerRotations[i % stickerRotations.length] * 0.7;
       const PROXIMITY_RADIUS = 180,
         STRENGTH = 4,
@@ -226,7 +234,7 @@ export default function Footer() {
         }
       };
       document.addEventListener("mousemove", onMove);
-      // No cleanup stored here to match original behaviour (lives for page lifetime)
+      stickerCleanups.push(() => document.removeEventListener("mousemove", onMove));
     });
 
     const wiggleTargets = [
@@ -239,12 +247,15 @@ export default function Footer() {
     wiggleTargets.forEach(({ selector, key }) => {
       document
         .querySelectorAll(selector)
-        .forEach((el) => initWiggle(el, WIGGLE_CONFIG[key]));
+        .forEach((el) => stickerCleanups.push(initWiggle(el, WIGGLE_CONFIG[key])));
     });
 
     document
       .querySelectorAll(".single-social")
-      .forEach((el) => initWiggle(el, WIGGLE_CONFIG.socials));
+      .forEach((el) => stickerCleanups.push(initWiggle(el, WIGGLE_CONFIG.socials)));
+
+    // Remove document listeners when the footer unmounts (client-side navigation).
+    return () => stickerCleanups.forEach((fn) => fn());
   }, []);
 
   return (
@@ -282,9 +293,9 @@ export default function Footer() {
         <div className="footer-column">
           <span className="footer-badge">office</span>
           <address>
-            papaverhof 21
+            12 bark lane
             <br />
-            1032 LX amsterdam
+            london N1 7GU
           </address>
           <a href="#" className="footer-map-link">
             <span>Google Maps</span>
@@ -321,7 +332,7 @@ export default function Footer() {
             send us a whatsapp*
           </a>
           <p className="footer-note">
-            *we&apos;re millennials and gen-z: please do not call us.
+            *messages only: we reply within a day, usually with dog photos.
           </p>
           <div className="footer-socials" id="footer-socials">
             {SOCIAL_ICONS.map(({ href, label, svg }) => (
