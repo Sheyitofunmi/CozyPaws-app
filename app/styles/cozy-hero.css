@@ -900,3 +900,251 @@
     opacity: 1;
   }
 }
+
+/* ─── Hero interactions (desktop hero, real mouse, motion OK) ─────────────
+   Everything here uses the individual `translate` / `rotate` / `scale`
+   properties, so it never fights the entrance animations (which own
+   `transform`) or GSAP's scroll parallax (which owns the img's transform). */
+
+/* Count-up: reserve the final width so nothing shifts while counting. */
+.cozy-countup {
+  display: inline-grid;
+  font-variant-numeric: tabular-nums;
+}
+.cozy-countup > span,
+.cozy-countup::after {
+  grid-area: 1 / 1;
+}
+.cozy-countup::after {
+  content: attr(data-final);
+  visibility: hidden;
+}
+
+.cozy-rating__star-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* The ledge is part of each pet photo, so when a pet lifts, this strip of the
+   same colour fills the gap underneath instead of showing the background. */
+.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item--side { --ledge: #a7e8b0; }
+.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item--center { --ledge: #003c08; }
+.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 40px;
+  background: var(--ledge);
+}
+
+/* Speech bubbles (hidden until hover). */
+.cozy-photos__item[data-says]::before {
+  content: attr(data-says);
+  position: absolute;
+  z-index: 12;
+  top: 2%;
+  right: 16%;
+  padding: 0.55em 0.9em;
+  border-radius: 999px 999px 999px 4px;
+  background: #ffffff;
+  color: #1a3d1a;
+  font: 600 clamp(13px, 1.1vw, 17px) / 1 "Epilogue", sans-serif;
+  box-shadow: 0 8px 24px -10px rgb(26 61 26 / 0.45);
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.6;
+  translate: 0 10px;
+  transform-origin: bottom left;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    scale var(--dur-base) var(--ease-spring),
+    translate var(--dur-base) var(--ease-spring);
+}
+.cozy-photos__item--center[data-says]::before {
+  top: 34%;
+  right: 5%;
+}
+.cozy-photos__item--side:last-child[data-says]::before {
+  right: auto;
+  left: 14%;
+  border-radius: 999px 999px 4px 999px;
+  transform-origin: bottom right;
+}
+
+/* Spotlight that follows the cursor (position set by useHeroPointer). */
+.cozy-hero__stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    560px circle at var(--mx, 50%) var(--my, 40%),
+    rgb(230 250 185 / 0.85),
+    rgb(230 250 185 / 0) 65%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.cozy-hero__stage[data-spot]::before {
+  opacity: 1;
+}
+
+/* Side cards: tilt + glare (angles set by useHeroPointer). */
+.cozy-card[data-tilt] .cozy-card__img-wrap {
+  transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition:
+    transform 600ms var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.cozy-card[data-tilt] .cozy-card__img-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 0%),
+    rgb(255 255 255 / 0.45),
+    rgb(255 255 255 / 0) 55%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.cozy-card__arrow-btn,
+.cozy-card__video-overlay {
+  z-index: 2;
+}
+.cozy-hero .cozy-card__img-wrap img {
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    scale 700ms var(--ease-out);
+}
+.cozy-card__arrow-btn svg {
+  transition: rotate var(--dur-base) var(--ease-spring);
+}
+.cozy-play-btn {
+  position: relative;
+}
+.cozy-play-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes cozy-ping {
+  from { opacity: 0.8; scale: 1; }
+  to { opacity: 0; scale: 1.9; }
+}
+
+@keyframes cozy-sparkle {
+  0% { opacity: 0; scale: 0; }
+  40% { opacity: 1; scale: 1.1; }
+  100% { opacity: 0; scale: 0.4; translate: var(--sx) var(--sy); }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  /* Pets: the one you point at pops up and talks, the others duck. */
+  .cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item {
+    transition: translate 500ms var(--ease-spring);
+  }
+  .cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item:hover {
+    translate: 0 -14px;
+  }
+  .cozy-photos:not(.cozy-photos--mobile):has(.cozy-photos__item:hover) .cozy-photos__item:not(:hover) {
+    translate: 0 8px;
+  }
+  .cozy-photos__item[data-says]:hover::before {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+
+  /* Headline: letters ripple under the cursor. */
+  .cozy-letter {
+    display: inline-block;
+    transition:
+      translate 450ms var(--ease-spring),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .cozy-letter:hover {
+    translate: 0 -0.12em;
+    color: var(--color-green);
+  }
+  .cozy-letter:hover + .cozy-letter,
+  .cozy-letter:has(+ .cozy-letter:hover) {
+    translate: 0 -0.05em;
+  }
+
+  /* Cards. */
+  .cozy-card[data-tilt]:hover .cozy-card__img-wrap {
+    transition-duration: 150ms, var(--dur-base);
+    box-shadow: 0 22px 40px -20px rgb(26 61 26 / 0.55);
+  }
+  .cozy-card[data-tilt]:hover .cozy-card__img-wrap::after {
+    opacity: 1;
+  }
+  .cozy-card[data-tilt]:hover .cozy-card__img-wrap img {
+    scale: 1.06;
+  }
+  .cozy-card--product:hover .cozy-card__arrow-btn svg {
+    rotate: 45deg;
+  }
+  .cozy-card--video:hover .cozy-play-btn {
+    transform: scale(1.12);
+  }
+  .cozy-card--video:hover .cozy-play-btn::after {
+    animation: cozy-ping 1.2s var(--ease-out) infinite;
+  }
+
+  /* Stats: avatars fan out, star spins and sparkles. */
+  .cozy-avatar-plus,
+  .cozy-stat__value {
+    transition: translate 450ms var(--ease-spring);
+  }
+  .cozy-avatar-plus svg {
+    transition: rotate 450ms var(--ease-spring);
+  }
+  .cozy-stat:hover .cozy-avatar-plus,
+  .cozy-stat:hover .cozy-stat__value {
+    translate: 10px 0;
+  }
+  .cozy-stat:hover .cozy-avatar-plus svg {
+    rotate: 90deg;
+  }
+  .cozy-rating__star {
+    transition:
+      rotate 600ms var(--ease-spring),
+      scale 600ms var(--ease-spring);
+  }
+  .cozy-rating:hover .cozy-rating__star {
+    rotate: 72deg;
+    scale: 1.2;
+  }
+  .cozy-rating__star-wrap::before,
+  .cozy-rating__star-wrap::after {
+    content: "";
+    position: absolute;
+    width: 0.28em;
+    height: 0.28em;
+    border-radius: 2px;
+    background: #e86a10;
+    rotate: 45deg;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .cozy-rating__star-wrap::before { top: -30%; left: -35%; --sx: -6px; --sy: -6px; }
+  .cozy-rating__star-wrap::after { bottom: -15%; right: -45%; --sx: 6px; --sy: 4px; }
+  .cozy-rating:hover .cozy-rating__star-wrap::before {
+    animation: cozy-sparkle 700ms var(--ease-out) both;
+  }
+  .cozy-rating:hover .cozy-rating__star-wrap::after {
+    animation: cozy-sparkle 700ms 120ms var(--ease-out) both;
+  }
+}

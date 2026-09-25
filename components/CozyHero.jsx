@@ -11,6 +11,7 @@ import SmartImage from "@/components/SmartImage";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useMagnetic } from "@/lib/hooks/useMagnetic";
+import { useHeroPointer } from "@/lib/hooks/useHeroPointer";
 
 const ASSETS = {
   logo: REMOTE_ASSETS.logo,
@@ -137,6 +138,61 @@ function IconPlus(props) {
   );
 }
 
+// Counts 0 → 98 as the stat fades in. Only runs if the number hasn't been
+// seen yet (on a slow phone that hydrates late, it just stays at 98K+).
+function CountUp({ to, suffix }) {
+  const ref = useRef(null);
+  const [value, setValue] = useState(to);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const host = el.closest(".cozy-overlay, .cozy-mobile__stats");
+    if (host && Number(getComputedStyle(host).opacity) > 0.1) return;
+    let frame = 0;
+    let start = 0;
+    const delay = 900;
+    const duration = 1400;
+    setValue(0);
+    const tick = (now) => {
+      if (!start) start = now + delay;
+      const t = Math.min(1, Math.max(0, (now - start) / duration));
+      setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [to]);
+  return (
+    <>
+      {/* data-final reserves the final width, so nothing shifts while counting */}
+      <span ref={ref} aria-hidden="true" className="cozy-countup" data-final={`${to}${suffix}`}>
+        <span>
+          {value}
+          {suffix}
+        </span>
+      </span>
+      <span className="visually-hidden">
+        {to}
+        {suffix}
+      </span>
+    </>
+  );
+}
+
+// Hero headline split into letters so they can ripple under the cursor.
+// Screen readers get the word from aria-label, not letter by letter.
+function Letters({ word }) {
+  return (
+    <span aria-hidden="true">
+      {Array.from(word).map((ch, i) => (
+        <span key={i} className="cozy-letter">
+          {ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function StatOverlay({ className = "" }) {
   return (
     <div className={`cozy-stat ${className}`}>
@@ -146,7 +202,9 @@ function StatOverlay({ className = "" }) {
           <IconPlus />
         </span>
       </div>
-      <span className="cozy-stat__value">98K+</span>
+      <span className="cozy-stat__value">
+        <CountUp to={98} suffix="K+" />
+      </span>
     </div>
   );
 }
@@ -154,7 +212,9 @@ function StatOverlay({ className = "" }) {
 function RatingOverlay({ className = "" }) {
   return (
     <div className={`cozy-rating ${className}`}>
-      <IconStar filled className="cozy-rating__star" />
+      <span className="cozy-rating__star-wrap" aria-hidden="true">
+        <IconStar filled className="cozy-rating__star" />
+      </span>
       <span>4.6</span>
     </div>
   );
@@ -223,6 +283,8 @@ export default function CozyHero() {
 
   const exploreRef = useRef(null);
   useMagnetic(exploreRef);
+  const stageRef = useRef(null);
+  useHeroPointer(stageRef);
 
   return (
     <section className="cozy-hero" ref={heroRef}>
@@ -313,21 +375,21 @@ export default function CozyHero() {
         </div>
       )}
 
-      <div className="cozy-hero__stage">
+      <div className="cozy-hero__stage" ref={stageRef}>
         <div className="cozy-hero__heading-wrap">
-          <h1 className="cozy-hero__heading">
+          <h1 className="cozy-hero__heading" aria-label="Everything Your Pets Love">
             <span className="cozy-hero__line">
-              <span className="cozy-word cozy-delay-200">Everything</span>
+              <span className="cozy-word cozy-delay-200"><Letters word="Everything" /></span>
             </span>
             <span className="cozy-hero__line">
-              <span className="cozy-word cozy-delay-400">Your</span>{" "}
-              <span className="cozy-word cozy-delay-500">Pets</span>{" "}
-              <span className="cozy-word cozy-delay-600">Love</span>
+              <span className="cozy-word cozy-delay-400"><Letters word="Your" /></span>{" "}
+              <span className="cozy-word cozy-delay-500"><Letters word="Pets" /></span>{" "}
+              <span className="cozy-word cozy-delay-600"><Letters word="Love" /></span>
             </span>
           </h1>
         </div>
 
-        <div className="cozy-card cozy-card--product cozy-slide-in-left cozy-delay-600">
+        <div className="cozy-card cozy-card--product cozy-slide-in-left cozy-delay-600" data-tilt>
           <div className="cozy-card__img-wrap">
             <SmartImage src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} loading="eager" sizes="210px" />
             <a
@@ -343,7 +405,7 @@ export default function CozyHero() {
           <p className="cozy-card__price">$49.99</p>
         </div>
 
-        <div className="cozy-card cozy-card--video cozy-slide-in-right cozy-delay-700">
+        <div className="cozy-card cozy-card--video cozy-slide-in-right cozy-delay-700" data-tilt>
           <div className="cozy-card__img-wrap cozy-card__img-wrap--video">
             <SmartImage src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} loading="eager" sizes="150px" />
             <div className="cozy-card__video-overlay">
@@ -360,13 +422,13 @@ export default function CozyHero() {
         </div>
 
         <div className="cozy-photos">
-          <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
+          <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700" data-says="woof!">
             <SmartImage src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1000">
               <StatOverlay />
             </div>
           </div>
-          <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
+          <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600" data-says="treats?">
             <SmartImage src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} loading="eager" sizes="(max-width: 768px) 40vw, 40vw" />
             <div className="cozy-overlay cozy-fade-up cozy-delay-1100">
               <h2 className="cozy-overlay__heading">
@@ -383,7 +445,7 @@ export default function CozyHero() {
               </a>
             </div>
           </div>
-          <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-900">
+          <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-900" data-says="meow?">
             <SmartImage src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1200">
               <RatingOverlay />
