@@ -2156,3 +2156,101 @@ html[data-vt] .product-gallery img {
   height: 100%;
   object-fit: cover;
 }
+
+/* ─── Cart: removal, toast exit, rollback cue ──────────────────────────── */
+
+/* Toast: an Undo button that reads as a button, not a close icon. */
+.cart-toast {
+  align-items: center;
+}
+.cart-toast .cart-toast__action {
+  width: auto;
+  height: 32px;
+  padding: 0 0.9rem;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: var(--flow-ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.cart-toast .cart-toast__action:active {
+  transform: scale(0.96);
+}
+.cart-toast .cart-toast__action:focus-visible,
+.cart-toast .cart-toast__close:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Toast: leave the way it came in, instead of vanishing. */
+.cart-toast[data-leaving] {
+  animation: cart-toast-out 220ms var(--ease-in-out) forwards;
+  pointer-events: none;
+}
+@keyframes cart-toast-out {
+  to { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+
+/* Rows that just changed on their own say why, right on the row. */
+.cart-line__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-weight: 600;
+  color: #9a3d0b; /* orange text that passes AA on white */
+  animation: flow-rise var(--dur-base) var(--ease-out);
+}
+.cart-line__note[data-tone="error"] {
+  color: var(--flow-danger);
+}
+.cart-line__note::before {
+  content: "↺";
+  font-weight: 700;
+}
+[data-pending] .cart-line__note::before {
+  content: "↺";
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: 0;
+  animation: none;
+}
+/* …and the row flashes once so the eye lands on it. */
+.cart-line[data-note],
+.shop-cart__line[data-note] {
+  animation: row-corrected 900ms var(--ease-out);
+}
+@keyframes row-corrected {
+  0% { background-color: rgb(232 106 16 / 0.16); }
+  100% { background-color: transparent; }
+}
+.cart-line[data-note="error"],
+.shop-cart__line[data-note="error"] {
+  animation-name: row-corrected-error;
+}
+@keyframes row-corrected-error {
+  0% { background-color: rgb(180 35 24 / 0.12); }
+  100% { background-color: transparent; }
+}
+
+/* A row on its way out can't be clicked. */
+[data-exiting] {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-toast[data-leaving] {
+    animation: cart-toast-fade 150ms linear forwards;
+  }
+  .cart-line__note,
+  .cart-line[data-note],
+  .shop-cart__line[data-note] {
+    animation: none;
+  }
+}
+@keyframes cart-toast-fade {
+  to { opacity: 0; }
+}

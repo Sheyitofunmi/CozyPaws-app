@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { getProduct, PRODUCTS } from "@/lib/catalog";
 import { useDialog } from "@/lib/hooks/useDialog";
+import { useExitingItems } from "@/lib/hooks/useExitingItems";
 import { useBump } from "@/lib/hooks/useBump";
 import { formatPrice } from "@/lib/money";
 import { FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/pricing";
@@ -31,6 +32,8 @@ export default function CartDrawer() {
     const product = getProduct(id);
     return product ? [{ product, qty }] : [];
   });
+  // Removed rows stay a moment to animate out (and to not jolt the list).
+  const rendered = useExitingItems(items, (line) => line.id);
   const subtotalCents = lines.reduce((sum, l) => sum + l.product.priceCents * l.qty, 0);
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - subtotalCents);
   const progress = Math.min(1, subtotalCents / FREE_SHIPPING_THRESHOLD_CENTS);
@@ -70,7 +73,7 @@ export default function CartDrawer() {
           </button>
         </div>
 
-        {lines.length === 0 ? (
+        {rendered.length === 0 ? (
           <div className="shop-cart__empty">
             <img src="/assets/pets/paw-sticker.svg" alt="" aria-hidden="true" />
             <p>Your cart is feeling a little lonely.</p>
@@ -96,15 +99,20 @@ export default function CartDrawer() {
               </div>
             </div>
             <ul className="shop-cart__list">
-              {lines.map(({ product, qty }) => (
-                <CartLineItem
-                  key={product.id}
-                  product={product}
-                  qty={qty}
-                  variant="drawer"
-                  highlight={highlightId === product.id}
-                />
-              ))}
+              {rendered.map(({ item, key, exiting }) => {
+                const product = getProduct(item.id);
+                if (!product) return null;
+                return (
+                  <CartLineItem
+                    key={key}
+                    product={product}
+                    qty={item.qty}
+                    variant="drawer"
+                    highlight={highlightId === product.id}
+                    exiting={exiting}
+                  />
+                );
+              })}
             </ul>
             {suggestions.length > 0 && (
               <section className="cart-suggest" aria-labelledby="cart-suggest-title">

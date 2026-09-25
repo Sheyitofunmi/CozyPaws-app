@@ -57,4 +57,21 @@ describe("cartReducer", () => {
     expect(selectVisibleLines(state)).toEqual([{ id: "a", qty: 3 }]);
     expect(state.pending.a).toEqual({ qty: 3, seq: 2 });
   });
+
+  it("puts an undone line back in its old position", () => {
+    const lines = [
+      { id: "a", qty: 1 },
+      { id: "b", qty: 2 },
+      { id: "c", qty: 1 },
+    ];
+    let state: CartState = cartReducer(initialCartState, { type: "hydrate", lines });
+    state = cartReducer(state, { type: "request", id: "b", qty: 0, seq: 1 });
+    state = cartReducer(state, { type: "confirm", id: "b", qty: 0, seq: 1 });
+    expect(selectVisibleLines(state).map((l) => l.id)).toEqual(["a", "c"]);
+
+    state = cartReducer(state, { type: "request", id: "b", qty: 2, seq: 2, at: 1 });
+    expect(selectVisibleLines(state).map((l) => l.id)).toEqual(["a", "b", "c"]); // optimistic
+    state = cartReducer(state, { type: "confirm", id: "b", qty: 2, seq: 2 });
+    expect(state.confirmed).toEqual(lines); // and it stays there once confirmed
+  });
 });

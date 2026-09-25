@@ -19,6 +19,8 @@ import type { CartLine } from "./types";
 export interface PendingChange {
   qty: number;
   seq: number;
+  /** Where a re-added line goes (Undo puts it back in its old spot). */
+  at?: number;
 }
 
 export interface CartState {
@@ -29,7 +31,7 @@ export interface CartState {
 
 export type CartAction =
   | { type: "hydrate"; lines: CartLine[] }
-  | { type: "request"; id: string; qty: number; seq: number }
+  | { type: "request"; id: string; qty: number; seq: number; at?: number }
   | { type: "confirm"; id: string; qty: number; seq: number }
   /** `available` set → clamp to it (stock). Omitted → roll back (network error). */
   | { type: "reject"; id: string; seq: number; available?: number }
@@ -42,12 +44,13 @@ export const initialCartState: CartState = {
   lastSettledSeq: {},
 };
 
-function withQty(lines: CartLine[], id: string, qty: number): CartLine[] {
+function withQty(lines: CartLine[], id: string, qty: number, at?: number): CartLine[] {
   if (qty <= 0) return lines.filter((l) => l.id !== id);
   const exists = lines.some((l) => l.id === id);
-  return exists
-    ? lines.map((l) => (l.id === id ? { ...l, qty } : l))
-    : [...lines, { id, qty }];
+  if (exists) return lines.map((l) => (l.id === id ? { ...l, qty } : l));
+  if (at === undefined || at >= lines.length) return [...lines, { id, qty }];
+  const index = Math.max(0, at);
+  return [...lines.slice(0, index), { id, qty }, ...lines.slice(index)];
 }
 
 function withoutKey<T>(record: Record<string, T>, key: string): Record<string, T> {
@@ -67,7 +70,10 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
     case "request":
       return {
         ...state,
-        pending: { ...state.pending, [action.id]: { qty: action.qty, seq: action.seq } },
+        pending: {
+          ...state.pending,
+          [action.id]: { qty: action.qty, seq: action.seq, at: action.at },
+        },
       };
 
     case "confirm": {
@@ -75,7 +81,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       if (action.seq < settled) return state; // stale response, a newer one already landed
       const pending = state.pending[action.id];
       return {
-        confirmed: withQty(state.confirmed, action.id, action.qty),
+        confirmed: withQty(state.confirmed, action.id, action.qty, pending?.at),
         pending: pending?.seq === action.seq ? withoutKey(state.pending, action.id) : state.pending,
         lastSettledSeq: { ...state.lastSettledSeq, [action.id]: action.seq },
       };
@@ -105,7 +111,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
 export function selectVisibleLines(state: CartState): CartLine[] {
   let lines = state.confirmed;
   for (const [id, change] of Object.entries(state.pending)) {
-    lines = withQty(lines, id, change.qty);
+    lines = withQty(lines, id, change.qty, change.at);
   }
   return lines;
 }

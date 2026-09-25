@@ -28,6 +28,17 @@ export interface CartNotice {
   id: number;
   message: string;
   tone: "info" | "error";
+  /** Optional button in the toast, e.g. Undo after a removal. */
+  action?: { label: string; run: () => void };
+  /** How long the toast stays up (ms). */
+  duration?: number;
+}
+
+/** Why a row just changed on its own (shown on the row itself). */
+export interface LineNote {
+  text: string;
+  tone: "info" | "error";
+  key: number;
 }
 
 interface CartContextValue {
@@ -44,6 +55,8 @@ interface CartContextValue {
   isPending: (id: string) => boolean;
   notice: CartNotice | null;
   dismissNotice: () => void;
+  /** A short reason on a row the server corrected or rolled back. */
+  lineNote: (id: string) => LineNote | undefined;
   /** The line the user just added (drives the drawer highlight). */
   lastAdded: { id: string; seq: number } | null;
   /** The header cart button: where "fly to cart" images land. */
@@ -91,15 +104,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState<CartNotice | null>(null);
   const cartTargetRef = useRef<HTMLButtonElement | null>(null);
   const [lastAdded, setLastAdded] = useState<{ id: string; seq: number } | null>(null);
+  const [lineNotes, setLineNotes] = useState<Record<string, LineNote>>({});
+  const noteTimers = useRef<Record<string, number>>({});
 
   const dispatch = useCallback((action: CartAction) => {
     stateRef.current = cartReducer(stateRef.current, action);
     setState(stateRef.current);
   }, []);
 
-  const notify = useCallback((message: string, tone: CartNotice["tone"]) => {
+  const notify = useCallback(
+    (message: string, tone: CartNotice["tone"], extra?: Pick<CartNotice, "action" | "duration">) => {
+      noticeSeq.current += 1;
+      setNotice({ id: noticeSeq.current, message, tone, ...extra });
+    },
+    [],
+  );
+
+  // The toast explains a correction, but people look at the row they
+  // touched, so the row carries a short reason too (for a few seconds).
+  const noteLine = useCallback((id: string, text: string, tone: LineNote["tone"]) => {
     noticeSeq.current += 1;
-    setNotice({ id: noticeSeq.current, message, tone });
+    const key = noticeSeq.current;
+    setLineNotes((notes) => ({ ...notes, [id]: { text, tone, key } }));
+    window.clearTimeout(noteTimers.current[id]);
+    noteTimers.current[id] = window.setTimeout(() => {
+      setLineNotes(({ [id]: _gone, ...rest }) => rest);
+    }, 4000);
+  }, []);
+  useEffect(() => {
+    const timers = noteTimers.current;
+    return () => Object.values(timers).forEach((t) => window.clearTimeout(t));
   }, []);
 
   // Server renders an empty cart; hydrate from storage after mount so the
@@ -125,15 +159,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state.confirmed, hydrated]);
 
   const updateQty = useCallback(
-    async (id: string, rawQty: number) => {
+    async (id: string, rawQty: number, at?: number) => {
       const product = getProduct(id);
       if (!product) return;
       const qty = Math.max(0, Math.min(99, Math.floor(rawQty)));
-      if (qty === selectQty(stateRef.current, id)) return;
+      const previous = selectQty(stateRef.current, id);
+      if (qty === previous) return;
+      const removedAt =
+        qty === 0 ? selectVisibleLines(stateRef.current).findIndex((l) => l.id === id) : -1;
 
       seqRef.current += 1;
       const seq = seqRef.current;
-      dispatch({ type: "request", id, qty, seq }); // optimistic: UI updates now
+      dispatch({ type: "request", id, qty, seq, at }); // optimistic: UI updates now
+
+      // Removing is one tap, so make it one tap to take back.
+      if (qty === 0) {
+        notify(`Removed ${product.name}.`, "info", {
+          duration: 6000,
+          action: {
+            label: "Undo",
+            run: () => {
+              void updateQty(id, previous, removedAt >= 0 ? removedAt : undefined);
+              // Put keyboard focus back on the restored row, not on <body>.
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => {
+                  const buttons = document.querySelectorAll<HTMLElement>(
+                    `[aria-label="Remove ${product.name}"]`,
+                  );
+                  Array.from(buttons)
+                    .find((el) => !el.closest("[inert]"))
+                    ?.focus({ preventScroll: true });
+                }),
+              );
+            },
+          },
+        });
+      }
 
       try {
         const res = await fetch("/api/cart", {
@@ -147,18 +208,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (data.code === "insufficient_stock" || data.code === "unknown_product") {
-          dispatch({ type: "reject", id, seq, available: data.available ?? 0 });
+          const available = data.available ?? 0;
+          dispatch({ type: "reject", id, seq, available });
           notify(data.message, "info");
+          if (available > 0) noteLine(id, `only ${available} left`, "info");
         } else {
           dispatch({ type: "reject", id, seq });
           notify(data.message, "error");
+          explainRollback(id, qty);
         }
       } catch {
         dispatch({ type: "reject", id, seq });
         notify("Network hiccup: your cart wasn't changed. Try again.", "error");
+        explainRollback(id, qty);
+      }
+
+      function explainRollback(lineId: string, wanted: number) {
+        const now = selectQty(stateRef.current, lineId);
+        if (now === 0) return; // the row is gone; the toast explains it
+        noteLine(lineId, wanted === 0 ? "couldn't remove, try again" : `not saved, back to ${now}`, "error");
       }
     },
-    [dispatch, notify],
+    [dispatch, notify, noteLine],
   );
 
   const addItem = useCallback(
@@ -181,6 +252,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
   const isPending = useCallback((id: string) => id in state.pending, [state.pending]);
   const dismissNotice = useCallback(() => setNotice(null), []);
+  const lineNote = useCallback((id: string) => lineNotes[id], [lineNotes]);
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
@@ -199,6 +271,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isPending,
     notice,
     dismissNotice,
+    lineNote,
     lastAdded,
     cartTargetRef,
     isOpen,

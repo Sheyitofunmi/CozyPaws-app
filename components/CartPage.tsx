@@ -27,6 +27,7 @@ import AnimatedPrice from "@/components/AnimatedPrice";
 import WalletPayDialog from "@/components/WalletPayDialog";
 import { prefersReducedMotion } from "@/lib/motion";
 import { useBump } from "@/lib/hooks/useBump";
+import { useExitingItems } from "@/lib/hooks/useExitingItems";
 import { IconArrowRight, IconCheck, IconTruck } from "@/components/icons";
 
 type FieldErrors = Partial<Record<CustomerField | "items" | "form", string>>;
@@ -83,6 +84,7 @@ const emptyCustomer: CheckoutCustomer = { name: "", email: "", address: "", city
 export default function CartPage() {
   const router = useRouter();
   const { items, hydrated, clearCart, replaceLines } = useCart();
+  const renderedLines = useExitingItems(items, (line) => line.id);
   const [status, setStatus] = useState<Status>("idle");
   const [values, setValues] = useState<CheckoutCustomer>(emptyCustomer);
   const [touched, setTouched] = useState<Partial<Record<CustomerField, boolean>>>({});
@@ -322,11 +324,18 @@ export default function CartPage() {
               your cart <span>· {itemCount} item{itemCount === 1 ? "" : "s"}</span>
             </h2>
             <ul className="cart-lines">
-              {items.map(({ id, qty }) => {
+              {renderedLines.map(({ item: { id, qty }, key, exiting }) => {
                 const product = getProduct(id);
                 if (!product) return null;
                 return (
-                  <CartLineItem key={id} product={product} qty={qty} variant="page" unitCents={unitFor(id)} />
+                  <CartLineItem
+                    key={key}
+                    product={product}
+                    qty={qty}
+                    variant="page"
+                    unitCents={unitFor(id)}
+                    exiting={exiting}
+                  />
                 );
               })}
             </ul>

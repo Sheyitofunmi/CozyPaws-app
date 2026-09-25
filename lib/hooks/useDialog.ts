@@ -30,7 +30,13 @@ export function useDialog(
 
     const siblings = Array.from(document.body.children).filter(
       (el): el is HTMLElement =>
-        el instanceof HTMLElement && el !== dialog && !el.contains(dialog) && !el.hasAttribute("inert"),
+        el instanceof HTMLElement &&
+        el !== dialog &&
+        !el.contains(dialog) &&
+        !el.hasAttribute("inert") &&
+        // Live announcements (the cart toast and its Undo) must stay usable
+        // while a drawer is open: removing from the drawer is what shows them.
+        !el.hasAttribute("data-dialog-exempt"),
     );
     siblings.forEach((el) => el.setAttribute("inert", ""));
 

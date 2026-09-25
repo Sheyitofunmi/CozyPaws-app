@@ -30,6 +30,8 @@ test.describe("optimistic cart", () => {
     const status = page.locator(".cart-toast-region");
     await expect(status).toContainText("Only 1 left");
     await expect(cartDialog(page).locator(".qty-number")).toHaveText("1");
+    // The row itself says why its number changed, not only the toast.
+    await expect(cartDialog(page).locator(".cart-line__note")).toHaveText(/only 1 left/);
   });
 
   test("rolls back completely when the request fails", async ({ page, context, baseURL }) => {
@@ -145,5 +147,58 @@ test.describe("motion and microinteractions", () => {
     await expect(page.locator(".product-qty .qty-number__value")).toHaveAttribute("data-dir", "up");
     await page.getByRole("button", { name: "Decrease quantity" }).click();
     await expect(page.locator(".product-qty .qty-number__value")).toHaveAttribute("data-dir", "down");
+  });
+});
+
+test.describe("removing and correcting rows", () => {
+  const seed = [
+    { id: "peanut-butter-bites", qty: 1 },
+    { id: "cloud-nine-bed", qty: 1 },
+    { id: "everyday-leash", qty: 1 },
+  ];
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/cart");
+    // Wait for hydration: it persists the (empty) cart, which would overwrite the seed.
+    await expect(page.getByRole("heading", { name: "Your cart is empty" })).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await page.evaluate((lines) => localStorage.setItem("cozypaws-cart", JSON.stringify(lines)), seed);
+    await page.reload();
+    await expect(page.locator(".cart-line")).toHaveCount(3);
+  });
+
+  test("a removed row collapses, and Undo puts it back where it was", async ({ page }) => {
+    await page.getByRole("button", { name: "Remove cloud nine bed" }).click();
+
+    // It animates out instead of vanishing…
+    await expect(page.locator(".cart-line[data-exiting]")).toHaveCount(1);
+    await expect(page.locator(".cart-line")).toHaveCount(2);
+
+    // …and the toast offers Undo, with keyboard focus already on it.
+    const undo = page.locator(".cart-toast-region").getByRole("button", { name: "Undo" });
+    await expect(page.locator(".cart-toast-region")).toContainText("Removed cloud nine bed.");
+    await expect(undo).toBeFocused();
+    await undo.click();
+
+    await expect(page.locator(".cart-line .cart-line__name")).toHaveText([
+      "peanut butter bites",
+      "cloud nine bed",
+      "everyday leash",
+    ]);
+  });
+
+  test("the toast animates out when dismissed", async ({ page }) => {
+    await page.getByRole("button", { name: "Remove everyday leash" }).click();
+    await page.getByRole("button", { name: "Dismiss notification" }).click();
+    await expect(page.locator(".cart-toast[data-leaving]")).toHaveCount(1);
+    await expect(page.locator(".cart-toast")).toHaveCount(0);
+  });
+
+  test("a rolled-back row shows the reason on the row", async ({ page, context, baseURL }) => {
+    await setDemo(context, baseURL!, { failNextCart: true });
+    await page.getByRole("button", { name: "Increase quantity of everyday leash" }).click();
+    const row = page.locator(".cart-line", { hasText: "everyday leash" });
+    await expect(row.locator(".cart-line__note")).toHaveText(/not saved, back to 1/);
+    await expect(row.locator(".qty-number")).toHaveText("1");
   });
 });
