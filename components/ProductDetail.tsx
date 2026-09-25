@@ -10,7 +10,10 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { flyToCart } from "@/lib/fly-to-cart";
+import { usePop } from "@/lib/hooks/usePop";
 import SiteHeader from "@/components/SiteHeader";
+import SmartImage from "@/components/SmartImage";
+import QtyNumber from "@/components/QtyNumber";
 import SiteFooter from "@/components/SiteFooter";
 import {
   IconPlus,
@@ -84,6 +87,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   const imageRef = useRef<HTMLImageElement>(null);
   const stickyImageRef = useRef<HTMLImageElement>(null);
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
+  const [popping, pop] = usePop();
   const [qty, setQty] = useState(1);
   const pageRef = useRef<HTMLDivElement>(null);
   useScrollReveal(pageRef);
@@ -155,9 +159,18 @@ export default function ProductDetail({ product }: { product: Product }) {
       </nav>
 
       <section className="product-main">
-        <div className="product-gallery" data-reveal>
+        <div className="product-gallery img-slot" data-reveal>
           <span className="product-gallery__blob" aria-hidden="true" />
-          <img ref={imageRef} src={product.img} alt={product.name} width={800} height={800} fetchPriority="high" />
+          <SmartImage
+            ref={imageRef}
+            src={product.img}
+            alt={product.name}
+            width={800}
+            height={800}
+            fetchPriority="high"
+            sizes="(max-width: 768px) 100vw, 560px"
+            style={{ viewTransitionName: "product-image" }}
+          />
           {product.badge && (
             <span className="product-gallery__badge">{product.badge}</span>
           )}
@@ -188,7 +201,9 @@ export default function ProductDetail({ product }: { product: Product }) {
               >
                 <IconMinus />
               </button>
-              <span aria-live="polite">{qty}</span>
+              <span aria-live="polite">
+                <QtyNumber value={qty} />
+              </span>
               <button
                 type="button"
                 aria-label="Increase quantity"
@@ -214,9 +229,13 @@ export default function ProductDetail({ product }: { product: Product }) {
             </button>
             <button
               className={`product-fav ${saved ? "is-saved" : ""}`}
+              data-pop={popping === product.id || undefined}
               aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
               aria-pressed={saved}
-              onClick={() => toggleSaved(product.id)}
+              onClick={() => {
+                if (!saved) pop(product.id);
+                toggleSaved(product.id);
+              }}
             >
               <IconStar fill={saved ? "currentColor" : "none"} />
             </button>
@@ -273,8 +292,8 @@ export default function ProductDetail({ product }: { product: Product }) {
               data-reveal
               style={{ "--accent": CATEGORY_ACCENT[item.category] } as CSSProperties}
             >
-              <div className="related-card__img">
-                <img src={item.img} alt="" width={800} height={800} loading="lazy" />
+              <div className="related-card__img img-slot">
+                <SmartImage src={item.img} alt="" width={800} height={800} loading="lazy" sizes="(max-width: 768px) 50vw, 260px" />
                 <span className="related-card__view">
                   <IconArrowUpRight />
                 </span>

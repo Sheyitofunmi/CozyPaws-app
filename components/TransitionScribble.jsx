@@ -31,7 +31,10 @@ export default function TransitionScribble() {
       "var(--color-pink)",
     ];
 
-    const runScribbleAnimation = (e) => {
+    // `quick` = the automatic intro on page load: ~1.5s instead of ~5s, so
+    // visitors aren't staring at a locked screen. Clicking the logo still
+    // plays the full-length version.
+    const runScribbleAnimation = (e, quick = false) => {
       if (e) e.preventDefault();
       if (
         gsap.isTweening(transitionScribblePath) ||
@@ -41,8 +44,8 @@ export default function TransitionScribble() {
         return;
 
       const config = ANIMATION_CONFIG.transitionScribble;
-      const durIn = config.durationIn || 0.8;
-      const durOut = config.durationOut || 1.5;
+      const durIn = quick ? 0.6 : config.durationIn || 0.8;
+      const durOut = quick ? 0.9 : config.durationOut || 1.5;
 
       gsap.set(transitionScribbleSvg, { scale: config.scale });
 
@@ -124,6 +127,10 @@ export default function TransitionScribble() {
         durIn,
       );
 
+      // Hand the page back as soon as the scribble starts clearing, not
+      // when it has fully gone.
+      drawTl.call(() => document.body.classList.remove("is-transitioning"), null, durIn);
+
       drawTl.to(
         transitionScribblePath,
         { strokeDashoffset: -l, duration: durOut, ease: "power2.inOut" },
@@ -182,7 +189,7 @@ export default function TransitionScribble() {
       window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = autoRun
-      ? setTimeout(() => runScribbleAnimation(null), 100)
+      ? setTimeout(() => runScribbleAnimation(null, true), 100)
       : null;
 
     return () => {

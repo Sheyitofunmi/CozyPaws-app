@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/motion";
 import { WIGGLE_CONFIG } from "@/lib/data";
 import MobileNav from "@/components/MobileNav";
+import SmartImage from "@/components/SmartImage";
 
 function initWiggle(element, intensity) {
   // Looping wiggles are pure decoration: skip them for reduced-motion users.
@@ -46,45 +48,57 @@ export default function Navbar() {
       navbar.classList.remove("on-light");
     }
 
-    const updateNavbarColor = () => {
-      if (!navbar || !contentSection || !footerEl) return;
-      const scrollPos = window.scrollY + navbar.offsetHeight / 2;
-      const contentTop =
-        contentSection.getBoundingClientRect().top + window.scrollY;
-
-      const serviceCardsSection = document.querySelector(
-        ".service-cards-wrapper",
-      );
-      const serviceCardsTop = serviceCardsSection
-        ? serviceCardsSection.getBoundingClientRect().top + window.scrollY
-        : Infinity;
-
-      const doubleMarquee = document.querySelector(".Double-marquee");
-      const doubleMarqueeTop = doubleMarquee
-        ? doubleMarquee.getBoundingClientRect().top + window.scrollY
-        : Infinity;
-      const footerTop = footerEl.getBoundingClientRect().top + window.scrollY;
-
-      if (scrollPos >= footerTop) {
-        navbar.classList.add("on-dark");
-        navbar.classList.remove("on-light");
-      } else if (scrollPos >= doubleMarqueeTop) {
-        navbar.classList.add("on-light");
-        navbar.classList.remove("on-dark");
-      } else if (scrollPos >= serviceCardsTop) {
-        navbar.classList.add("on-light");
-        navbar.classList.remove("on-dark");
-      } else if (scrollPos >= contentTop) {
-        navbar.classList.add("on-light");
-        navbar.classList.remove("on-dark");
-      } else {
-        navbar.classList.add("on-dark");
-        navbar.classList.remove("on-light");
-      }
+    // Section boundaries are measured once (and again on resize / after
+    // ScrollTrigger adds pin space), not on every scroll event: reading
+    // getBoundingClientRect in a scroll handler forces layout each frame.
+    let tops = { content: Infinity, service: Infinity, marquee: Infinity, footer: Infinity };
+    const topOf = (el) => (el ? el.getBoundingClientRect().top + window.scrollY : Infinity);
+    const measure = () => {
+      tops = {
+        content: topOf(contentSection),
+        service: topOf(document.querySelector(".service-cards-wrapper")),
+        marquee: topOf(document.querySelector(".Double-marquee")),
+        footer: topOf(footerEl),
+      };
+      updateNavbar();
     };
 
-    window.addEventListener("scroll", updateNavbarColor);
-    updateNavbarColor();
+    let lastY = window.scrollY;
+    const updateNavbar = () => {
+      if (!navbar || !contentSection || !footerEl) return;
+      const y = window.scrollY;
+      const scrollPos = y + navbar.offsetHeight / 2;
+      const onLight =
+        scrollPos < tops.footer &&
+        (scrollPos >= tops.marquee || scrollPos >= tops.service || scrollPos >= tops.content);
+      navbar.classList.toggle("on-light", onLight);
+      navbar.classList.toggle("on-dark", !onLight);
+
+      // Get out of the way while reading down; come back as soon as the
+      // visitor scrolls up (or is using the navbar / its pop-outs).
+      const delta = y - lastY;
+      lastY = y;
+      const busy = navbar.matches(":hover, :focus-within");
+      if (y < window.innerHeight * 0.6 || delta < -6 || busy) navbar.classList.remove("is-away");
+      else if (delta > 8) navbar.classList.add("is-away");
+      // A soft backdrop once content scrolls underneath, so labels stay readable.
+      navbar.classList.toggle("is-scrolled", y > 40);
+    };
+
+    let ticking = false;
+    const updateNavbarColor = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        updateNavbar();
+      });
+    };
+
+    window.addEventListener("scroll", updateNavbarColor, { passive: true });
+    window.addEventListener("resize", measure);
+    ScrollTrigger.addEventListener("refresh", measure);
+    measure();
 
     const cleanups = [];
     const cozyLogo = document.querySelector(".cozy-logo");
@@ -359,6 +373,8 @@ export default function Navbar() {
 
     return () => {
       window.removeEventListener("scroll", updateNavbarColor);
+      window.removeEventListener("resize", measure);
+      ScrollTrigger.removeEventListener("refresh", measure);
       cleanups.forEach((fn) => fn && fn());
     };
   }, []);
@@ -391,9 +407,12 @@ export default function Navbar() {
               <div className="nav-popout-inner">
                 <div className="nav-work-item">
                   <div className="nav-work-item__img-wrap">
-                    <img
+                    <SmartImage
                       src="/assets/pets/house3.avif"
-                      loading="eager"
+                      loading="lazy"
+                      width={900}
+                      height={900}
+                      sizes="96px"
                       alt="Cozy dog house"
                       className="nav-work-item__img"
                     />
@@ -407,9 +426,12 @@ export default function Navbar() {
                 </div>
                 <div className="nav-work-item">
                   <div className="nav-work-item__img-wrap">
-                    <img
+                    <SmartImage
                       src="/assets/pets/toy1.avif"
-                      loading="eager"
+                      loading="lazy"
+                      width={900}
+                      height={900}
+                      sizes="96px"
                       alt="Rope tug bundle"
                       className="nav-work-item__img"
                     />
@@ -423,9 +445,12 @@ export default function Navbar() {
                 </div>
                 <div className="nav-work-item">
                   <div className="nav-work-item__img-wrap">
-                    <img
+                    <SmartImage
                       src="/assets/pets/cat3.avif"
-                      loading="eager"
+                      loading="lazy"
+                      width={900}
+                      height={900}
+                      sizes="96px"
                       alt="Peanut butter bites"
                       className="nav-work-item__img"
                     />
@@ -528,8 +553,13 @@ export default function Navbar() {
 
             <div className="nav-popout nav-wa-box">
               <div className="nav-popout-inner">
-                <img
+                {/* 478KB PNG → resized on demand; lazy, since it lives in a hidden pop-out. */}
+                <SmartImage
                   src="/assets/wa_qr_code.png"
+                  loading="lazy"
+                  width={640}
+                  height={640}
+                  sizes="200px"
                   className="nav-wa-qr"
                   alt="WhatsApp QR Code"
                 />

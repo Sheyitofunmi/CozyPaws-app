@@ -57,12 +57,20 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 ## Craft details
 
 - **Feedback where you're looking.** The product photo flies into the cart icon (Web Animations API on a throwaway clone, skipped for reduced motion), "add to cart" turns into "added ✓", the cart badge bumps, and the new line is highlighted in the drawer. On phones a sticky buy bar appears once the main button scrolls away.
+- **Mistakes are cheap.** Removing an item collapses the row (it slides out and the gap closes, instead of the list jumping) and the toast offers **Undo**, which puts the item back in its old position. Keyboard focus lands on Undo, then back on the restored row. The toast pauses while you hover or focus it and animates out. When the server corrects a row (stock) or a request fails, the row itself flashes and says why ("only 1 left", "not saved, back to 1"), not only the toast.
 - **Checkout that doesn't punish.** One set of validation rules runs on the client and the server. Fields are checked when you leave them and re-checked as you fix them, so no round trip to find a typo. No example values as placeholders.
 - **Every button state is deliberate.** Place order goes idle → placing (spinner, disabled) → "order placed ✓" for a beat → receipt. Failures shake the button (motion only; the reason is always in text next to it) and the label becomes "try again". Totals count to their new value instead of jumping.
+- **One motion system.** Durations and easings are tokens (`--dur-fast/base/slow`, `--ease-out/in-out/spring` in `base.css`). Hover lifts only apply on devices that really hover, so nothing "sticks" after a tap.
+- **Loading that keeps its shape.** Route skeletons (`loading.tsx`), a checkout skeleton until the saved cart is read, and images that fade in over a shimmer. Images go through `next/image`, so phones get right-sized files: product-page LCP on a throttled mobile connection went from ~4.6s to ~1.4s, with zero layout shift.
+- **Transitions with meaning.** The shop photo morphs into the product page (View Transitions API, with a plain navigation as fallback), pages fade in, the filter highlight slides between pills, quantities roll in the direction they changed, the wishlist star pops, and crossing the free-delivery line gets a small celebration. All of it is skipped under reduced motion.
+- **Every screen size.** Checked at 320–1920px: no horizontal scroll, 2-up product grid on phones, 44px tap areas on small links and remove buttons, a sticky "place order" bar wherever checkout is one column, and dialogs that scroll on short landscape phones.
 - **A real confirmation page.** `/order/confirmed` survives a refresh and "back" never re-shows the filled checkout. The receipt has items, totals, the ship-to address, a delivery window and what happens next.
 - **No flicker on fast networks.** "Saving…" only appears if a request takes longer than 300ms (`useDelayedFlag`).
 - **Accessible drawers.** Real modal dialogs: focus moves in and returns to the trigger, Tab is trapped, Esc closes, and the page behind is `inert`.
 - **Announced changes.** Toasts, result counts and checkout errors use live regions. Validation errors set `aria-invalid` and focus the first bad field.
+- **A homepage that loads light.** Pet photos go through `next/image` and lazy-load below the fold (image data for a full scroll went from 1.65MB to ~150KB). Scroll-effect setup waits for idle time (`useIdleReady`), and the pinned "we wanna be where the dogs are" section pins with a transform, so there's no layout shift (CLS 1.9 → 0). Throttled mobile LCP is under a second.
+- **Scroll that feels alive, not busy.** Subtle parallax on the hero pets, a navbar that tucks away when you scroll down and comes back (with a blurred backdrop) when you scroll up, service cards that stack as you scroll on phones, a scroll progress bar (CSS scroll-driven animation, skipped where unsupported), a magnetic "Explore Products" button, and a pause button on the brand marquee.
+- **A hero that reacts to the mouse.** The pet you point at pops up and "talks" while the others duck, a soft spotlight follows the cursor, the side cards tilt with a glare, headline letters ripple, the 98K+ stat counts up, and the rating star spins. Pointer effects write CSS variables from one rAF-throttled listener (`useHeroPointer`), so React never re-renders on mouse move; they only run with a real mouse and motion allowed. The headline wraps by word, never mid-word.
 - **Reduced motion.** Decorative motion (wiggles, marquee, inertia cards, custom cursor, smooth scroll) is skipped. Functional feedback stays, just without movement.
 - **Contrast.** Button and badge orange darkened slightly to reach WCAG AA (4.8:1).
 - **Money as integer cents**, formatted only at the edge with `Intl.NumberFormat`.
@@ -73,7 +81,7 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 | --- | --- | --- |
 | Unit | Vitest | pricing, quote diffs, cart reducer (rollback, stale responses, races) |
 | End-to-end | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
-| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on `/shop`, product pages and `/cart` |
+| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages and `/cart` |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
 

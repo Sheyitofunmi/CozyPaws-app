@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import Link from "next/link";
@@ -18,8 +19,11 @@ import { useWishlist } from "@/lib/wishlist";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { formatPrice } from "@/lib/money";
 import { flyToCart } from "@/lib/fly-to-cart";
+import { usePop } from "@/lib/hooks/usePop";
+import { isModifiedClick, navigateWithTransition } from "@/lib/view-transition";
 import type { Category } from "@/lib/types";
 import SiteHeader from "@/components/SiteHeader";
+import SmartImage from "@/components/SmartImage";
 import SiteFooter from "@/components/SiteFooter";
 import { IconPlus, IconArrowUpRight, IconStar } from "@/components/icons";
 
@@ -86,8 +90,31 @@ export default function ShopPage() {
 
   const { addItem, openCart, items, cartTargetRef } = useCart();
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
+  const [popping, pop] = usePop();
   const pageRef = useRef<HTMLDivElement>(null);
   useScrollReveal(pageRef, [activeCategory, query]);
+
+  // Sliding filter highlight: measure the active pill (it can wrap onto a
+  // new row on small screens) and move one indicator to it.
+  const filtersRef = useRef<HTMLElement>(null);
+  const pillRefs = useRef<Partial<Record<Filter, HTMLButtonElement | null>>>({});
+  const [indicator, setIndicator] = useState<{ x: number; y: number; w: number; h: number; animate: boolean } | null>(null);
+  const activeAccent = activeCategory === "all" ? "var(--flow-ink)" : CATEGORY_ACCENT[activeCategory];
+  useEffect(() => {
+    const container = filtersRef.current;
+    if (!container) return;
+    const measure = (animate: boolean) => {
+      const pill = pillRefs.current[activeCategory];
+      if (!pill) return;
+      setIndicator({ x: pill.offsetLeft, y: pill.offsetTop, w: pill.offsetWidth, h: pill.offsetHeight, animate });
+    };
+    measure(indicator !== null);
+    // Re-measure without animating when the layout reflows (resize, font load).
+    const observer = new ResizeObserver(() => measure(false));
+    observer.observe(container);
+    return () => observer.disconnect();
+    // Only re-run when the active category changes.
+  }, [activeCategory]);
 
   // URL → input, e.g. when the hero search navigates here with ?q=
   useEffect(() => {
@@ -137,6 +164,17 @@ export default function ShopPage() {
   }, [activeCategory, query]);
 
   const qtyInCart = (id: string) => items.find((line) => line.id === id)?.qty ?? 0;
+
+  // Card → product: the photo morphs into the product page's photo.
+  const openProduct = (e: MouseEvent<HTMLAnchorElement>, id: string) => {
+    if (isModifiedClick(e)) return; // let cmd/ctrl-click open a new tab
+    const photo = e.currentTarget.closest("article")?.querySelector("img") ?? null;
+    const handled = navigateWithTransition(() => router.push(`/shop/${id}`), {
+      element: photo,
+      name: "product-image",
+    });
+    if (handled) e.preventDefault();
+  };
 
   const handleAdd = (id: string, button: HTMLElement) => {
     addItem(id);
@@ -194,17 +232,48 @@ export default function ShopPage() {
         </kbd>
       </search>
 
-      <nav className="shop-filters cozy-fade-up cozy-delay-400" aria-label="Product categories">
+      <nav
+        ref={filtersRef}
+        className="shop-filters cozy-fade-up cozy-delay-400"
+        aria-label="Product categories"
+        data-indicator={indicator ? "" : undefined}
+      >
+        {/* One highlight that slides to the active pill instead of jumping. */}
+        {indicator && (
+          <span
+            className="shop-filters__indicator"
+            aria-hidden="true"
+            data-animate={indicator.animate || undefined}
+            style={{
+              transform: `translate(${indicator.x}px, ${indicator.y}px)`,
+              width: indicator.w,
+              height: indicator.h,
+              background: activeAccent,
+            }}
+          />
+        )}
         {CATEGORIES.map((category) => {
           const active = category === activeCategory;
           const accent = category !== "all" ? CATEGORY_ACCENT[category] : undefined;
+          const textColor = category !== "all" ? CATEGORY_TEXT[category] : undefined;
           return (
             <button
               key={category}
+              ref={(node) => {
+                pillRefs.current[category] = node;
+              }}
               type="button"
               aria-pressed={active}
               className={`shop-filter-pill ${active ? "is-active" : ""}`}
-              style={active && accent ? { background: accent, borderColor: accent, color: category !== "all" ? CATEGORY_TEXT[category] : undefined } : undefined}
+              style={
+                active
+                  ? indicator
+                    ? { color: textColor, borderColor: accent }
+                    : accent
+                      ? { background: accent, borderColor: accent, color: textColor }
+                      : undefined
+                  : undefined
+              }
               onClick={() => setActiveCategory(category)}
             >
               {category}
@@ -252,8 +321,20 @@ export default function ShopPage() {
                 data-reveal
                 style={{ "--accent": CATEGORY_ACCENT[product.category] } as CSSProperties}
               >
-                <Link href={`/shop/${product.id}`} className="shop-card__img-wrap" aria-label={product.name}>
-                  <img src={product.img} alt="" loading="lazy" width={800} height={800} />
+                <Link
+                  href={`/shop/${product.id}`}
+                  className="shop-card__img-wrap img-slot"
+                  aria-label={product.name}
+                  onClick={(e) => openProduct(e, product.id)}
+                >
+                  <SmartImage
+                    src={product.img}
+                    alt=""
+                    loading="lazy"
+                    width={800}
+                    height={800}
+                    sizes="(max-width: 599px) 50vw, (max-width: 1100px) 33vw, 320px"
+                  />
                   {product.badge && <span className="shop-card__badge">{product.badge}</span>}
                   <span className="shop-card__view" aria-hidden="true">
                     <IconArrowUpRight />
@@ -262,15 +343,19 @@ export default function ShopPage() {
                 <button
                   type="button"
                   className={`shop-card__fav ${saved ? "is-saved" : ""}`}
+                  data-pop={popping === product.id || undefined}
                   aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
                   aria-pressed={saved}
-                  onClick={() => toggleSaved(product.id)}
+                  onClick={() => {
+                    if (!saved) pop(product.id);
+                    toggleSaved(product.id);
+                  }}
                 >
                   <IconStar fill={saved ? "currentColor" : "none"} />
                 </button>
                 <div className="shop-card__info">
                   <div>
-                    <Link href={`/shop/${product.id}`} className="shop-card__name">
+                    <Link href={`/shop/${product.id}`} className="shop-card__name" onClick={(e) => openProduct(e, product.id)}>
                       {highlight(product.name, query)}
                     </Link>
                     <p className="shop-card__category">{product.category}</p>

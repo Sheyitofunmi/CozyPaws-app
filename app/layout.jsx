@@ -7,6 +7,7 @@ import CartDrawer from "@/components/CartDrawer";
 import WishlistDrawer from "@/components/WishlistDrawer";
 import CartToast from "@/components/CartToast";
 import DemoPanelGate from "@/components/DemoPanelGate";
+import ViewTransitionListener from "@/components/ViewTransitionListener";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
             <WishlistDrawer />
             <CartToast />
             <DemoPanelGate />
+            <ViewTransitionListener />
           </WishlistProvider>
         </CartProvider>
       </body>

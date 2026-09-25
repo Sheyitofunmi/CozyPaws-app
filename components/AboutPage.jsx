@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import SmartImage from "@/components/SmartImage";
 import { REMOTE_ASSETS } from "@/lib/remote-assets";
 import {
   IconArrowRight,
@@ -173,7 +174,7 @@ export default function AboutPage() {
           {TEAM.map((member) => (
             <figure key={member.name} className="team-card" data-reveal>
               <div className="team-card__img">
-                <img src={member.img} alt={member.name} loading="lazy" />
+                <SmartImage src={member.img} alt={member.name} loading="lazy" />
               </div>
               <figcaption>
                 <p className="team-card__name">{member.name}</p>

@@ -28,6 +28,16 @@
   --color-dark: #1a1a1a;
   --color-black-soft: #111111;
   --color-black-deep: #0a0a0a;
+
+  /* Motion tokens: every UI transition picks from these, so the whole site
+     moves with one rhythm. (Hand-tuned GSAP timelines keep their own values.) */
+  --dur-instant: 100ms;
+  --dur-fast: 200ms;   /* hovers, presses, colour changes */
+  --dur-base: 300ms;   /* small movements: badges, pills, toasts */
+  --dur-slow: 450ms;   /* entrances, drawers, dialogs */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* default: fast start, soft landing */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);    /* things moving across the screen */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* playful overshoot, use sparingly */
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────────── */

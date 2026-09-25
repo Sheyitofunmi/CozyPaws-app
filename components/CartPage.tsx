@@ -22,9 +22,12 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import CartLineItem from "@/components/CartLineItem";
 import CheckoutSteps from "@/components/CheckoutSteps";
+import { CheckoutSkeleton } from "@/components/Skeletons";
 import AnimatedPrice from "@/components/AnimatedPrice";
 import WalletPayDialog from "@/components/WalletPayDialog";
 import { prefersReducedMotion } from "@/lib/motion";
+import { useBump } from "@/lib/hooks/useBump";
+import { useExitingItems } from "@/lib/hooks/useExitingItems";
 import { IconArrowRight, IconCheck, IconTruck } from "@/components/icons";
 
 type FieldErrors = Partial<Record<CustomerField | "items" | "form", string>>;
@@ -81,6 +84,7 @@ const emptyCustomer: CheckoutCustomer = { name: "", email: "", address: "", city
 export default function CartPage() {
   const router = useRouter();
   const { items, hydrated, clearCart, replaceLines } = useCart();
+  const renderedLines = useExitingItems(items, (line) => line.id);
   const [status, setStatus] = useState<Status>("idle");
   const [values, setValues] = useState<CheckoutCustomer>(emptyCustomer);
   const [touched, setTouched] = useState<Partial<Record<CustomerField, boolean>>>({});
@@ -148,6 +152,7 @@ export default function CartPage() {
 
   const unitFor = (id: string) => quote.lines.find((l) => l.id === id)?.unitCents;
   const remainingForFree = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - quote.subtotalCents);
+  const freeDeliveryBump = useBump(remainingForFree === 0 && quote.lines.length > 0 ? 1 : 0, hydrated);
 
   /*
    * Validation timing ("reward early, punish late"):
@@ -279,6 +284,10 @@ export default function CartPage() {
     void submitOrder(quote);
   };
 
+  // The saved cart lives in the browser, so the server can't render it.
+  // Show the page's shape until it's read instead of flashing "$0.00".
+  if (!hydrated) return <CheckoutSkeleton />;
+
   if (hydrated && quote.lines.length === 0) {
     return (
       <div className="cozy-page cart-page">
@@ -315,11 +324,18 @@ export default function CartPage() {
               your cart <span>· {itemCount} item{itemCount === 1 ? "" : "s"}</span>
             </h2>
             <ul className="cart-lines">
-              {items.map(({ id, qty }) => {
+              {renderedLines.map(({ item: { id, qty }, key, exiting }) => {
                 const product = getProduct(id);
                 if (!product) return null;
                 return (
-                  <CartLineItem key={id} product={product} qty={qty} variant="page" unitCents={unitFor(id)} />
+                  <CartLineItem
+                    key={key}
+                    product={product}
+                    qty={qty}
+                    variant="page"
+                    unitCents={unitFor(id)}
+                    exiting={exiting}
+                  />
                 );
               })}
             </ul>
@@ -394,7 +410,11 @@ export default function CartPage() {
               order summary
             </h2>
 
-            <p className={`cart-summary__ship-hint ${remainingForFree === 0 ? "is-free" : ""}`}>
+            <p
+              key={freeDeliveryBump}
+              className={`cart-summary__ship-hint ${remainingForFree === 0 ? "is-free" : ""}`}
+              data-celebrate={freeDeliveryBump > 0 && remainingForFree === 0 ? "" : undefined}
+            >
               <IconTruck />
               {remainingForFree > 0
                 ? `Add ${formatPrice(remainingForFree)} more for free delivery`

@@ -11,7 +11,7 @@
 ──────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --hover-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --hover-ease: var(--ease-out); /* alias kept for older rules */
   --accent-orange: #e86a10;
 }
 
@@ -37,23 +37,18 @@
   background: var(--accent-orange);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.32s var(--hover-ease);
+  transition: transform var(--dur-base) var(--hover-ease);
 }
 
-.link-underline:hover::after,
-.cozy-header__nav a:hover::after,
-.cozy-header__nav a.is-active::after,
-.footer-email:hover::after,
-.footer-whatsapp:hover::after {
+.cozy-header__nav a.is-active::after {
   transform: scaleX(1);
 }
 
 /* ── CozyHero top nav ──────────────────────────────────────────────────────── */
 .cozy-header__nav a {
-  transition: color 0.22s ease;
+  transition: color var(--dur-fast) ease;
 }
 
-.cozy-header__nav a:hover,
 .cozy-header__nav a.is-active {
   color: #1a3d1a;
 }
@@ -61,65 +56,37 @@
 /* ── Footer links (footer.css previously had no hover states) ──────────────── */
 .footer-email,
 .footer-whatsapp {
-  transition: color 0.22s ease;
-}
-
-.footer-email:hover,
-.footer-whatsapp:hover,
-.footer-map-link:hover {
-  color: var(--color-orange);
+  transition: color var(--dur-fast) ease;
 }
 
 .footer-map-link {
-  transition: color 0.22s ease;
+  transition: color var(--dur-fast) ease;
 }
 
 .footer-socials a {
   transition:
-    color 0.22s ease,
-    transform 0.22s var(--hover-ease);
-}
-
-.footer-socials a:hover {
-  color: var(--color-orange);
+    color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--hover-ease);
 }
 
 /* ── Scroll-navbar popout ──────────────────────────────────────────────────── */
 .nav-work-item {
-  transition: transform 0.25s var(--hover-ease);
-}
-
-.nav-work-item:hover {
-  transform: translateX(4px);
+  transition: transform var(--dur-fast) var(--hover-ease);
 }
 
 .nav-work-item__img {
-  transition: transform 0.35s var(--hover-ease);
-}
-
-.nav-work-item:hover .nav-work-item__img {
-  transform: scale(1.08);
+  transition: transform var(--dur-base) var(--hover-ease);
 }
 
 .nav-work-title {
-  transition: color 0.2s ease;
-}
-
-.nav-work-item:hover .nav-work-title {
-  color: var(--color-orange);
+  transition: color var(--dur-fast) ease;
 }
 
 .nav-work-btn {
   transition:
-    transform 0.24s var(--hover-ease),
-    background-color 0.24s ease,
-    box-shadow 0.24s ease;
-}
-
-.nav-work-btn:hover {
-  background-color: var(--color-orange);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+    transform var(--dur-fast) var(--hover-ease),
+    background-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
 }
 
 .nav-work-btn:active {
@@ -127,11 +94,7 @@
 }
 
 .nav-wa-link {
-  transition: color 0.2s ease;
-}
-
-.nav-wa-link:hover {
-  color: var(--color-orange);
+  transition: color var(--dur-fast) ease;
 }
 
 /* ── Primary CTA buttons — lift + shadow + a little life ───────────────────── */
@@ -146,21 +109,11 @@
 .shop-filter-pill,
 .cart-summary__checkout {
   transition:
-    transform 0.22s var(--hover-ease),
-    box-shadow 0.22s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.cozy-btn-orange:hover,
-.vimeo-hero__btn:hover,
-.about-cta__btn:hover,
-.product-add:hover,
-.contact-submit:hover:not(:disabled),
-.cart-summary__checkout:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 26px rgba(232, 106, 16, 0.28);
+    transform var(--dur-fast) var(--hover-ease),
+    box-shadow var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
 }
 
 .cozy-btn-orange:active,
@@ -173,14 +126,6 @@
 }
 
 /* Secondary / outline buttons — lift without the orange glow */
-.shop-card__add:hover,
-.product-buy-now:hover,
-.shop-filter-pill:hover,
-.contact-topic:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(26, 61, 26, 0.14);
-}
-
 .shop-card__add:active,
 .product-buy-now:active,
 .shop-filter-pill:active,
@@ -191,15 +136,108 @@
 /* ── Round icon buttons — pop + gentle rotate ──────────────────────────────── */
 .cozy-icon-btn {
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s var(--hover-ease),
-    box-shadow 0.2s ease;
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--hover-ease),
+    box-shadow var(--dur-fast) ease;
 }
 
-.cozy-icon-btn:hover {
-  transform: translateY(-2px) rotate(-6deg);
-  box-shadow: 0 8px 18px rgba(26, 61, 26, 0.18);
+.cozy-icon-btn:active {
+  transform: translateY(0) rotate(0deg) scale(0.95);
+}
+
+/* ── Hover effects only where hover exists ─────────────────────────────────
+   On touch screens :hover "sticks" after a tap (a lifted button stays lifted),
+   so every hover lift/colour lives behind a real-pointer check. :active press
+   feedback above still works everywhere. */
+@media (hover: hover) and (pointer: fine) {
+  .link-underline:hover::after,
+  .cozy-header__nav a:hover::after,
+  .footer-email:hover::after,
+  .footer-whatsapp:hover::after {
+    transform: scaleX(1);
+  }
+
+  .cozy-header__nav a:hover {
+    color: #1a3d1a;
+  }
+
+  .footer-email:hover,
+  .footer-whatsapp:hover,
+  .footer-map-link:hover {
+    color: var(--color-orange);
+  }
+
+  .footer-socials a:hover {
+    color: var(--color-orange);
+  }
+
+  .nav-work-item:hover {
+    transform: translateX(4px);
+  }
+
+  .nav-work-item:hover .nav-work-item__img {
+    transform: scale(1.08);
+  }
+
+  .nav-work-item:hover .nav-work-title {
+    color: var(--color-orange);
+  }
+
+  .nav-work-btn:hover {
+    background-color: var(--color-orange);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .nav-wa-link:hover {
+    color: var(--color-orange);
+  }
+
+  .cozy-btn-orange:hover,
+  .vimeo-hero__btn:hover,
+  .about-cta__btn:hover,
+  .product-add:hover,
+  .contact-submit:hover:not(:disabled),
+  .cart-summary__checkout:hover:not(:disabled) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 26px rgba(232, 106, 16, 0.28);
+  }
+
+  .shop-card__add:hover,
+  .product-buy-now:hover,
+  .shop-filter-pill:hover,
+  .contact-topic:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(26, 61, 26, 0.14);
+  }
+
+  .cozy-icon-btn:hover {
+    transform: translateY(-2px) rotate(-6deg);
+    box-shadow: 0 8px 18px rgba(26, 61, 26, 0.18);
+  }
+}
+
+/* Press states re-stated after the hover block so :active still wins while
+   a pressed button is also hovered (same specificity, later rule wins). */
+.nav-work-btn:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.cozy-btn-orange:active,
+.vimeo-hero__btn:active,
+.about-cta__btn:active,
+.product-add:active,
+.contact-submit:active,
+.cart-summary__checkout:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.shop-card__add:active,
+.product-buy-now:active,
+.shop-filter-pill:active,
+.contact-topic:active {
+  transform: translateY(0);
 }
 
 .cozy-icon-btn:active {
@@ -224,9 +262,9 @@
   .nav-work-btn,
   .footer-socials a {
     transition:
-      background-color 0.2s ease,
-      color 0.2s ease,
-      border-color 0.2s ease;
+      background-color var(--dur-fast) ease,
+      color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease;
   }
 
   .cozy-btn-orange:hover,

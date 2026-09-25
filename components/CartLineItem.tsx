@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { useDelayedFlag } from "@/lib/hooks/useDelayedFlag";
 import { formatPrice } from "@/lib/money";
 import type { Product } from "@/lib/types";
+import SmartImage from "@/components/SmartImage";
+import QtyNumber from "@/components/QtyNumber";
 import { IconClose, IconMinus, IconPlus } from "@/components/icons";
 
 interface Props {
@@ -18,16 +20,40 @@ interface Props {
   onNavigate?: () => void;
   /** Briefly highlight this row (it was just added). */
   highlight?: boolean;
+  /** The row was removed and is animating out (see useExitingItems). */
+  exiting?: boolean;
+}
+
+/** Collapse a removed row: slide + fade, then close the gap it leaves. */
+function collapse(el: HTMLElement) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: "forwards" });
+    return;
+  }
+  const cs = getComputedStyle(el);
+  el.style.overflow = "hidden";
+  el.animate(
+    [
+      { opacity: 1, transform: "none", height: `${el.offsetHeight}px`, paddingBlock: `${cs.paddingTop} ${cs.paddingBottom}`, marginBlock: `${cs.marginTop} ${cs.marginBottom}` },
+      { opacity: 0, transform: "translateX(24px)", height: `${el.offsetHeight}px`, offset: 0.45 },
+      { opacity: 0, transform: "translateX(24px)", height: "0px", paddingBlock: "0px", marginBlock: "0px", borderWidth: "0px" },
+    ],
+    { duration: 300, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+  );
 }
 
 /** One cart row, shared by the drawer and the cart page. */
-export default function CartLineItem({ product, qty, variant, unitCents, onNavigate, highlight }: Props) {
+export default function CartLineItem({ product, qty, variant, unitCents, onNavigate, highlight, exiting }: Props) {
   const rowRef = useRef<HTMLLIElement>(null);
   useEffect(() => {
     if (highlight) rowRef.current?.scrollIntoView({ block: "nearest" });
   }, [highlight]);
+  useLayoutEffect(() => {
+    if (exiting && rowRef.current) collapse(rowRef.current);
+  }, [exiting]);
   const unit = unitCents ?? product.priceCents;
-  const { setQty, removeItem, isPending } = useCart();
+  const { setQty, removeItem, isPending, lineNote } = useCart();
+  const note = exiting ? undefined : lineNote(product.id);
   // Only show "saving" if the server is slow: no flicker on fast networks.
   const showPending = useDelayedFlag(isPending(product.id), 300);
   const atStock = qty >= product.stock;
@@ -41,7 +67,7 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
       >
         <IconMinus />
       </button>
-      <span>{qty}</span>
+      <QtyNumber value={qty} />
       <button
         type="button"
         aria-label={`Increase quantity of ${product.name}`}
@@ -53,7 +79,13 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
     </div>
   );
 
-  const status = showPending ? (
+  // A server correction wins over everything else: it's the "why did my
+  // number just change?" answer, right where the number is.
+  const status = note ? (
+    <span key={note.key} className="cart-line__status cart-line__note" data-tone={note.tone}>
+      {note.text}
+    </span>
+  ) : showPending ? (
     <span className="cart-line__status" role="status">saving…</span>
   ) : atStock ? (
     <span className="cart-line__status">max available</span>
@@ -65,9 +97,13 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
         ref={rowRef}
         className="shop-cart__line"
         data-pending={showPending || undefined}
+        data-note={note?.tone}
+        data-exiting={exiting || undefined}
+        inert={exiting || undefined}
+        aria-hidden={exiting || undefined}
         data-just-added={highlight || undefined}
       >
-        <img src={product.img} alt="" />
+        <SmartImage src={product.img} alt="" width={96} height={96} sizes="96px" />
         <div className="shop-cart__line-info">
           <p className="shop-cart__line-name">{product.name}</p>
           <p className="shop-cart__line-price">{formatPrice(unit)}</p>
@@ -89,9 +125,17 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
   }
 
   return (
-    <li className="cart-line" data-pending={showPending || undefined}>
-      <Link href={`/shop/${product.id}`} className="cart-line__img" onClick={onNavigate} tabIndex={-1} aria-hidden="true">
-        <img src={product.img} alt="" />
+    <li
+      ref={rowRef}
+      className="cart-line"
+      data-pending={showPending || undefined}
+      data-note={note?.tone}
+      data-exiting={exiting || undefined}
+      inert={exiting || undefined}
+      aria-hidden={exiting || undefined}
+    >
+      <Link href={`/shop/${product.id}`} className="cart-line__img img-slot" onClick={onNavigate} tabIndex={-1} aria-hidden="true">
+        <SmartImage src={product.img} alt="" width={96} height={96} sizes="96px" />
       </Link>
       <div className="cart-line__body">
         <div className="cart-line__top">

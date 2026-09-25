@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { prefersReducedMotion } from "@/lib/motion";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SOCIAL_ICONS, WIGGLE_CONFIG } from "@/lib/data";
+import { useIdleReady } from "@/lib/hooks/useIdleReady";
 
 function initWiggle(element, intensity) {
   // Looping wiggles are pure decoration: skip them for reduced-motion users.
@@ -36,7 +37,11 @@ function initWiggle(element, intensity) {
 }
 
 export default function Footer() {
+  // Below the fold: wire up animations once the browser is idle.
+  const ready = useIdleReady();
+
   useEffect(() => {
+    if (!ready) return;
     gsap.registerPlugin(ScrollTrigger);
 
     document.querySelectorAll(".footer-map-link").forEach((footerMapLink) => {
@@ -256,7 +261,7 @@ export default function Footer() {
 
     // Remove document listeners when the footer unmounts (client-side navigation).
     return () => stickerCleanups.forEach((fn) => fn());
-  }, []);
+  }, [ready]);
 
   return (
     <div className="footer-inner">
@@ -406,6 +411,7 @@ export default function Footer() {
         <div className="footer-stickers">
           <div className="footer-sticker sticker-smiley">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-smiley.svg"
               width="100%"
               alt=""
@@ -415,6 +421,7 @@ export default function Footer() {
           </div>
           <div className="footer-sticker sticker-heart">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-heart.svg"
               width="100%"
               alt=""
@@ -424,6 +431,7 @@ export default function Footer() {
           </div>
           <div className="footer-sticker sticker-hands">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-hands.svg"
               width="100%"
               alt=""
@@ -433,6 +441,7 @@ export default function Footer() {
           </div>
           <div className="footer-sticker sticker-100">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-100.svg"
               width="100%"
               alt=""
@@ -442,6 +451,7 @@ export default function Footer() {
           </div>
           <div className="footer-sticker sticker-camera">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-camera.svg"
               width="100%"
               alt=""
@@ -450,6 +460,7 @@ export default function Footer() {
           </div>
           <div className="footer-sticker sticker-boom">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-boom.svg"
               width="100%"
               alt=""

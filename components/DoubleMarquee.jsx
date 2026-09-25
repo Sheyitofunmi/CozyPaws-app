@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { prefersReducedMotion } from "@/lib/motion";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { brands, colors } from "@/lib/data";
+import { useIdleReady } from "@/lib/hooks/useIdleReady";
 
 function shuffleArray(array) {
   const shuffled = [...array];
@@ -69,9 +70,14 @@ function buildMarqueeItems() {
 }
 
 export default function DoubleMarquee() {
+  const [paused, setPaused] = useState(false);
   const [tracks, setTracks] = useState([[], []]);
 
+  // Below the fold: wire up animations once the browser is idle.
+  const ready = useIdleReady();
+
   useEffect(() => {
+    if (!ready) return;
     gsap.registerPlugin(ScrollTrigger);
 
     setTracks(buildMarqueeItems());
@@ -123,7 +129,7 @@ export default function DoubleMarquee() {
         if (t.vars.trigger === ".Double-marquee") t.kill();
       });
     };
-  }, []);
+  }, [ready]);
 
   return (
     <>
@@ -151,6 +157,7 @@ export default function DoubleMarquee() {
         </div>
         <div className="marquee-blob-container">
           <img
+              loading="lazy"
             src="/assets/Marquee-blob SVG/marquee-blob.svg"
             className="marquee-blob"
             alt=""
@@ -159,6 +166,7 @@ export default function DoubleMarquee() {
           <div className="marquee-svg-container">
             <div className="marquee-svg-item">
               <img
+              loading="lazy"
                 src="/assets/Marquee-blob SVG/marquee-hand.svg"
                 width="100%"
                 alt=""
@@ -192,7 +200,26 @@ export default function DoubleMarquee() {
         </div>
       </div>
 
-      <div className="marquee-right">
+      {/* Anything that moves for more than 5s needs a way to stop it
+          (WCAG 2.2.2). Hovering or focusing inside also pauses it. */}
+      <div className="marquee-right" data-paused={paused || undefined}>
+        <button
+          type="button"
+          className="marquee-pause"
+          aria-pressed={paused}
+          aria-label={paused ? "Play brand animation" : "Pause brand animation"}
+          onClick={() => setPaused((p) => !p)}
+        >
+          {paused ? (
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M8 5v14l11-7z" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
         {tracks.map((trackItems, colIndex) => (
           <div key={colIndex} className="marquee-column">
             <div className="marquee-track">
