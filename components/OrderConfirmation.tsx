@@ -6,6 +6,7 @@ import { getProduct } from "@/lib/catalog";
 import { deliveryWindow } from "@/lib/delivery";
 import { readLastOrder, type PlacedOrder } from "@/lib/last-order";
 import { formatPrice } from "@/lib/money";
+import { NETWORK_FEE_CENTS, shortAddress } from "@/lib/wallet-machine";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import CheckoutSteps from "@/components/CheckoutSteps";
@@ -149,6 +150,19 @@ function Receipt({
               <dd>{formatPrice(quote.totalCents)}</dd>
             </div>
           </dl>
+          <p className="order-paid-with">
+            {order.payment?.method === "wallet" ? (
+              <>
+                paid with wallet <code>{shortAddress(order.payment.account)}</code> · tx{" "}
+                <code>{shortAddress(order.payment.txHash)}</code>{" "}
+                <span className="wallet-sim-badge">simulated</span>
+                <br />
+                plus a {formatPrice(NETWORK_FEE_CENTS)} network fee, paid from your wallet
+              </>
+            ) : (
+              <>paid by card (demo: nothing was charged)</>
+            )}
+          </p>
         </section>
 
         <div className="order-confirm__side">

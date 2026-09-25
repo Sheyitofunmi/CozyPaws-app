@@ -1,4 +1,4 @@
-import type { CheckoutCustomer, Quote } from "./types";
+import type { CheckoutCustomer, Payment, Quote } from "./types";
 
 /**
  * The confirmation page lives at its own URL (/order/confirmed) so a refresh
@@ -13,6 +13,7 @@ export interface PlacedOrder {
   placedAt: string; // ISO timestamp
   quote: Quote;
   customer: CheckoutCustomer;
+  payment?: Payment;
 }
 
 export function saveLastOrder(order: PlacedOrder) {

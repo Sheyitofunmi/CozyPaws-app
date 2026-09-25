@@ -15,6 +15,8 @@ export function useDialog(
   dialogRef: RefObject<HTMLElement | null>,
   isOpen: boolean,
   onClose: () => void,
+  /** Element to focus on open (e.g. the dialog's heading). Defaults to the first focusable. */
+  initialFocusRef?: RefObject<HTMLElement | null>,
 ) {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
@@ -37,7 +39,9 @@ export function useDialog(
         (el) => el.offsetParent !== null || el === document.activeElement,
       );
     // Wait a frame so the element is visible (it animates in from off-screen).
-    const raf = requestAnimationFrame(() => (focusables()[0] ?? dialog).focus());
+    const raf = requestAnimationFrame(() =>
+      (initialFocusRef?.current ?? focusables()[0] ?? dialog).focus(),
+    );
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

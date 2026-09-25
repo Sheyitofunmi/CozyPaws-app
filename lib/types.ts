@@ -70,15 +70,31 @@ export interface CheckoutCustomer {
   zip: string;
 }
 
+export type Payment =
+  | { method: "card" }
+  /** Simulated wallet payment: the tx hash is fake, see components/WalletPayDialog.tsx. */
+  | { method: "wallet"; account: string; txHash: string };
+
 export interface CheckoutRequest {
   customer: CheckoutCustomer;
   items: CartLine[];
   /** The quote the customer was looking at when they pressed "place order". */
   expected: { lines: QuoteLine[]; totalCents: Cents };
+  /** Defaults to the demo card flow when omitted. */
+  payment?: Payment;
 }
 
+export interface QuoteRequest {
+  items: CartLine[];
+  expected?: { lines: QuoteLine[]; totalCents: Cents };
+}
+
+export type QuoteResponse =
+  | { ok: true; quote: Quote; changes: LineChange[] }
+  | { ok: false; code: "invalid_request" | "empty_cart"; message: string };
+
 export type CheckoutResponse =
-  | { ok: true; orderId: string; quote: Quote; message: string }
+  | { ok: true; orderId: string; quote: Quote; payment: Payment; message: string }
   | { ok: false; code: "validation"; errors: Partial<Record<keyof CheckoutCustomer | "items", string>> }
   | { ok: false; code: "quote_changed"; quote: Quote; changes: LineChange[] }
-  | { ok: false; code: "invalid_request" | "empty_cart" | "unavailable"; message: string };
+  | { ok: false; code: "invalid_request" | "empty_cart" | "unavailable" | "payment_invalid"; message: string };

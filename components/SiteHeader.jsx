@@ -21,7 +21,7 @@ const NAV_LINKS = [
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const { count, openCart, hydrated } = useCart();
+  const { count, openCart, hydrated, cartTargetRef } = useCart();
   const cartBump = useBump(count, hydrated);
   const { count: wishlistCount, openWishlist } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -63,6 +63,7 @@ export default function SiteHeader() {
           )}
         </button>
         <button
+          ref={cartTargetRef}
           className="cozy-icon-btn"
           aria-label={count > 0 ? `Open cart, ${count} item${count === 1 ? "" : "s"}` : "Open cart"}
           onClick={openCart}

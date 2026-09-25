@@ -15,13 +15,17 @@ import type {
   CheckoutRequest,
   CheckoutResponse,
   LineChange,
+  Payment,
   Quote,
 } from "@/lib/types";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import CartLineItem from "@/components/CartLineItem";
 import CheckoutSteps from "@/components/CheckoutSteps";
-import { IconArrowRight, IconTruck } from "@/components/icons";
+import AnimatedPrice from "@/components/AnimatedPrice";
+import WalletPayDialog from "@/components/WalletPayDialog";
+import { prefersReducedMotion } from "@/lib/motion";
+import { IconArrowRight, IconCheck, IconTruck } from "@/components/icons";
 
 type FieldErrors = Partial<Record<CustomerField | "items" | "form", string>>;
 
@@ -51,7 +55,8 @@ const FIELDS: FieldConfig[] = [
   { name: "zip", label: "Postal code", span: 1, autoComplete: "postal-code" },
 ];
 
-type Status = "idle" | "placing" | "review";
+type Status = "idle" | "placing" | "review" | "success";
+type PayMethod = "card" | "wallet";
 
 /** Stable signature of a quote, so a retry of the same order reuses its key. */
 const signature = (q: Quote) =>
@@ -83,6 +88,25 @@ export default function CartPage() {
   const [announcement, setAnnouncement] = useState("");
   const [serverQuote, setServerQuote] = useState<Quote | null>(null);
   const [changes, setChanges] = useState<LineChange[]>([]);
+  const [payMethod, setPayMethod] = useState<PayMethod>("card");
+  const [walletOpen, setWalletOpen] = useState(false);
+  // Bumped on every failed attempt so the button's "shake" animation replays.
+  const [shakeKey, setShakeKey] = useState(0);
+  const placeOrderRef = useRef<HTMLButtonElement>(null);
+  // A small "no" shake on failure. Motion only: the reason is always in text too.
+  useEffect(() => {
+    if (shakeKey === 0 || prefersReducedMotion()) return;
+    placeOrderRef.current?.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-6px)" },
+        { transform: "translateX(5px)" },
+        { transform: "translateX(-3px)" },
+        { transform: "translateX(0)" },
+      ],
+      { duration: 380, easing: "ease-out" },
+    );
+  }, [shakeKey]);
 
   const formRef = useRef<HTMLFormElement>(null);
   const reviewHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -148,19 +172,22 @@ export default function CartPage() {
     if (el instanceof HTMLInputElement) el.focus();
   }
 
-  async function submitOrder(expected: Quote) {
-    if (inFlight.current) return; // blocks double-clicks within the same frame
-
-    // Check the form on the client first: no round trip to find a typo.
+  /** Client-side check first: no round trip to find a typo. Returns true when the form is good. */
+  function checkForm(): boolean {
     const clientErrors = validateCustomer(values);
     const invalid = CUSTOMER_FIELDS.filter((f) => clientErrors[f]);
-    if (invalid.length > 0) {
-      setErrors(clientErrors);
-      setTouched(Object.fromEntries(CUSTOMER_FIELDS.map((f) => [f, true])));
-      setAnnouncement(`${invalid.length} field${invalid.length === 1 ? " needs" : "s need"} a look before we can place your order.`);
-      focusField(invalid[0]!);
-      return;
-    }
+    if (invalid.length === 0) return true;
+    setErrors(clientErrors);
+    setTouched(Object.fromEntries(CUSTOMER_FIELDS.map((f) => [f, true])));
+    setAnnouncement(`${invalid.length} field${invalid.length === 1 ? " needs" : "s need"} a look before we can place your order.`);
+    setShakeKey((k) => k + 1);
+    focusField(invalid[0]!);
+    return false;
+  }
+
+  async function submitOrder(expected: Quote, payment: Payment = { method: "card" }) {
+    if (inFlight.current) return; // blocks double-clicks within the same frame
+    if (!checkForm()) return;
 
     inFlight.current = true;
     setStatus("placing");
@@ -177,6 +204,7 @@ export default function CartPage() {
       customer: values,
       items: expected.lines.map(({ id, qty }) => ({ id, qty })),
       expected: { lines: expected.lines, totalCents: expected.totalCents },
+      payment,
     };
 
     try {
@@ -196,16 +224,26 @@ export default function CartPage() {
           placedAt: new Date().toISOString(),
           quote: result.quote,
           customer: values,
+          payment: result.payment,
         });
-        clearCart();
-        // replace(), not push(): "back" from the receipt shouldn't land on a checkout form.
-        router.replace("/order/confirmed");
+        // A short "order placed ✓" beat on the button before we move on,
+        // so success registers where the user is looking.
+        setStatus("success");
+        window.setTimeout(
+          () => {
+            clearCart();
+            // replace(), not push(): "back" from the receipt shouldn't land on a checkout form.
+            router.replace("/order/confirmed");
+          },
+          prefersReducedMotion() ? 250 : 750,
+        );
         return;
       }
 
       switch (result.code) {
         case "validation": {
           setErrors(result.errors);
+          setShakeKey((k) => k + 1);
           setStatus("idle");
           const first = CUSTOMER_FIELDS.find((f) => result.errors[f]);
           if (first) focusField(first);
@@ -219,10 +257,12 @@ export default function CartPage() {
           break;
         default:
           setErrors({ form: result.message });
+          setShakeKey((k) => k + 1);
           setStatus("idle");
       }
     } catch {
       setErrors({ form: "Network hiccup: your order wasn't placed. Please try again." });
+      setShakeKey((k) => k + 1);
       setStatus("idle");
     } finally {
       inFlight.current = false;
@@ -231,6 +271,11 @@ export default function CartPage() {
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (payMethod === "wallet") {
+      // Same form check, then the wallet takes over (connect → review → sign → confirm).
+      if (checkForm()) setWalletOpen(true);
+      return;
+    }
     void submitOrder(quote);
   };
 
@@ -252,6 +297,8 @@ export default function CartPage() {
   }
 
   const placing = status === "placing";
+  const succeeded = status === "success";
+  const busy = placing || succeeded;
   const itemCount = quote.lines.reduce((n, l) => n + l.qty, 0);
 
   return (
@@ -334,9 +381,9 @@ export default function CartPage() {
                   );
                 })}
               </div>
-              {(errors.form || errors.items) && (
+              {errors.items && (
                 <p className="contact-error cart-form-error" role="alert">
-                  {errors.form ?? errors.items}
+                  {errors.items}
                 </p>
               )}
             </form>
@@ -356,7 +403,7 @@ export default function CartPage() {
 
             <div className="cart-summary__row">
               <span>Subtotal</span>
-              <span>{formatPrice(quote.subtotalCents)}</span>
+              <AnimatedPrice cents={quote.subtotalCents} />
             </div>
             <div className="cart-summary__row">
               <span>Shipping</span>
@@ -364,8 +411,40 @@ export default function CartPage() {
             </div>
             <div className="cart-summary__row cart-summary__row--total">
               <span>Total</span>
-              <span>{formatPrice(quote.totalCents)}</span>
+              <AnimatedPrice cents={quote.totalCents} />
             </div>
+
+            <fieldset className="pay-method" disabled={busy}>
+              <legend>pay with</legend>
+              <label data-checked={payMethod === "card" || undefined}>
+                <input
+                  type="radio"
+                  name="pay-method"
+                  value="card"
+                  checked={payMethod === "card"}
+                  onChange={() => setPayMethod("card")}
+                />
+                <span>
+                  <strong>card</strong>
+                  <small>demo: nothing is charged</small>
+                </span>
+              </label>
+              <label data-checked={payMethod === "wallet" || undefined}>
+                <input
+                  type="radio"
+                  name="pay-method"
+                  value="wallet"
+                  checked={payMethod === "wallet"}
+                  onChange={() => setPayMethod("wallet")}
+                />
+                <span>
+                  <strong>
+                    crypto wallet <span className="wallet-sim-badge">simulated</span>
+                  </strong>
+                  <small>connect, sign, confirm</small>
+                </span>
+              </label>
+            </fieldset>
 
             <div ref={summaryButtonRef}>
               {status === "review" ? (
@@ -399,24 +478,39 @@ export default function CartPage() {
                 </div>
               ) : (
                 <button
+                  ref={placeOrderRef}
                   type="submit"
                   form="checkout-form"
-                  className="cozy-btn-orange cart-summary__checkout"
-                  disabled={placing || !hydrated}
+                  className={`cozy-btn-orange cart-summary__checkout place-order ${succeeded ? "is-success" : ""}`}
+                  disabled={busy || !hydrated}
+                  aria-describedby={errors.form ? "place-order-error" : undefined}
                 >
-                  {placing ? (
+                  {succeeded ? (
+                    <>
+                      <IconCheck className="place-order__check" /> order placed
+                    </>
+                  ) : placing ? (
                     <>
                       <span className="btn-spinner" aria-hidden="true" /> placing order…
                     </>
                   ) : (
                     <>
-                      place order · {formatPrice(quote.totalCents)}
+                      {payMethod === "wallet" ? "pay with wallet" : errors.form ? "try again" : "place order"} ·{" "}
+                      {formatPrice(quote.totalCents)}
                       <IconArrowRight className="cozy-btn-orange__icon" />
                     </>
                   )}
                 </button>
               )}
             </div>
+            {errors.form && (
+              <p id="place-order-error" className="contact-error cart-form-error" role="alert">
+                {errors.form}
+              </p>
+            )}
+            <p className="visually-hidden" role="status">
+              {succeeded ? "Order placed. Taking you to your receipt." : ""}
+            </p>
             <p className="cart-summary__note">demo store: no real payment is taken.</p>
             <Link href="/shop" className="cart-summary__continue">
               ← continue shopping
@@ -434,18 +528,34 @@ export default function CartPage() {
       >
         <div className="checkout-sticky__total">
           <span>total</span>
-          <strong>{formatPrice(quote.totalCents)}</strong>
+          <strong>
+            <AnimatedPrice cents={quote.totalCents} />
+          </strong>
         </div>
         <button
           type="submit"
           form="checkout-form"
           tabIndex={-1}
           className="cozy-btn-orange checkout-sticky__btn"
-          disabled={placing || !hydrated}
+          disabled={busy || !hydrated}
         >
-          {placing ? "placing…" : "place order"}
+          {succeeded ? "placed ✓" : placing ? "placing…" : payMethod === "wallet" ? "pay with wallet" : "place order"}
         </button>
       </div>
+
+      <WalletPayDialog
+        open={walletOpen}
+        items={items}
+        shownQuote={quote}
+        onClose={() => setWalletOpen(false)}
+        onQuoteChanged={(serverPriced) => {
+          setServerQuote(serverPriced);
+          replaceLines(serverPriced.lines.map(({ id, qty }) => ({ id, qty })));
+        }}
+        onPaid={({ account, txHash, quote: paidQuote }) =>
+          void submitOrder(paidQuote, { method: "wallet", account, txHash })
+        }
+      />
 
       <SiteFooter />
     </div>

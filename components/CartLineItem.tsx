@@ -90,7 +90,7 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
 
   return (
     <li className="cart-line" data-pending={showPending || undefined}>
-      <Link href={`/shop/${product.id}`} className="cart-line__img" onClick={onNavigate} tabIndex={-1}>
+      <Link href={`/shop/${product.id}`} className="cart-line__img" onClick={onNavigate} tabIndex={-1} aria-hidden="true">
         <img src={product.img} alt="" />
       </Link>
       <div className="cart-line__body">

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildQuote, diffQuotes } from "@/lib/pricing";
 import { getServerProduct } from "@/lib/server/catalog";
 import { readDemo, sleep } from "@/lib/server/demo";
-import type { CheckoutRequest, CheckoutResponse } from "@/lib/types";
+import type { CheckoutRequest, CheckoutResponse, Payment } from "@/lib/types";
 import { validateCustomer, type CustomerErrors } from "@/lib/validation";
 
 /*
@@ -67,11 +67,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const payment: Payment = body.payment ?? { method: "card" };
+  if (payment.method === "wallet" && !isWalletPayment(payment)) {
+    return NextResponse.json<CheckoutResponse>(
+      { ok: false, code: "payment_invalid", message: "We couldn't verify that wallet payment." },
+      { status: 402 },
+    );
+  }
+  // A real integration would verify the transaction on-chain here (amount,
+  // recipient, confirmations) before fulfilling. This demo only checks shape.
+
   const orderId = `CP-${Date.now().toString(36).toUpperCase()}`;
   const response: CheckoutResponse = {
     ok: true,
     orderId,
     quote,
+    payment,
     message: `Order ${orderId} confirmed! A (pretend) confirmation email is on its way.`,
   };
   if (idempotencyKey) completedOrders.set(idempotencyKey, response);
@@ -80,6 +91,14 @@ export async function POST(req: NextRequest) {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function isWalletPayment(p: Payment): boolean {
+  return (
+    p.method === "wallet" &&
+    /^0x[0-9a-f]{40}$/i.test(p.account) &&
+    /^0x[0-9a-f]{64}$/i.test(p.txHash)
+  );
 }
 
 function isCheckoutRequest(value: unknown): value is CheckoutRequest {

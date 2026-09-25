@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { getProduct } from "./catalog";
 import {
@@ -45,6 +46,8 @@ interface CartContextValue {
   dismissNotice: () => void;
   /** The line the user just added (drives the drawer highlight). */
   lastAdded: { id: string; seq: number } | null;
+  /** The header cart button: where "fly to cart" images land. */
+  cartTargetRef: RefObject<HTMLButtonElement | null>;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -86,6 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [notice, setNotice] = useState<CartNotice | null>(null);
+  const cartTargetRef = useRef<HTMLButtonElement | null>(null);
   const [lastAdded, setLastAdded] = useState<{ id: string; seq: number } | null>(null);
 
   const dispatch = useCallback((action: CartAction) => {
@@ -196,6 +200,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     notice,
     dismissNotice,
     lastAdded,
+    cartTargetRef,
     isOpen,
     openCart,
     closeCart,

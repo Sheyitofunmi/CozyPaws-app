@@ -8,6 +8,7 @@ import { useDialog } from "@/lib/hooks/useDialog";
 import { formatPrice } from "@/lib/money";
 import { FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/pricing";
 import CartLineItem from "@/components/CartLineItem";
+import AnimatedPrice from "@/components/AnimatedPrice";
 import { IconClose, IconPlus } from "@/components/icons";
 
 export default function CartDrawer() {
@@ -127,7 +128,7 @@ export default function CartDrawer() {
             <div className="shop-cart__foot">
               <div className="shop-cart__subtotal">
                 <span>subtotal</span>
-                <span>{formatPrice(subtotalCents)}</span>
+                <AnimatedPrice cents={subtotalCents} />
               </div>
               <Link href="/cart" className="cozy-btn-orange shop-cart__checkout" onClick={closeCart}>
                 go to checkout

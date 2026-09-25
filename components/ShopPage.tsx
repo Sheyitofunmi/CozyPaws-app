@@ -17,6 +17,7 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { formatPrice } from "@/lib/money";
+import { flyToCart } from "@/lib/fly-to-cart";
 import type { Category } from "@/lib/types";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -83,7 +84,7 @@ export default function ShopPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSyncedQuery = useRef(urlQuery);
 
-  const { addItem, openCart, items } = useCart();
+  const { addItem, openCart, items, cartTargetRef } = useCart();
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
   const pageRef = useRef<HTMLDivElement>(null);
   useScrollReveal(pageRef, [activeCategory, query]);
@@ -137,9 +138,11 @@ export default function ShopPage() {
 
   const qtyInCart = (id: string) => items.find((line) => line.id === id)?.qty ?? 0;
 
-  const handleAdd = (id: string) => {
+  const handleAdd = (id: string, button: HTMLElement) => {
     addItem(id);
-    openCart();
+    // Fly the card's own photo (found from the clicked card, not the document).
+    const photo = button.closest("article")?.querySelector("img") ?? null;
+    void flyToCart(photo, cartTargetRef.current).then(openCart);
   };
 
   const resultLabel = `${visibleProducts.length} product${visibleProducts.length === 1 ? "" : "s"}${
@@ -277,7 +280,7 @@ export default function ShopPage() {
                 <button
                   type="button"
                   className="shop-card__add"
-                  onClick={() => handleAdd(product.id)}
+                  onClick={(e) => handleAdd(product.id, e.currentTarget)}
                   disabled={maxedOut}
                 >
                   <IconPlus className="shop-card__add-icon" />{" "}

@@ -9,6 +9,7 @@ import type { Category, Product } from "@/lib/types";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useScrollReveal } from "@/lib/useScrollReveal";
+import { flyToCart } from "@/lib/fly-to-cart";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import {
@@ -79,7 +80,9 @@ const TRUST = [
 
 export default function ProductDetail({ product }: { product: Product }) {
   const router = useRouter();
-  const { addItem, openCart, items } = useCart();
+  const { addItem, openCart, items, cartTargetRef } = useCart();
+  const imageRef = useRef<HTMLImageElement>(null);
+  const stickyImageRef = useRef<HTMLImageElement>(null);
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
   const [qty, setQty] = useState(1);
   const pageRef = useRef<HTMLDivElement>(null);
@@ -106,13 +109,14 @@ export default function ProductDetail({ product }: { product: Product }) {
   const addedTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
 
-  const addToCart = () => {
-    addItem(product.id, qty);
+  const addToCart = (source: HTMLImageElement | null = imageRef.current) => {
+    addItem(product.id, qty); // optimistic: the cart updates right away
     setQty(1);
     setJustAdded(true);
     window.clearTimeout(addedTimer.current);
     addedTimer.current = window.setTimeout(() => setJustAdded(false), 1600);
-    openCart();
+    // Let the image land in the cart icon before the drawer slides over it.
+    void flyToCart(source, cartTargetRef.current).then(openCart);
   };
 
   // Mobile: once the main buy button scrolls away, a slim bar keeps it in reach.
@@ -153,7 +157,7 @@ export default function ProductDetail({ product }: { product: Product }) {
       <section className="product-main">
         <div className="product-gallery" data-reveal>
           <span className="product-gallery__blob" aria-hidden="true" />
-          <img src={product.img} alt={product.name} width={800} height={800} fetchPriority="high" />
+          <img ref={imageRef} src={product.img} alt={product.name} width={800} height={800} fetchPriority="high" />
           {product.badge && (
             <span className="product-gallery__badge">{product.badge}</span>
           )}
@@ -197,7 +201,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             <button
               type="button"
               className={`cozy-btn-orange product-add ${justAdded ? "is-added" : ""}`}
-              onClick={addToCart}
+              onClick={() => addToCart()}
               disabled={soldOutForYou}
             >
               <span className="product-add__label">{addLabel}</span>
@@ -241,7 +245,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         aria-hidden={!showStickyBuy}
         inert={!showStickyBuy}
       >
-        <img src={product.img} alt="" width={44} height={44} />
+        <img ref={stickyImageRef} src={product.img} alt="" width={44} height={44} />
         <div className="product-sticky__text">
           <p className="product-sticky__name">{product.name}</p>
           <p className="product-sticky__price">{formatPrice(product.priceCents)}</p>
@@ -249,7 +253,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         <button
           type="button"
           className={`cozy-btn-orange product-sticky__add ${justAdded ? "is-added" : ""}`}
-          onClick={addToCart}
+          onClick={() => addToCart(stickyImageRef.current)}
           disabled={soldOutForYou}
         >
           {justAdded ? "added ✓" : soldOutForYou ? "in your cart" : "add to cart"}

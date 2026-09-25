@@ -16,6 +16,8 @@ interface DemoState {
   failNextCart: boolean;
   priceBump?: { id: string; percent: number };
   stockDrop?: { id: string; stock: number };
+  /** Simulated wallet connects with a low balance (insufficient funds path). */
+  walletLow?: boolean;
 }
 
 const EMPTY: DemoState = { latencyMs: 0, failNextCart: false };
@@ -55,7 +57,11 @@ export default function DemoPanel() {
   };
 
   const active =
-    state.latencyMs > 0 || state.failNextCart || Boolean(state.priceBump) || Boolean(state.stockDrop);
+    state.latencyMs > 0 ||
+    state.failNextCart ||
+    Boolean(state.priceBump) ||
+    Boolean(state.stockDrop) ||
+    state.walletLow === true;
 
   return (
     <div className="demo-panel" data-open={open || undefined}>
@@ -92,6 +98,15 @@ export default function DemoPanel() {
               onChange={(e) => update({ failNextCart: e.target.checked })}
             />
             Fail next cart request
+          </label>
+
+          <label className="demo-panel__row">
+            <input
+              type="checkbox"
+              checked={state.walletLow === true}
+              onChange={(e) => update({ walletLow: e.target.checked })}
+            />
+            Wallet has low balance
           </label>
 
           <label className="demo-panel__row">
