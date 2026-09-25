@@ -34,7 +34,7 @@ export default function SiteHeader() {
         className="site-header__logo-link"
         aria-label="CozyPaws home"
       >
-        <img src={LOGO_SRC} alt="CozyPaws" className="site-header__logo" />
+        <img src={LOGO_SRC} alt="CozyPaws" className="site-header__logo" width={140} height={35} />
       </Link>
 
       <nav className="site-header__nav" aria-label="Primary">

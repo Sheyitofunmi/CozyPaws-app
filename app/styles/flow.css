@@ -497,3 +497,8 @@
     display: none;
   }
 }
+
+/* Hide empty error slots so they don't add stray spacing. */
+.contact-error:empty {
+  display: none;
+}

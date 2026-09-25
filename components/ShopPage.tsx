@@ -25,6 +25,11 @@ import { IconPlus, IconArrowUpRight, IconStar } from "@/components/icons";
 type Filter = "all" | Category;
 const CATEGORIES: Filter[] = ["all", ...CARDS_DATA.map((card) => card.title as Category)];
 const URL_SYNC_DELAY_MS = 250;
+// White text fails contrast on the lighter accents.
+const CATEGORY_TEXT: Partial<Record<Category, string>> = {
+  "comfy beds": "var(--color-black)",
+  "grooming & care": "var(--color-black)",
+};
 
 /** Wraps each case-insensitive match of `query` in <mark>. */
 function highlight(text: string, query: string): ReactNode {
@@ -60,9 +65,17 @@ export default function ShopPage() {
   const urlCategory = searchParams.get("category");
 
   const [term, setTerm] = useState(urlQuery);
-  const [activeCategory, setActiveCategory] = useState<Filter>(
-    CATEGORIES.includes(urlCategory as Filter) ? (urlCategory as Filter) : "all",
-  );
+  // Category lives in the URL, so a filtered view can be shared or bookmarked.
+  const activeCategory: Filter = CATEGORIES.includes(urlCategory as Filter)
+    ? (urlCategory as Filter)
+    : "all";
+  const setActiveCategory = (category: Filter) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (category === "all") params.delete("category");
+    else params.set("category", category);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
   const deferredTerm = useDeferredValue(term);
   const query = deferredTerm.trim();
   const isStale = term.trim() !== query;
@@ -72,7 +85,8 @@ export default function ShopPage() {
 
   const { addItem, openCart, items } = useCart();
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
-  useScrollReveal([activeCategory, query]);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(pageRef, [activeCategory, query]);
 
   // URL → input, e.g. when the hero search navigates here with ?q=
   useEffect(() => {
@@ -133,7 +147,7 @@ export default function ShopPage() {
   }`;
 
   return (
-    <div className="shop-page cozy-page">
+    <div className="shop-page cozy-page" ref={pageRef}>
       <SiteHeader />
 
       <section className="shop-hero">
@@ -187,7 +201,7 @@ export default function ShopPage() {
               type="button"
               aria-pressed={active}
               className={`shop-filter-pill ${active ? "is-active" : ""}`}
-              style={active && accent ? { background: accent, borderColor: accent } : undefined}
+              style={active && accent ? { background: accent, borderColor: accent, color: category !== "all" ? CATEGORY_TEXT[category] : undefined } : undefined}
               onClick={() => setActiveCategory(category)}
             >
               {category}
@@ -236,7 +250,7 @@ export default function ShopPage() {
                 style={{ "--accent": CATEGORY_ACCENT[product.category] } as CSSProperties}
               >
                 <Link href={`/shop/${product.id}`} className="shop-card__img-wrap" aria-label={product.name}>
-                  <img src={product.img} alt="" loading="lazy" width={400} height={400} />
+                  <img src={product.img} alt="" loading="lazy" width={800} height={800} />
                   {product.badge && <span className="shop-card__badge">{product.badge}</span>}
                   <span className="shop-card__view" aria-hidden="true">
                     <IconArrowUpRight />

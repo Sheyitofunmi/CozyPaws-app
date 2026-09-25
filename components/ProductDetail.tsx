@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CATEGORY_ACCENT, PRODUCTS } from "@/lib/catalog";
@@ -71,7 +71,7 @@ const CATEGORY_COPY: Record<Category, { blurb: string; features: string[] }> = {
 
 const TRUST = [
   { icon: IconTruck, label: "Free delivery over $50" },
-  { icon: IconHeart, label: "10,000+ happy dogs" },
+  { icon: IconHeart, label: "Picked by dog people" },
   { icon: IconShield, label: "30-day easy returns" },
 ];
 
@@ -81,7 +81,8 @@ export default function ProductDetail({ product }: { product: Product }) {
   const { addItem, openCart, items } = useCart();
   const { has: isSaved, toggle: toggleSaved } = useWishlist();
   const [qty, setQty] = useState(1);
-  useScrollReveal();
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(pageRef);
 
   const saved = isSaved(product.id);
 
@@ -110,7 +111,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   };
 
   return (
-    <div className="cozy-page product-page" style={{ "--accent": accent } as CSSProperties}>
+    <div className="cozy-page product-page" style={{ "--accent": accent } as CSSProperties} ref={pageRef}>
       <SiteHeader />
 
       <nav className="product-breadcrumb" aria-label="Breadcrumb">
@@ -124,7 +125,7 @@ export default function ProductDetail({ product }: { product: Product }) {
       <section className="product-main">
         <div className="product-gallery" data-reveal>
           <span className="product-gallery__blob" aria-hidden="true" />
-          <img src={product.img} alt={product.name} />
+          <img src={product.img} alt={product.name} width={800} height={800} fetchPriority="high" />
           {product.badge && (
             <span className="product-gallery__badge">{product.badge}</span>
           )}
@@ -133,17 +134,6 @@ export default function ProductDetail({ product }: { product: Product }) {
         <div className="product-info" data-reveal data-reveal-delay="0.1">
           <span className="product-info__category">{product.category}</span>
           <h1 className="product-info__name">{product.name}</h1>
-
-          <div className="product-info__rating">
-            <span className="product-info__stars" aria-hidden="true">
-              <IconStar />
-              <IconStar />
-              <IconStar />
-              <IconStar />
-              <IconStar />
-            </span>
-            <span>4.8 · 214 reviews</span>
-          </div>
 
           <p className="product-info__price">{formatPrice(product.priceCents)}</p>
           <p className="product-info__blurb">{copy.blurb}</p>
@@ -230,7 +220,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               style={{ "--accent": CATEGORY_ACCENT[item.category] } as CSSProperties}
             >
               <div className="related-card__img">
-                <img src={item.img} alt={item.name} loading="lazy" />
+                <img src={item.img} alt="" width={800} height={800} loading="lazy" />
                 <span className="related-card__view">
                   <IconArrowUpRight />
                 </span>

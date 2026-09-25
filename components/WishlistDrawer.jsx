@@ -71,9 +71,10 @@ export default function WishlistDrawer() {
                 <Link
                   href={`/shop/${item.id}`}
                   onClick={closeWishlist}
-                  aria-label={item.name}
+                  tabIndex={-1}
+                  aria-hidden="true"
                 >
-                  <img src={item.img} alt={item.name} />
+                  <img src={item.img} alt="" width={72} height={72} />
                 </Link>
                 <div className="shop-cart__line-info">
                   <Link

@@ -854,24 +854,6 @@ a.shop-card__name:hover {
   margin: 0.75rem 0 0.5rem;
 }
 
-.product-info__rating {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #6b7280;
-  font-size: 0.85rem;
-}
-
-.product-info__stars {
-  display: inline-flex;
-  color: #e86a10;
-}
-
-.product-info__stars svg {
-  width: 16px;
-  height: 16px;
-}
-
 .product-info__price {
   font-size: clamp(24px, 3vw, 32px);
   font-weight: 700;

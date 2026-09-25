@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import SiteHeader from "@/components/SiteHeader";
@@ -61,10 +62,11 @@ const TEAM = [
 ];
 
 export default function AboutPage() {
-  useScrollReveal();
+  const pageRef = useRef(null);
+  useScrollReveal(pageRef);
 
   return (
-    <div className="cozy-page about-page">
+    <div className="cozy-page about-page" ref={pageRef}>
       <SiteHeader />
 
       <section className="about-hero">

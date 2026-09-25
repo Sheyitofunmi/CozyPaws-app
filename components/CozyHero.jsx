@@ -137,7 +137,7 @@ function StatOverlay({ className = "" }) {
   return (
     <div className={`cozy-stat ${className}`}>
       <div className="cozy-avatar-stack">
-        <img src={ASSETS.avatar} alt="" />
+        <img src={ASSETS.avatar} alt="" width={128} height={128} />
         <span className="cozy-avatar-plus">
           <IconPlus />
         </span>
@@ -195,7 +195,7 @@ export default function CozyHero() {
   return (
     <section className="cozy-hero" ref={heroRef}>
       <header className="cozy-header cozy-fade-in cozy-delay-100">
-        <img src={ASSETS.logo} alt="CozyPaws" className="cozy-header__logo" />
+        <img src={ASSETS.logo} alt="CozyPaws" className="cozy-header__logo" width={130} height={33} />
         <nav className="cozy-header__nav">
           <a href="/" className="is-active" style={POINTER_CURSOR}>
             Home
@@ -297,7 +297,7 @@ export default function CozyHero() {
 
         <div className="cozy-card cozy-card--product cozy-slide-in-left cozy-delay-600">
           <div className="cozy-card__img-wrap">
-            <img src={ASSETS.productCard} alt="Cozy Dog House" />
+            <img src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} />
             <a
               href="/shop"
               className="cozy-card__arrow-btn"
@@ -313,7 +313,7 @@ export default function CozyHero() {
 
         <div className="cozy-card cozy-card--video cozy-slide-in-right cozy-delay-700">
           <div className="cozy-card__img-wrap cozy-card__img-wrap--video">
-            <img src={ASSETS.videoCard} alt="Product review videos" />
+            <img src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} />
             <div className="cozy-card__video-overlay">
               <button
                 className="cozy-play-btn"
@@ -329,13 +329,13 @@ export default function CozyHero() {
 
         <div className="cozy-photos">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
-            <img src={ASSETS.bottomLeft} alt="Happy dog" />
+            <img src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1000">
               <StatOverlay />
             </div>
           </div>
           <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
-            <img src={ASSETS.bottomCenter} alt="Dog with owner" />
+            <img src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} fetchPriority="high" />
             <div className="cozy-overlay cozy-fade-up cozy-delay-1100">
               <h2 className="cozy-overlay__heading">
                 Best Products for Your Pet
@@ -351,7 +351,7 @@ export default function CozyHero() {
             </div>
           </div>
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-900">
-            <img src={ASSETS.bottomRight} alt="Playful dog" />
+            <img src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1200">
               <RatingOverlay />
             </div>
@@ -380,7 +380,7 @@ export default function CozyHero() {
         <div className="cozy-mobile__cards">
           <div className="cozy-mcard cozy-scale-in cozy-delay-500">
             <div className="cozy-card__img-wrap cozy-mcard__img--square">
-              <img src={ASSETS.productCard} alt="Cozy Dog House" />
+              <img src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} />
               <a
                 href="/shop"
                 className="cozy-card__arrow-btn"
@@ -395,7 +395,7 @@ export default function CozyHero() {
           </div>
           <div className="cozy-mcard cozy-scale-in cozy-delay-600">
             <div className="cozy-card__img-wrap cozy-mcard__img--tall">
-              <img src={ASSETS.videoCard} alt="Product review videos" />
+              <img src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} />
               <div className="cozy-card__video-overlay">
                 <button
                   className="cozy-play-btn"
@@ -418,13 +418,13 @@ export default function CozyHero() {
 
         <div className="cozy-photos cozy-photos--mobile">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
-            <img src={ASSETS.bottomLeft} alt="Happy dog" />
+            <img src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} />
           </div>
           <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
-            <img src={ASSETS.bottomCenter} alt="Dog with owner" />
+            <img src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} />
           </div>
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-800">
-            <img src={ASSETS.bottomRight} alt="Playful dog" />
+            <img src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} />
           </div>
         </div>
       </div>

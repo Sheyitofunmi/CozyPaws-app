@@ -1,4 +1,5 @@
 import "./globals.css";
+import { preload } from "react-dom";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import { CartProvider } from "@/lib/cart";
 import { WishlistProvider } from "@/lib/wishlist";
@@ -26,6 +27,13 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  // Epilogue is the headline font on the landing page: fetch it early.
+  preload("/fonts/Epilogue-VariableFont_wght.woff2", {
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  });
+
   return (
     <html lang="en" className={`${inter.variable} ${dmSerifDisplay.variable}`}>
       <body suppressHydrationWarning>
