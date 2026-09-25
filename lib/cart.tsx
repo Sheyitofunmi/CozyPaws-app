@@ -43,6 +43,8 @@ interface CartContextValue {
   isPending: (id: string) => boolean;
   notice: CartNotice | null;
   dismissNotice: () => void;
+  /** The line the user just added (drives the drawer highlight). */
+  lastAdded: { id: string; seq: number } | null;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -84,6 +86,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [notice, setNotice] = useState<CartNotice | null>(null);
+  const [lastAdded, setLastAdded] = useState<{ id: string; seq: number } | null>(null);
 
   const dispatch = useCallback((action: CartAction) => {
     stateRef.current = cartReducer(stateRef.current, action);
@@ -157,6 +160,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (id: string, qty = 1) => {
       void updateQty(id, selectQty(stateRef.current, id) + qty);
+      setLastAdded((prev) => ({ id, seq: (prev?.seq ?? 0) + 1 }));
     },
     [updateQty],
   );
@@ -191,6 +195,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isPending,
     notice,
     dismissNotice,
+    lastAdded,
     isOpen,
     openCart,
     closeCart,

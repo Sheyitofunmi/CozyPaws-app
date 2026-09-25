@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CATEGORY_ACCENT, PRODUCTS } from "@/lib/catalog";
@@ -19,6 +19,7 @@ import {
   IconTruck,
   IconHeart,
   IconShield,
+  IconCheck,
 } from "@/components/icons";
 
 const CATEGORY_COPY: Record<Category, { blurb: string; features: string[] }> = {
@@ -99,11 +100,38 @@ export default function ProductDetail({ product }: { product: Product }) {
     .concat(PRODUCTS.filter((p) => p.category !== product.category))
     .slice(0, 4);
 
+  // "added ✓" confirmation on the button itself, so feedback happens where
+  // the user is looking, not only in the drawer that slides in.
+  const [justAdded, setJustAdded] = useState(false);
+  const addedTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(addedTimer.current), []);
+
   const addToCart = () => {
     addItem(product.id, qty);
     setQty(1);
+    setJustAdded(true);
+    window.clearTimeout(addedTimer.current);
+    addedTimer.current = window.setTimeout(() => setJustAdded(false), 1600);
     openCart();
   };
+
+  // Mobile: once the main buy button scrolls away, a slim bar keeps it in reach.
+  const buyRef = useRef<HTMLDivElement>(null);
+  const [showStickyBuy, setShowStickyBuy] = useState(false);
+  useEffect(() => {
+    const target = buyRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry) return;
+      setShowStickyBuy(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  const addLabel = soldOutForYou
+    ? "all available stock is in your cart"
+    : `add to cart · ${formatPrice(product.priceCents * qty)}`;
 
   const buyNow = () => {
     addItem(product.id, qty);
@@ -146,7 +174,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             </ul>
           )}
 
-          <div className="product-info__buy">
+          <div className="product-info__buy" ref={buyRef}>
             <div className="product-qty" role="group" aria-label="Quantity">
               <button
                 type="button"
@@ -168,13 +196,14 @@ export default function ProductDetail({ product }: { product: Product }) {
             </div>
             <button
               type="button"
-              className="cozy-btn-orange product-add"
+              className={`cozy-btn-orange product-add ${justAdded ? "is-added" : ""}`}
               onClick={addToCart}
               disabled={soldOutForYou}
             >
-              {soldOutForYou
-                ? "all available stock is in your cart"
-                : `add to cart · ${formatPrice(product.priceCents * qty)}`}
+              <span className="product-add__label">{addLabel}</span>
+              <span className="product-add__done" aria-hidden="true">
+                <IconCheck /> added
+              </span>
             </button>
             <button type="button" className="product-buy-now" onClick={buyNow} disabled={soldOutForYou}>
               buy now
@@ -205,6 +234,27 @@ export default function ProductDetail({ product }: { product: Product }) {
           </ul>
         </div>
       </section>
+
+      <div
+        className="product-sticky"
+        data-visible={showStickyBuy || undefined}
+        aria-hidden={!showStickyBuy}
+        inert={!showStickyBuy}
+      >
+        <img src={product.img} alt="" width={44} height={44} />
+        <div className="product-sticky__text">
+          <p className="product-sticky__name">{product.name}</p>
+          <p className="product-sticky__price">{formatPrice(product.priceCents)}</p>
+        </div>
+        <button
+          type="button"
+          className={`cozy-btn-orange product-sticky__add ${justAdded ? "is-added" : ""}`}
+          onClick={addToCart}
+          disabled={soldOutForYou}
+        >
+          {justAdded ? "added ✓" : soldOutForYou ? "in your cart" : "add to cart"}
+        </button>
+      </div>
 
       <section className="product-related">
         <h2 className="product-related__title" data-reveal>

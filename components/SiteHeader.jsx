@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
 import { REMOTE_ASSETS } from "@/lib/remote-assets";
+import { useBump } from "@/lib/hooks/useBump";
 import { IconCart, IconStar, IconMenu, IconClose } from "@/components/icons";
 
 const LOGO_SRC = REMOTE_ASSETS.logo;
@@ -20,7 +21,8 @@ const NAV_LINKS = [
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const { count, openCart } = useCart();
+  const { count, openCart, hydrated } = useCart();
+  const cartBump = useBump(count, hydrated);
   const { count: wishlistCount, openWishlist } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -62,11 +64,15 @@ export default function SiteHeader() {
         </button>
         <button
           className="cozy-icon-btn"
-          aria-label="Open cart"
+          aria-label={count > 0 ? `Open cart, ${count} item${count === 1 ? "" : "s"}` : "Open cart"}
           onClick={openCart}
         >
           <IconCart className="cozy-icon" />
-          {count > 0 && <span className="cozy-badge">{count}</span>}
+          {count > 0 && (
+            <span key={cartBump} className={`cozy-badge ${cartBump ? "cozy-badge--bump" : ""}`} aria-hidden="true">
+              {count}
+            </span>
+          )}
         </button>
         <AccountMenu />
         <button

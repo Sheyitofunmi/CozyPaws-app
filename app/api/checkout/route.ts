@@ -2,9 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildQuote, diffQuotes } from "@/lib/pricing";
 import { getServerProduct } from "@/lib/server/catalog";
 import { readDemo, sleep } from "@/lib/server/demo";
-import type { CheckoutCustomer, CheckoutRequest, CheckoutResponse } from "@/lib/types";
-
-const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+import type { CheckoutRequest, CheckoutResponse } from "@/lib/types";
+import { validateCustomer, type CustomerErrors } from "@/lib/validation";
 
 /*
  * Idempotency: the client sends an Idempotency-Key per order attempt, so a
@@ -40,7 +39,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const errors = validateCustomer(body.customer);
+  const errors: CustomerErrors & { items?: string } = validateCustomer(body.customer);
   if (body.items.length === 0) errors.items = "Your cart is empty.";
   if (Object.keys(errors).length > 0) {
     return NextResponse.json<CheckoutResponse>(
@@ -77,16 +76,6 @@ export async function POST(req: NextRequest) {
   };
   if (idempotencyKey) completedOrders.set(idempotencyKey, response);
   return NextResponse.json(response);
-}
-
-function validateCustomer(c: CheckoutCustomer) {
-  const errors: Partial<Record<keyof CheckoutCustomer | "items", string>> = {};
-  if (c.name.trim().length < 2) errors.name = "Please enter your name.";
-  if (!isEmail(c.email.trim())) errors.email = "Enter a valid email.";
-  if (c.address.trim().length < 5) errors.address = "Enter a delivery address.";
-  if (c.city.trim().length < 2) errors.city = "Enter your city.";
-  if (c.zip.trim().length < 3) errors.zip = "Enter a postal code.";
-  return errors;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

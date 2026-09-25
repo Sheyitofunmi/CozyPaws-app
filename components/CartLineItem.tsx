@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { useDelayedFlag } from "@/lib/hooks/useDelayedFlag";
@@ -14,10 +16,16 @@ interface Props {
   /** Server-quoted unit price, when it differs from the catalog. */
   unitCents?: number;
   onNavigate?: () => void;
+  /** Briefly highlight this row (it was just added). */
+  highlight?: boolean;
 }
 
 /** One cart row, shared by the drawer and the cart page. */
-export default function CartLineItem({ product, qty, variant, unitCents, onNavigate }: Props) {
+export default function CartLineItem({ product, qty, variant, unitCents, onNavigate, highlight }: Props) {
+  const rowRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (highlight) rowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [highlight]);
   const unit = unitCents ?? product.priceCents;
   const { setQty, removeItem, isPending } = useCart();
   // Only show "saving" if the server is slow: no flicker on fast networks.
@@ -53,7 +61,12 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
 
   if (variant === "drawer") {
     return (
-      <li className="shop-cart__line" data-pending={showPending || undefined}>
+      <li
+        ref={rowRef}
+        className="shop-cart__line"
+        data-pending={showPending || undefined}
+        data-just-added={highlight || undefined}
+      >
         <img src={product.img} alt="" />
         <div className="shop-cart__line-info">
           <p className="shop-cart__line-name">{product.name}</p>

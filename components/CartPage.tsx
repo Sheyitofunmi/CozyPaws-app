@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { getProduct } from "@/lib/catalog";
+import { saveLastOrder } from "@/lib/last-order";
 import { formatPrice } from "@/lib/money";
 import { buildQuote, FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/pricing";
+import { CUSTOMER_FIELDS, validateCustomer, validateField, type CustomerField } from "@/lib/validation";
 import type {
   CartLine,
   CheckoutCustomer,
@@ -17,20 +20,38 @@ import type {
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import CartLineItem from "@/components/CartLineItem";
-import { IconArrowRight, IconCheck, IconTruck } from "@/components/icons";
+import CheckoutSteps from "@/components/CheckoutSteps";
+import { IconArrowRight, IconTruck } from "@/components/icons";
 
-type FieldName = keyof CheckoutCustomer;
-type FieldErrors = Partial<Record<FieldName | "items" | "form", string>>;
+type FieldErrors = Partial<Record<CustomerField | "items" | "form", string>>;
 
-const FIELDS: { name: FieldName; label: string; placeholder: string; span: 1 | 2; autoComplete: string }[] = [
-  { name: "name", label: "Full name", placeholder: "Jane Doe", span: 2, autoComplete: "name" },
-  { name: "email", label: "Email", placeholder: "you@example.com", span: 2, autoComplete: "email" },
-  { name: "address", label: "Address", placeholder: "12 Maple Street", span: 2, autoComplete: "street-address" },
-  { name: "city", label: "City", placeholder: "London", span: 1, autoComplete: "address-level2" },
-  { name: "zip", label: "Postal code", placeholder: "N1 7GU", span: 1, autoComplete: "postal-code" },
+interface FieldConfig {
+  name: CustomerField;
+  label: string;
+  span: 1 | 2;
+  autoComplete: string;
+  inputMode?: "email" | "text";
+  hint?: string;
+}
+
+// No example values as placeholders: grey "Jane Doe" text reads like a
+// filled-in field and people skip it. Labels + a hint where it helps.
+const FIELDS: FieldConfig[] = [
+  { name: "name", label: "Full name", span: 2, autoComplete: "name" },
+  {
+    name: "email",
+    label: "Email",
+    span: 2,
+    autoComplete: "email",
+    inputMode: "email",
+    hint: "for your receipt and tracking, nothing else",
+  },
+  { name: "address", label: "Address", span: 2, autoComplete: "street-address" },
+  { name: "city", label: "City", span: 1, autoComplete: "address-level2" },
+  { name: "zip", label: "Postal code", span: 1, autoComplete: "postal-code" },
 ];
 
-type Status = "idle" | "placing" | "review" | "done";
+type Status = "idle" | "placing" | "review";
 
 /** Stable signature of a quote, so a retry of the same order reuses its key. */
 const signature = (q: Quote) =>
@@ -50,19 +71,25 @@ function describeChange(change: LineChange): string {
   }
 }
 
+const emptyCustomer: CheckoutCustomer = { name: "", email: "", address: "", city: "", zip: "" };
+
 export default function CartPage() {
+  const router = useRouter();
   const { items, hydrated, clearCart, replaceLines } = useCart();
   const [status, setStatus] = useState<Status>("idle");
+  const [values, setValues] = useState<CheckoutCustomer>(emptyCustomer);
+  const [touched, setTouched] = useState<Partial<Record<CustomerField, boolean>>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [announcement, setAnnouncement] = useState("");
   const [serverQuote, setServerQuote] = useState<Quote | null>(null);
   const [changes, setChanges] = useState<LineChange[]>([]);
-  const [order, setOrder] = useState<{ orderId: string; totalCents: number; message: string } | null>(null);
 
   const formRef = useRef<HTMLFormElement>(null);
   const reviewHeadingRef = useRef<HTMLHeadingElement>(null);
-  const successHeadingRef = useRef<HTMLHeadingElement>(null);
+  const summaryButtonRef = useRef<HTMLDivElement>(null);
   const inFlight = useRef(false);
   const idempotency = useRef<{ sig: string; key: string } | null>(null);
+  const [summaryButtonVisible, setSummaryButtonVisible] = useState(true);
 
   // The quote the customer is looking at. If the server has priced this exact
   // cart, show the server's numbers; otherwise the catalog's.
@@ -81,23 +108,64 @@ export default function CartPage() {
 
   useEffect(() => {
     if (status === "review") reviewHeadingRef.current?.focus();
-    if (status === "done") successHeadingRef.current?.focus();
   }, [status]);
+
+  // Mobile: the summary sits below the form, so a slim bar keeps
+  // "place order" in reach until the real button scrolls into view.
+  useEffect(() => {
+    const target = summaryButtonRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry) setSummaryButtonVisible(entry.isIntersecting);
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hydrated, quote.lines.length]);
 
   const unitFor = (id: string) => quote.lines.find((l) => l.id === id)?.unitCents;
   const remainingForFree = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - quote.subtotalCents);
 
+  /*
+   * Validation timing ("reward early, punish late"):
+   * - no errors while someone is still typing their first attempt,
+   * - check a field when they leave it,
+   * - once a field has been checked, re-check on every keystroke so the
+   *   error disappears the moment it's fixed.
+   */
+  const onFieldChange = (field: CustomerField, value: string) => {
+    setValues((v) => ({ ...v, [field]: value }));
+    if (touched[field]) setErrors((e) => ({ ...e, [field]: validateField(field, value) }));
+  };
+
+  const onFieldBlur = (field: CustomerField) => {
+    if (!values[field]) return; // leaving an empty field untouched isn't an error yet
+    setTouched((t) => ({ ...t, [field]: true }));
+    setErrors((e) => ({ ...e, [field]: validateField(field, values[field]) }));
+  };
+
+  function focusField(field: CustomerField) {
+    const el = formRef.current?.elements.namedItem(field);
+    if (el instanceof HTMLInputElement) el.focus();
+  }
+
   async function submitOrder(expected: Quote) {
-    const form = formRef.current;
-    if (!form || inFlight.current) return; // blocks double-clicks within the same frame
+    if (inFlight.current) return; // blocks double-clicks within the same frame
+
+    // Check the form on the client first: no round trip to find a typo.
+    const clientErrors = validateCustomer(values);
+    const invalid = CUSTOMER_FIELDS.filter((f) => clientErrors[f]);
+    if (invalid.length > 0) {
+      setErrors(clientErrors);
+      setTouched(Object.fromEntries(CUSTOMER_FIELDS.map((f) => [f, true])));
+      setAnnouncement(`${invalid.length} field${invalid.length === 1 ? " needs" : "s need"} a look before we can place your order.`);
+      focusField(invalid[0]!);
+      return;
+    }
+
     inFlight.current = true;
     setStatus("placing");
     setErrors({});
-
-    const data = new FormData(form);
-    const customer = Object.fromEntries(
-      FIELDS.map(({ name }) => [name, String(data.get(name) ?? "")]),
-    ) as unknown as CheckoutCustomer;
+    setAnnouncement("");
 
     // Same order intent → same key, so a retry can never create a second order.
     const sig = signature(expected);
@@ -106,7 +174,7 @@ export default function CartPage() {
     }
 
     const body: CheckoutRequest = {
-      customer,
+      customer: values,
       items: expected.lines.map(({ id, qty }) => ({ id, qty })),
       expected: { lines: expected.lines, totalCents: expected.totalCents },
     };
@@ -123,9 +191,15 @@ export default function CartPage() {
       const result = (await res.json()) as CheckoutResponse;
 
       if (result.ok) {
-        setOrder({ orderId: result.orderId, totalCents: result.quote.totalCents, message: result.message });
-        setStatus("done");
+        saveLastOrder({
+          orderId: result.orderId,
+          placedAt: new Date().toISOString(),
+          quote: result.quote,
+          customer: values,
+        });
         clearCart();
+        // replace(), not push(): "back" from the receipt shouldn't land on a checkout form.
+        router.replace("/order/confirmed");
         return;
       }
 
@@ -133,11 +207,8 @@ export default function CartPage() {
         case "validation": {
           setErrors(result.errors);
           setStatus("idle");
-          // Move focus to the first problem so keyboard and screen-reader
-          // users land exactly where they need to act.
-          const firstInvalid = FIELDS.find(({ name }) => result.errors[name]);
-          const field = firstInvalid && form.elements.namedItem(firstInvalid.name);
-          if (field instanceof HTMLInputElement) field.focus();
+          const first = CUSTOMER_FIELDS.find((f) => result.errors[f]);
+          if (first) focusField(first);
           break;
         }
         case "quote_changed":
@@ -163,37 +234,6 @@ export default function CartPage() {
     void submitOrder(quote);
   };
 
-  if (status === "done" && order) {
-    return (
-      <div className="cozy-page cart-page">
-        <SiteHeader />
-        <section className="cart-confirm" aria-labelledby="confirm-title">
-          <span className="cart-confirm__check" aria-hidden="true">
-            <IconCheck />
-          </span>
-          <h1 id="confirm-title" ref={successHeadingRef} tabIndex={-1}>
-            Thank you! 🐾
-          </h1>
-          <p className="cart-confirm__msg">{order.message}</p>
-          <div className="cart-confirm__summary">
-            <div>
-              <span>Order</span>
-              <span>{order.orderId}</span>
-            </div>
-            <div>
-              <span>Total paid</span>
-              <span>{formatPrice(order.totalCents)}</span>
-            </div>
-          </div>
-          <Link href="/shop" className="cozy-btn-orange">
-            keep shopping <IconArrowRight className="cozy-btn-orange__icon" />
-          </Link>
-        </section>
-        <SiteFooter />
-      </div>
-    );
-  }
-
   if (hydrated && quote.lines.length === 0) {
     return (
       <div className="cozy-page cart-page">
@@ -212,16 +252,21 @@ export default function CartPage() {
   }
 
   const placing = status === "placing";
+  const itemCount = quote.lines.reduce((n, l) => n + l.qty, 0);
 
   return (
     <div className="cozy-page cart-page">
       <SiteHeader />
 
       <section className="cart-main" aria-busy={!hydrated}>
-        <h1 className="cart-main__title">your cart</h1>
+        <h1 className="cart-main__title">checkout</h1>
+        <CheckoutSteps current="details" />
 
         <div className="cart-layout">
           <div className="cart-left">
+            <h2 className="cart-left__title">
+              your cart <span>· {itemCount} item{itemCount === 1 ? "" : "s"}</span>
+            </h2>
             <ul className="cart-lines">
               {items.map(({ id, qty }) => {
                 const product = getProduct(id);
@@ -241,23 +286,45 @@ export default function CartPage() {
               aria-labelledby="shipping-title"
             >
               <h2 id="shipping-title" className="cart-shipping__title">
-                shipping details
+                where should we send it?
               </h2>
+              <p className="visually-hidden" role="status" aria-live="polite">
+                {announcement}
+              </p>
               <div className="cart-shipping__grid">
-                {FIELDS.map(({ name, label, placeholder, span, autoComplete }) => {
+                {FIELDS.map(({ name, label, span, autoComplete, inputMode, hint }) => {
                   const error = errors[name];
+                  const valid = touched[name] && !error && values[name].length > 0;
+                  const describedBy = [hint && `ck-${name}-hint`, error && `ck-${name}-error`]
+                    .filter(Boolean)
+                    .join(" ");
                   return (
-                    <div key={name} className={`contact-field cart-field--span-${span}`}>
+                    <div
+                      key={name}
+                      className={`contact-field cart-field--span-${span}`}
+                      data-valid={valid || undefined}
+                    >
                       <label htmlFor={`ck-${name}`}>{label}</label>
                       <input
                         id={`ck-${name}`}
                         name={name}
                         type={name === "email" ? "email" : "text"}
-                        placeholder={placeholder}
+                        inputMode={inputMode}
                         autoComplete={autoComplete}
+                        autoCapitalize={name === "email" ? "none" : undefined}
+                        spellCheck={name === "email" ? false : undefined}
+                        enterKeyHint={name === "zip" ? "done" : "next"}
+                        value={values[name]}
+                        onChange={(e) => onFieldChange(name, e.target.value)}
+                        onBlur={() => onFieldBlur(name)}
                         aria-invalid={error ? true : undefined}
-                        aria-describedby={error ? `ck-${name}-error` : undefined}
+                        aria-describedby={describedBy || undefined}
                       />
+                      {hint && !error && (
+                        <span id={`ck-${name}-hint`} className="cart-field__hint">
+                          {hint}
+                        </span>
+                      )}
                       {error && (
                         <span id={`ck-${name}-error`} className="contact-error">
                           {error}
@@ -268,7 +335,7 @@ export default function CartPage() {
                 })}
               </div>
               {(errors.form || errors.items) && (
-                <p className="contact-error" role="alert">
+                <p className="contact-error cart-form-error" role="alert">
                   {errors.form ?? errors.items}
                 </p>
               )}
@@ -300,55 +367,56 @@ export default function CartPage() {
               <span>{formatPrice(quote.totalCents)}</span>
             </div>
 
-            {status === "review" ? (
-              <div className="quote-review" role="region" aria-labelledby="review-title">
-                <h3 id="review-title" ref={reviewHeadingRef} tabIndex={-1}>
-                  Your total changed
-                </h3>
-                <p>Prices or stock moved while you were checking out. Nothing has been charged.</p>
-                <ul>
-                  {changes.map((c) => (
-                    <li key={`${c.kind}-${c.id}`}>{describeChange(c)}</li>
-                  ))}
-                </ul>
+            <div ref={summaryButtonRef}>
+              {status === "review" ? (
+                <div className="quote-review" role="region" aria-labelledby="review-title">
+                  <h3 id="review-title" ref={reviewHeadingRef} tabIndex={-1}>
+                    Your total changed
+                  </h3>
+                  <p>Prices or stock moved while you were checking out. Nothing has been charged.</p>
+                  <ul>
+                    {changes.map((c) => (
+                      <li key={`${c.kind}-${c.id}`}>{describeChange(c)}</li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    className="cozy-btn-orange cart-summary__checkout"
+                    onClick={() => void submitOrder(quote)}
+                  >
+                    confirm new total · {formatPrice(quote.totalCents)}
+                  </button>
+                  <button
+                    type="button"
+                    className="quote-review__back"
+                    onClick={() => {
+                      setStatus("idle");
+                      setChanges([]);
+                    }}
+                  >
+                    back to cart
+                  </button>
+                </div>
+              ) : (
                 <button
-                  type="button"
+                  type="submit"
+                  form="checkout-form"
                   className="cozy-btn-orange cart-summary__checkout"
-                  onClick={() => void submitOrder(quote)}
+                  disabled={placing || !hydrated}
                 >
-                  confirm new total · {formatPrice(quote.totalCents)}
+                  {placing ? (
+                    <>
+                      <span className="btn-spinner" aria-hidden="true" /> placing order…
+                    </>
+                  ) : (
+                    <>
+                      place order · {formatPrice(quote.totalCents)}
+                      <IconArrowRight className="cozy-btn-orange__icon" />
+                    </>
+                  )}
                 </button>
-                <button
-                  type="button"
-                  className="quote-review__back"
-                  onClick={() => {
-                    setStatus("idle");
-                    setChanges([]);
-                  }}
-                >
-                  back to cart
-                </button>
-              </div>
-            ) : (
-              <button
-                type="submit"
-                form="checkout-form"
-                className="cozy-btn-orange cart-summary__checkout"
-                disabled={placing || !hydrated}
-                aria-disabled={placing || !hydrated}
-              >
-                {placing ? (
-                  <>
-                    <span className="btn-spinner" aria-hidden="true" /> placing order…
-                  </>
-                ) : (
-                  <>
-                    place order · {formatPrice(quote.totalCents)}
-                    <IconArrowRight className="cozy-btn-orange__icon" />
-                  </>
-                )}
-              </button>
-            )}
+              )}
+            </div>
             <p className="cart-summary__note">demo store: no real payment is taken.</p>
             <Link href="/shop" className="cart-summary__continue">
               ← continue shopping
@@ -356,6 +424,28 @@ export default function CartPage() {
           </aside>
         </div>
       </section>
+
+      {/* Mobile-only sticky bar. Hidden from assistive tech: it duplicates the summary button. */}
+      <div
+        className="checkout-sticky"
+        data-visible={(!summaryButtonVisible && status !== "review") || undefined}
+        aria-hidden="true"
+        inert={summaryButtonVisible || status === "review"}
+      >
+        <div className="checkout-sticky__total">
+          <span>total</span>
+          <strong>{formatPrice(quote.totalCents)}</strong>
+        </div>
+        <button
+          type="submit"
+          form="checkout-form"
+          tabIndex={-1}
+          className="cozy-btn-orange checkout-sticky__btn"
+          disabled={placing || !hydrated}
+        >
+          {placing ? "placing…" : "place order"}
+        </button>
+      </div>
 
       <SiteFooter />
     </div>
