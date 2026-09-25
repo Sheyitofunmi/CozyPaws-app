@@ -57,6 +57,8 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 ## Craft details
 
 - **Feedback where you're looking.** The product photo flies into the cart icon (Web Animations API on a throwaway clone, skipped for reduced motion), "add to cart" turns into "added ✓", the cart badge bumps, and the new line is highlighted in the drawer. On phones a sticky buy bar appears once the main button scrolls away.
+- **Pages with a point of view.** The About page swaps the usual stat tiles for "the Biscuit test" (products that failed, stamped REJECTED, with a chew-o-meter), a timeline whose scribble draws itself as you scroll (CSS scroll-driven animation), and team cards that flip to show each dog's file. The Contact page shows whether the team is in right now (in London time, whatever yours is), adds fields for the topic you pick (order number, company, a dog photo), and ends with a stamp.
+- **A map that doesn't cost the page anything.** The Contact map (MapLibre + OpenFreeMap vector tiles, no API key) is recoloured to the brand palette at runtime, only downloads when you scroll near it, doesn't hijack scrolling (Ctrl/⌘ + scroll to zoom), and is driven by an accessible list of places. If the tiles can't load, it says so and keeps the directions link.
 - **Mistakes are cheap.** Removing an item collapses the row (it slides out and the gap closes, instead of the list jumping) and the toast offers **Undo**, which puts the item back in its old position. Keyboard focus lands on Undo, then back on the restored row. The toast pauses while you hover or focus it and animates out. When the server corrects a row (stock) or a request fails, the row itself flashes and says why ("only 1 left", "not saved, back to 1"), not only the toast.
 - **Checkout that doesn't punish.** One set of validation rules runs on the client and the server. Fields are checked when you leave them and re-checked as you fix them, so no round trip to find a typo. No example values as placeholders.
 - **Every button state is deliberate.** Place order goes idle → placing (spinner, disabled) → "order placed ✓" for a beat → receipt. Failures shake the button (motion only; the reason is always in text next to it) and the label becomes "try again". Totals count to their new value instead of jumping.
@@ -81,7 +83,7 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 | --- | --- | --- |
 | Unit | Vitest | pricing, quote diffs, cart reducer (rollback, stale responses, races) |
 | End-to-end | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
-| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages and `/cart` |
+| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages, `/cart`, `/about` and `/contact` |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
 
@@ -95,7 +97,7 @@ GitHub Actions runs typecheck, unit and e2e tests on every PR.
 
 ## Stack
 
-Next.js 15 (App Router) · React 19 · TypeScript (strict, for the cart/checkout flow) · GSAP + ScrollTrigger + InertiaPlugin · Lenis · plain per-component CSS · Vitest · Playwright · axe-core
+Next.js 15 (App Router) · React 19 · TypeScript (strict, for the cart/checkout flow) · GSAP + ScrollTrigger + InertiaPlugin · Lenis · MapLibre GL · plain per-component CSS · Vitest · Playwright · axe-core
 
 ```bash
 npm install
@@ -123,4 +125,4 @@ tests/unit/  tests/e2e/
 
 ## Credits
 
-Product photos are a mix of the project's own images and Unsplash photos. Pet-brand logos are fictional. CozyPaws is a demo store, not a real shop: no payments are taken.
+Product photos are a mix of the project's own images and Unsplash photos. Map data © OpenStreetMap contributors, tiles by OpenFreeMap; the shop's address is made up and its pin is a placeholder in Islington. Pet-brand logos are fictional. CozyPaws is a demo store, not a real shop: no payments are taken.

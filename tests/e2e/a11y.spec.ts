@@ -47,7 +47,7 @@ test("no serious axe violations on checkout with an item in the cart", async ({ 
   expect(serious.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
 });
 
-for (const path of ["/shop", "/shop/cozy-dog-house", "/cart"]) {
+for (const path of ["/shop", "/shop/cozy-dog-house", "/cart", "/about", "/contact"]) {
   test(`no serious axe violations on ${path}`, async ({ page }) => {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
