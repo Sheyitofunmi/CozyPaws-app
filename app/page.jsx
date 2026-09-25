@@ -18,6 +18,7 @@ export default function Home() {
   return (
     <>
       <SvgSymbols />
+      <div className="scroll-progress" aria-hidden="true" />
       <SmoothScroll />
       <CursorBubble />
       <CozyHero />

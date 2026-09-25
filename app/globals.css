@@ -35,3 +35,5 @@
 /* Unified hover/active language (loaded last) */
 @import "./styles/flow.css";
 /* Cart/checkout flow states, search, toast, demo panel (loaded last) */
+@import "./styles/home-polish.css";
+/* Landing page: navbar, scroll effects, microinteractions */
