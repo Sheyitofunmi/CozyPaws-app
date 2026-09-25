@@ -30,7 +30,7 @@
   margin-left: 60px;
   color: inherit;
   letter-spacing: -0.5px;
-  transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.5s var(--ease-in-out);
 }
 
 .navbar {
@@ -44,7 +44,7 @@
   padding: 20px 40px;
   background: transparent;
   z-index: 1000;
-  transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.5s var(--ease-in-out);
 }
 
 .navbar.on-dark {
@@ -64,7 +64,7 @@
 .cozy-logo path,
 .nav-bar__whatsapp-svg path {
   fill: currentColor;
-  transition: fill 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: fill 0.2s var(--ease-in-out);
 }
 
 .nav-bar__whatsapp-svg {
