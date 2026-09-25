@@ -9,7 +9,7 @@
   --flow-muted: #4b5563;
   --flow-accent: #e86a10;
   --flow-danger: #b42318;
-  --flow-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --flow-ease-out: var(--ease-out); /* alias of the global token */
 }
 
 .visually-hidden {
@@ -117,7 +117,7 @@
   height: 100%;
   background: var(--color-green);
   transform-origin: left;
-  transition: transform 0.5s var(--flow-ease-out);
+  transition: transform var(--dur-slow) var(--flow-ease-out);
 }
 
 /* ─── Place-order button + spinner ─────────────────────────────────────── */
@@ -142,7 +142,7 @@
   border-radius: 0.9rem;
   background: #fff7ed;
   border: 1.5px solid var(--flow-accent);
-  animation: flow-rise 0.35s var(--flow-ease-out);
+  animation: flow-rise var(--dur-base) var(--flow-ease-out);
 }
 
 .quote-review h3 {
@@ -191,7 +191,7 @@
 
 /* ─── Order confirmation ───────────────────────────────────────────────── */
 .cart-confirm__check {
-  animation: flow-pop 0.5s var(--flow-ease-out) both;
+  animation: flow-pop var(--dur-slow) var(--flow-ease-out) both;
 }
 
 .cart-confirm h1:focus {
@@ -229,7 +229,7 @@
   color: var(--flow-ink);
   font: inherit;
   font-size: 16px; /* ≥16px stops iOS zooming on focus */
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
 
 .shop-search input:focus-visible {
@@ -273,7 +273,7 @@
 
 /* While React renders the deferred results, dim the old grid slightly. */
 .shop-grid {
-  transition: opacity 0.15s ease;
+  transition: opacity var(--dur-fast) ease;
 }
 
 .shop-grid[data-stale] {
@@ -303,7 +303,7 @@
   line-height: 1.4;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
-  animation: flow-rise 0.3s var(--flow-ease-out);
+  animation: flow-rise var(--dur-base) var(--flow-ease-out);
 }
 
 .cart-toast--error {
@@ -470,14 +470,14 @@
 .shop-cart {
   visibility: hidden;
   transition:
-    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s linear 0.35s;
+    transform var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
 }
 
 .shop-cart.is-open {
   visibility: visible;
   transition:
-    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--dur-base) var(--ease-out),
     visibility 0s;
 }
 
@@ -519,7 +519,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  transition: opacity 0.2s ease, transform 0.25s var(--flow-ease-out);
+  transition: opacity var(--dur-fast) ease, transform var(--dur-fast) var(--flow-ease-out);
 }
 
 .product-add__done {
@@ -576,7 +576,7 @@
     background: #ffffff;
     box-shadow: 0 10px 30px rgba(26, 61, 26, 0.18);
     transform: translateY(calc(100% + 1.5rem));
-    transition: transform 0.35s var(--flow-ease-out);
+    transition: transform var(--dur-base) var(--flow-ease-out);
   }
 
   .product-sticky[data-visible] {
@@ -622,7 +622,7 @@
 
 /* ─── Header cart badge: bump when the count goes up ───────────────────── */
 .cozy-badge--bump {
-  animation: flow-bump 0.45s var(--flow-ease-out);
+  animation: flow-bump var(--dur-slow) var(--flow-ease-out);
 }
 
 @keyframes flow-bump {
@@ -633,13 +633,13 @@
 
 /* ─── Drawer: highlight the line you just added ────────────────────────── */
 .shop-cart__line {
-  transition: box-shadow 0.4s ease, background-color 0.6s ease;
+  transition: box-shadow var(--dur-slow) ease, background-color var(--dur-slow) ease;
 }
 
 .shop-cart__line[data-just-added] {
   background: #fff7ed;
   box-shadow: 0 0 0 2px var(--flow-accent);
-  animation: flow-rise 0.35s var(--flow-ease-out);
+  animation: flow-rise var(--dur-base) var(--flow-ease-out);
 }
 
 /* The list only takes the room it needs; suggestions and the footer follow. */
@@ -866,12 +866,13 @@
   background: #fff1ef;
 }
 
-/* ─── Checkout: sticky "place order" bar (mobile only) ─────────────────── */
+/* ─── Checkout: sticky "place order" bar (single-column layouts) ─────── */
 .checkout-sticky {
   display: none;
 }
 
-@media (max-width: 768px) {
+/* Matches the 900px breakpoint where the checkout becomes one column. */
+@media (max-width: 899px) {
   .checkout-sticky {
     position: fixed;
     left: 0;
@@ -886,7 +887,7 @@
     background: #ffffff;
     box-shadow: 0 -8px 24px rgba(26, 61, 26, 0.12);
     transform: translateY(110%);
-    transition: transform 0.3s var(--flow-ease-out);
+    transition: transform var(--dur-base) var(--flow-ease-out);
   }
 
   .checkout-sticky[data-visible] {
@@ -945,7 +946,7 @@
   border-radius: 9999px;
   background: var(--color-green);
   color: #ffffff;
-  animation: flow-pop 0.55s var(--flow-ease-out) both;
+  animation: flow-pop var(--dur-slow) var(--flow-ease-out) both;
 }
 
 .order-confirm__check svg {
@@ -958,7 +959,7 @@
   font-weight: 400;
   font-size: clamp(34px, 5vw, 56px);
   color: var(--flow-ink);
-  animation: flow-rise 0.45s var(--flow-ease-out) 0.1s both;
+  animation: flow-rise var(--dur-slow) var(--flow-ease-out) 0.1s both;
 }
 
 .order-confirm__hero h1:focus {
@@ -1197,7 +1198,7 @@
 .animated-price {
   display: inline-block;
   font-variant-numeric: tabular-nums; /* digits don't jitter while counting */
-  transition: color 0.2s ease;
+  transition: color var(--dur-fast) ease;
 }
 
 .animated-price[data-changing] {
@@ -1206,7 +1207,7 @@
 
 /* ─── Place order: success beat ────────────────────────────────────────── */
 .place-order {
-  transition: background-color 0.25s ease;
+  transition: background-color var(--dur-fast) ease;
 }
 
 .place-order.is-success,
@@ -1219,7 +1220,7 @@
 .place-order__check {
   width: 18px;
   height: 18px;
-  animation: flow-pop 0.4s var(--flow-ease-out) both;
+  animation: flow-pop var(--dur-slow) var(--flow-ease-out) both;
 }
 
 /* ─── Payment method ───────────────────────────────────────────────────── */
@@ -1246,7 +1247,7 @@
   border: 1.5px solid rgba(26, 61, 26, 0.15);
   border-radius: 0.9rem;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
 }
 
 .pay-method label[data-checked] {
@@ -1295,7 +1296,7 @@
   background: rgba(17, 24, 39, 0.45);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.25s ease, visibility 0.25s ease;
+  transition: opacity var(--dur-fast) ease, visibility var(--dur-fast) ease;
 }
 
 .wallet-backdrop.is-open {
@@ -1319,9 +1320,9 @@
   visibility: hidden;
   transform: translate(-50%, calc(-50% + 16px)) scale(0.98);
   transition:
-    opacity 0.25s ease,
-    transform 0.35s var(--flow-ease-out),
-    visibility 0s linear 0.35s;
+    opacity var(--dur-fast) ease,
+    transform var(--dur-base) var(--flow-ease-out),
+    visibility 0s linear var(--dur-base);
 }
 
 .wallet-dialog.is-open {
@@ -1329,8 +1330,8 @@
   visibility: visible;
   transform: translate(-50%, -50%);
   transition:
-    opacity 0.25s ease,
-    transform 0.35s var(--flow-ease-out),
+    opacity var(--dur-fast) ease,
+    transform var(--dur-base) var(--flow-ease-out),
     visibility 0s;
 }
 
@@ -1361,7 +1362,7 @@
 .wallet-steps li {
   padding-top: 0.45rem;
   border-top: 3px solid rgba(26, 61, 26, 0.12);
-  transition: border-color 0.3s ease, color 0.3s ease;
+  transition: border-color var(--dur-base) ease, color var(--dur-base) ease;
 }
 
 .wallet-steps li[data-state="done"] {
@@ -1379,7 +1380,7 @@
   font-size: 26px;
   font-weight: 400;
   color: var(--flow-ink);
-  animation: flow-rise 0.3s var(--flow-ease-out);
+  animation: flow-rise var(--dur-base) var(--flow-ease-out);
 }
 
 .wallet-dialog__body h2:focus {
@@ -1406,7 +1407,7 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.15s ease;
+  transition: border-color var(--dur-fast) ease, transform var(--dur-fast) ease;
 }
 
 .wallet-options button:hover {
@@ -1556,7 +1557,7 @@
 .wallet-progress[data-done] .wallet-progress__icon {
   background: var(--color-green);
   color: #ffffff;
-  animation: flow-pop 0.45s var(--flow-ease-out) both;
+  animation: flow-pop var(--dur-slow) var(--flow-ease-out) both;
 }
 
 .wallet-progress__icon svg {
@@ -1571,7 +1572,7 @@
   border-radius: 1rem;
   background: #111827;
   color: #f9fafb;
-  animation: flow-rise 0.35s var(--flow-ease-out);
+  animation: flow-rise var(--dur-base) var(--flow-ease-out);
 }
 
 .sim-wallet__app {
@@ -1672,4 +1673,486 @@
   .place-order__check {
     animation: none;
   }
+}
+
+/* ─── Touch screens: no sticky hover lifts ─────────────────────────────── */
+/* These hover effects live in their component files; on devices without a
+   real hover they'd stay "stuck" after a tap, so neutralise the movement. */
+@media (hover: none) {
+  .shop-card:hover,
+  .shop-card__fav:hover,
+  .product-fav:hover,
+  .account-menu__trigger:hover,
+  .account-menu__signin:hover,
+  .related-card:hover .related-card__img img,
+  .about-value:hover,
+  .team-card:hover .team-card__img img,
+  .about-cta__btn:hover,
+  .contact-card:hover,
+  .site-footer__socials a:hover {
+    transform: none;
+  }
+
+  /* The "view" arrow is a hover reveal; on touch the whole card is the link. */
+  .shop-card__view {
+    display: none;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Loading states: skeletons + image fade-in
+   ═════════════════════════════════════════════════════════════════════════ */
+.skeleton,
+.img-slot {
+  background-color: #e3f1e5;
+  background-image: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.65) 50%, transparent 80%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: flow-shimmer 1.3s linear infinite;
+}
+
+.skeleton {
+  display: block;
+  border-radius: 0.5rem;
+}
+
+.skeleton--pill {
+  border-radius: 9999px;
+}
+
+@keyframes flow-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+/* Images fade in over the shimmer once decoded. */
+img[data-img-state] {
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+img[data-img-state="loading"] {
+  opacity: 0;
+}
+
+/* Stop the shimmer behind an image once it's there (or was already there
+   before JS ran, when it has no state at all). */
+.img-slot:has(img:not([data-img-state])),
+.img-slot:has(img[data-img-state="loaded"]) {
+  animation: none;
+  background-image: none;
+}
+
+/* Broken image: calm paw placeholder instead of a broken icon. */
+.img-slot:has(img[data-img-state="error"]) {
+  animation: none;
+  background: #e3f1e5 url("/assets/pets/paw-sticker.svg") center / 32% no-repeat;
+}
+
+img[data-img-state="error"] {
+  visibility: hidden;
+}
+
+.skeleton-hero {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 4rem 1.5rem 2.5rem;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border-radius: 1.25rem;
+  background: #ffffff;
+}
+
+.skeleton-card__img {
+  aspect-ratio: 1;
+  border-radius: 1rem;
+}
+
+.skeleton-product__img {
+  aspect-ratio: 1;
+  border-radius: 1.5rem;
+}
+
+.skeleton-product__info {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.skeleton-row__img {
+  width: 92px;
+  height: 92px;
+  flex-shrink: 0;
+  border-radius: 0.8rem;
+}
+
+.skeleton-row__text {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.cart-summary .skeleton + .skeleton {
+  margin-top: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .img-slot {
+    animation: none;
+  }
+
+  img[data-img-state] {
+    transition: none;
+  }
+}
+
+.cart-line__img.img-slot {
+  display: block;
+  line-height: 0;
+  border-radius: 0.8rem;
+  overflow: hidden;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Responsiveness
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* Phones: two products per row instead of one giant card per screen. */
+@media (min-width: 360px) and (max-width: 599px) {
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding-inline: 1rem;
+  }
+
+  .shop-card__info {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.65rem 0.75rem 0;
+  }
+
+  .shop-card__name {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  .shop-card__category {
+    font-size: 12px;
+  }
+
+  .shop-card__price {
+    font-size: 14px;
+  }
+
+  .shop-card__add {
+    margin: 0.6rem 0.6rem 0.75rem;
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .shop-card__fav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .shop-card__badge {
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+  }
+}
+
+/* Keyboard shortcut hints mean nothing without a keyboard. */
+@media (hover: none) and (pointer: coarse) {
+  .shop-search__kbd {
+    display: none;
+  }
+
+  .shop-search input {
+    padding-right: 1.2rem;
+  }
+}
+
+/* Small links get a comfortable tap area without changing how they look. */
+.product-breadcrumb a {
+  display: inline-block;
+  padding-block: 0.5rem;
+  margin-block: -0.5rem;
+}
+
+.cart-summary__continue,
+.quote-review__back,
+.shop-cart__keep {
+  min-height: 44px;
+  padding-block: 0.7rem;
+}
+
+/* Remove buttons: small visual, 40px hit area. */
+.cart-line__remove,
+.shop-cart__remove {
+  position: relative;
+}
+
+.cart-line__remove::after,
+.shop-cart__remove::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+/* Tablets in the single-column checkout: keep it a readable width. */
+@media (min-width: 600px) and (max-width: 899px) {
+  .cart-layout {
+    max-width: 640px;
+    margin-inline: auto;
+  }
+
+  .cart-main__title,
+  .checkout-steps,
+  .cart-left__title {
+    max-width: 640px;
+    margin-inline: auto;
+  }
+}
+
+/* Short landscape phones: dialogs and drawers scroll instead of clipping. */
+@media (max-height: 500px) {
+  .wallet-dialog {
+    top: 0.75rem;
+    transform: translate(-50%, 0);
+    max-height: calc(100dvh - 1.5rem);
+  }
+
+  .wallet-dialog.is-open {
+    transform: translate(-50%, 0);
+  }
+
+  .shop-cart__list {
+    min-height: 120px;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Page transitions
+   ═════════════════════════════════════════════════════════════════════════ */
+.page-enter {
+  animation: page-in var(--dur-base) var(--ease-out) backwards;
+}
+
+@keyframes page-in {
+  from { opacity: 0; }
+}
+
+/* A shared-element transition is already animating this change. */
+html[data-vt] .page-enter {
+  animation: none;
+}
+
+/* Product photo morphs from the shop card into the product page. */
+::view-transition-group(product-image) {
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-image-pair(product-image) {
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* During a shared-element transition the product photo must be visible in
+   the new page's snapshot, even before its reveal/fade-in has run. */
+html[data-vt] .product-gallery,
+html[data-vt] .product-gallery img {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Microinteractions
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* Quantity rolls in the direction it changed. */
+.qty-number {
+  display: inline-block;
+  min-width: 1.5ch;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: bottom;
+  font-variant-numeric: tabular-nums;
+}
+
+.qty-number__value {
+  display: inline-block;
+}
+
+.qty-number__value[data-dir="up"] {
+  animation: qty-in-up var(--dur-base) var(--ease-out);
+}
+
+.qty-number__value[data-dir="down"] {
+  animation: qty-in-down var(--dur-base) var(--ease-out);
+}
+
+@keyframes qty-in-up {
+  from { transform: translateY(70%); opacity: 0; }
+}
+
+@keyframes qty-in-down {
+  from { transform: translateY(-70%); opacity: 0; }
+}
+
+/* Wishlist star pops (with a little ring) when you save something. */
+.shop-card__fav[data-pop] svg,
+.product-fav[data-pop] svg {
+  animation: star-pop var(--dur-slow) var(--ease-spring);
+}
+
+.shop-card__fav[data-pop]::after,
+.product-fav[data-pop]::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid var(--color-orange);
+  animation: star-ring var(--dur-slow) var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+.product-fav {
+  position: relative;
+}
+
+@keyframes star-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45) rotate(-12deg); }
+  100% { transform: scale(1); }
+}
+
+@keyframes star-ring {
+  from { transform: scale(0.8); opacity: 1; }
+  to { transform: scale(1.6); opacity: 0; }
+}
+
+/* One filter highlight that slides between pills. */
+.shop-filters {
+  position: relative;
+}
+
+.shop-filters__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.shop-filters__indicator[data-animate] {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    width var(--dur-base) var(--ease-out),
+    height var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) ease;
+}
+
+.shop-filters[data-indicator] .shop-filter-pill {
+  position: relative;
+  z-index: 1;
+}
+
+.shop-filters[data-indicator] .shop-filter-pill.is-active {
+  background: transparent;
+}
+
+/* Free delivery unlocked: the bar glows and the message bounces in. */
+.shop-cart__ship[data-celebrate] p,
+.cart-summary__ship-hint[data-celebrate] {
+  animation: celebrate-in var(--dur-slow) var(--ease-spring);
+}
+
+.shop-cart__ship[data-celebrate] .shop-cart__ship-bar {
+  animation: bar-glow 1.2s var(--ease-out);
+}
+
+@keyframes celebrate-in {
+  0% { transform: scale(0.94); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bar-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(41, 114, 95, 0); }
+  30% { box-shadow: 0 0 0 5px rgba(41, 114, 95, 0.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qty-number__value[data-dir],
+  .shop-card__fav[data-pop] svg,
+  .product-fav[data-pop] svg,
+  .shop-cart__ship[data-celebrate] p,
+  .cart-summary__ship-hint[data-celebrate],
+  .shop-cart__ship[data-celebrate] .shop-cart__ship-bar {
+    animation: none;
+  }
+
+  .shop-card__fav[data-pop]::after,
+  .product-fav[data-pop]::after {
+    display: none;
+  }
+
+  .shop-filters__indicator[data-animate] {
+    transition: background-color var(--dur-fast) ease;
+  }
+}
+
+/* Landing hero nav: 44px-tall tap area, same look (underline follows). */
+.cozy-header__nav a {
+  display: inline-block;
+  padding-block: 0.75rem;
+  margin-block: -0.75rem;
+}
+
+.cozy-header__nav a::after {
+  bottom: calc(0.75rem - 3px);
+}
+
+/* Square product tiles stay square whatever the photo's shape (a 2:3 photo
+   used to stretch its card). The image fills the tile instead of sizing it. */
+.shop-card__img-wrap,
+.related-card__img {
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-card__img-wrap > img,
+.related-card__img > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

@@ -7,6 +7,8 @@ import { useCart } from "@/lib/cart";
 import { useDelayedFlag } from "@/lib/hooks/useDelayedFlag";
 import { formatPrice } from "@/lib/money";
 import type { Product } from "@/lib/types";
+import SmartImage from "@/components/SmartImage";
+import QtyNumber from "@/components/QtyNumber";
 import { IconClose, IconMinus, IconPlus } from "@/components/icons";
 
 interface Props {
@@ -41,7 +43,7 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
       >
         <IconMinus />
       </button>
-      <span>{qty}</span>
+      <QtyNumber value={qty} />
       <button
         type="button"
         aria-label={`Increase quantity of ${product.name}`}
@@ -67,7 +69,7 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
         data-pending={showPending || undefined}
         data-just-added={highlight || undefined}
       >
-        <img src={product.img} alt="" />
+        <SmartImage src={product.img} alt="" width={96} height={96} sizes="96px" />
         <div className="shop-cart__line-info">
           <p className="shop-cart__line-name">{product.name}</p>
           <p className="shop-cart__line-price">{formatPrice(unit)}</p>
@@ -90,8 +92,8 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
 
   return (
     <li className="cart-line" data-pending={showPending || undefined}>
-      <Link href={`/shop/${product.id}`} className="cart-line__img" onClick={onNavigate} tabIndex={-1} aria-hidden="true">
-        <img src={product.img} alt="" />
+      <Link href={`/shop/${product.id}`} className="cart-line__img img-slot" onClick={onNavigate} tabIndex={-1} aria-hidden="true">
+        <SmartImage src={product.img} alt="" width={96} height={96} sizes="96px" />
       </Link>
       <div className="cart-line__body">
         <div className="cart-line__top">

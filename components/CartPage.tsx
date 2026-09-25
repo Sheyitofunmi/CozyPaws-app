@@ -22,9 +22,11 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import CartLineItem from "@/components/CartLineItem";
 import CheckoutSteps from "@/components/CheckoutSteps";
+import { CheckoutSkeleton } from "@/components/Skeletons";
 import AnimatedPrice from "@/components/AnimatedPrice";
 import WalletPayDialog from "@/components/WalletPayDialog";
 import { prefersReducedMotion } from "@/lib/motion";
+import { useBump } from "@/lib/hooks/useBump";
 import { IconArrowRight, IconCheck, IconTruck } from "@/components/icons";
 
 type FieldErrors = Partial<Record<CustomerField | "items" | "form", string>>;
@@ -148,6 +150,7 @@ export default function CartPage() {
 
   const unitFor = (id: string) => quote.lines.find((l) => l.id === id)?.unitCents;
   const remainingForFree = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - quote.subtotalCents);
+  const freeDeliveryBump = useBump(remainingForFree === 0 && quote.lines.length > 0 ? 1 : 0, hydrated);
 
   /*
    * Validation timing ("reward early, punish late"):
@@ -279,6 +282,10 @@ export default function CartPage() {
     void submitOrder(quote);
   };
 
+  // The saved cart lives in the browser, so the server can't render it.
+  // Show the page's shape until it's read instead of flashing "$0.00".
+  if (!hydrated) return <CheckoutSkeleton />;
+
   if (hydrated && quote.lines.length === 0) {
     return (
       <div className="cozy-page cart-page">
@@ -394,7 +401,11 @@ export default function CartPage() {
               order summary
             </h2>
 
-            <p className={`cart-summary__ship-hint ${remainingForFree === 0 ? "is-free" : ""}`}>
+            <p
+              key={freeDeliveryBump}
+              className={`cart-summary__ship-hint ${remainingForFree === 0 ? "is-free" : ""}`}
+              data-celebrate={freeDeliveryBump > 0 && remainingForFree === 0 ? "" : undefined}
+            >
               <IconTruck />
               {remainingForFree > 0
                 ? `Add ${formatPrice(remainingForFree)} more for free delivery`

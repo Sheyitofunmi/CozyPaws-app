@@ -5,14 +5,16 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { getProduct, PRODUCTS } from "@/lib/catalog";
 import { useDialog } from "@/lib/hooks/useDialog";
+import { useBump } from "@/lib/hooks/useBump";
 import { formatPrice } from "@/lib/money";
 import { FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/pricing";
 import CartLineItem from "@/components/CartLineItem";
+import SmartImage from "@/components/SmartImage";
 import AnimatedPrice from "@/components/AnimatedPrice";
 import { IconClose, IconPlus } from "@/components/icons";
 
 export default function CartDrawer() {
-  const { items, isOpen, closeCart, addItem, lastAdded } = useCart();
+  const { items, isOpen, closeCart, addItem, lastAdded, hydrated } = useCart();
 
   // Highlight the row that was just added, then let it settle.
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -32,6 +34,8 @@ export default function CartDrawer() {
   const subtotalCents = lines.reduce((sum, l) => sum + l.product.priceCents * l.qty, 0);
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - subtotalCents);
   const progress = Math.min(1, subtotalCents / FREE_SHIPPING_THRESHOLD_CENTS);
+  // Celebrate the moment the cart crosses the free-delivery line (not on load).
+  const freeDeliveryBump = useBump(remaining === 0 && lines.length > 0 ? 1 : 0, hydrated);
 
   // "pairs well with": two in-stock items not in the cart, same category first.
   // Fills the empty drawer with something useful instead of whitespace.
@@ -76,7 +80,12 @@ export default function CartDrawer() {
           </div>
         ) : (
           <>
-            <div className="shop-cart__ship" aria-live="polite">
+            <div
+              key={freeDeliveryBump}
+              className="shop-cart__ship"
+              data-celebrate={freeDeliveryBump > 0 && remaining === 0 ? "" : undefined}
+              aria-live="polite"
+            >
               <p>
                 {remaining > 0
                   ? `${formatPrice(remaining)} away from free delivery`
@@ -105,7 +114,7 @@ export default function CartDrawer() {
                 <ul>
                   {suggestions.map((p) => (
                     <li key={p.id} className="cart-suggest__item">
-                      <img src={p.img} alt="" width={48} height={48} />
+                      <SmartImage src={p.img} alt="" width={48} height={48} loading="lazy" sizes="48px" />
                       <div>
                         <Link href={`/shop/${p.id}`} onClick={closeCart} className="cart-suggest__name">
                           {p.name}
