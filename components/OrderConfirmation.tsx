@@ -10,6 +10,7 @@ import { NETWORK_FEE_CENTS, shortAddress } from "@/lib/wallet-machine";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import CheckoutSteps from "@/components/CheckoutSteps";
+import SmartImage from "@/components/SmartImage";
 import { IconArrowRight, IconCheck, IconTruck } from "@/components/icons";
 
 type Loaded = { state: "loading" } | { state: "missing" } | { state: "ready"; order: PlacedOrder };
@@ -124,7 +125,7 @@ function Receipt({
               const product = getProduct(line.id);
               return (
                 <li key={line.id} className="order-line">
-                  {product && <img src={product.img} alt="" width={56} height={56} />}
+                  {product && <SmartImage src={product.img} alt="" width={56} height={56} sizes="56px" />}
                   <div className="order-line__text">
                     <p className="order-line__name">{line.name}</p>
                     <p className="order-line__meta">
