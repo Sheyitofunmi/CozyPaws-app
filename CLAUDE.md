@@ -20,6 +20,8 @@ and a cart → checkout flow built around "instant but never wrong about money".
 - Decorative motion must respect `prefers-reduced-motion` (`lib/motion.ts`, `gsap.matchMedia`).
 - Prefer refs over `document.querySelector` in new code.
 - No new UI libraries.
+- Motion: use the tokens in `app/styles/base.css` (`--dur-*`, `--ease-*`), put hover effects behind `@media (hover: hover)`, and give every animation a reduced-motion fallback.
+- Images in the flow use `components/SmartImage` (next/image + fade-in); always pass width, height and `sizes`.
 
 ## Commands
 - `npm run dev` · `npm run build` · `npm run typecheck`
