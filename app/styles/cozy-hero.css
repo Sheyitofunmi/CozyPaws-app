@@ -830,6 +830,20 @@
   animation: cozy-scale-in 0.7s var(--ease-out) both;
 }
 
+/* Mobile hero cards hold the page's largest image (its LCP). Starting from a
+   visible 0.25 opacity with no long delay lets the browser count it as
+   painted straight away, while it still eases in. */
+.cozy-card-in {
+  animation: cozy-card-in 0.6s var(--ease-out) both;
+}
+
+@keyframes cozy-card-in {
+  from {
+    opacity: 0.25;
+    transform: scale(0.92) translateY(8px);
+  }
+}
+
 .cozy-photo-reveal {
   animation: cozy-photo-reveal 1.1s var(--ease-out) both;
 }
@@ -880,6 +894,7 @@
   .cozy-text-reveal,
   .cozy-word,
   .cozy-scale-in,
+  .cozy-card-in,
   .cozy-photo-reveal {
     animation: none;
     opacity: 1;

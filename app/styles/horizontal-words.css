@@ -50,7 +50,8 @@
 
 .horizontal-words__bottom-text-l {
   max-width: 24em;
-  font-size: 1.5rem;
+  /* Scales smoothly from phones (~15px) to wide screens (24px). */
+  font-size: clamp(0.95rem, 0.8rem + 0.55vw, 1.5rem);
   line-height: 1.4;
   font-weight: 400;
   margin: 0;
@@ -173,16 +174,11 @@
 
   .horizontal-words__bottom-text-l {
     max-width: 100%;
-    font-size: 1.15rem;
     line-height: 1.5;
   }
 }
 
 @media (max-width: 768px) {
-  .horizontal-words__bottom-text-l {
-    font-size: 0.9rem;
-  }
-
   .horizontal-words__sticker-cursor {
     width: 5em;
   }
@@ -241,4 +237,10 @@
     width: 100%;
     margin-top: 2rem;
   }
+}
+
+/* Each word stays together when the headline wraps. */
+.horizontal-words__word {
+  display: inline-block;
+  white-space: nowrap;
 }

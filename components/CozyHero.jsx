@@ -7,6 +7,10 @@ import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
 import MobileNav from "@/components/MobileNav";
 import { REMOTE_ASSETS } from "@/lib/remote-assets";
+import SmartImage from "@/components/SmartImage";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useMagnetic } from "@/lib/hooks/useMagnetic";
 
 const ASSETS = {
   logo: REMOTE_ASSETS.logo,
@@ -137,7 +141,7 @@ function StatOverlay({ className = "" }) {
   return (
     <div className={`cozy-stat ${className}`}>
       <div className="cozy-avatar-stack">
-        <img src={ASSETS.avatar} alt="" width={128} height={128} />
+        <SmartImage src={ASSETS.avatar} alt="" width={128} height={128} sizes="48px" />
         <span className="cozy-avatar-plus">
           <IconPlus />
         </span>
@@ -177,20 +181,48 @@ export default function CozyHero() {
     const hero = heroRef.current;
     if (!navbar || !hero) return;
 
+    // Measure once (and on resize), not on every scroll event.
+    let heroBottom = hero.offsetTop + hero.offsetHeight;
+    const onResize = () => {
+      heroBottom = hero.offsetTop + hero.offsetHeight;
+      onScroll();
+    };
     const onScroll = () => {
-      const heroBottom = hero.offsetTop + hero.offsetHeight;
-      navbar.classList.toggle(
-        "is-cozy-hidden",
-        window.scrollY < heroBottom - 100,
-      );
+      navbar.classList.toggle("is-cozy-hidden", window.scrollY < heroBottom - 100);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
       navbar.classList.remove("is-cozy-hidden");
     };
   }, []);
+
+  // Depth on scroll: the three pets sink behind the green ledge at different
+  // speeds as the hero scrolls away. Desktop + motion-OK only.
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    gsap.registerPlugin(ScrollTrigger);
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 769px) and (prefers-reduced-motion: no-preference)", () => {
+      const photos = hero.querySelectorAll(".cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item > img");
+      const depth = [18, 10, 22];
+      photos.forEach((img, i) => {
+        gsap.to(img, {
+          yPercent: depth[i] ?? 12,
+          ease: "none",
+          scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: 0.4 },
+        });
+      });
+    });
+    return () => mm.revert();
+  }, []);
+
+  const exploreRef = useRef(null);
+  useMagnetic(exploreRef);
 
   return (
     <section className="cozy-hero" ref={heroRef}>
@@ -297,7 +329,7 @@ export default function CozyHero() {
 
         <div className="cozy-card cozy-card--product cozy-slide-in-left cozy-delay-600">
           <div className="cozy-card__img-wrap">
-            <img src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} />
+            <SmartImage src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} loading="eager" sizes="210px" />
             <a
               href="/shop"
               className="cozy-card__arrow-btn"
@@ -313,7 +345,7 @@ export default function CozyHero() {
 
         <div className="cozy-card cozy-card--video cozy-slide-in-right cozy-delay-700">
           <div className="cozy-card__img-wrap cozy-card__img-wrap--video">
-            <img src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} />
+            <SmartImage src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} loading="eager" sizes="150px" />
             <div className="cozy-card__video-overlay">
               <button
                 className="cozy-play-btn"
@@ -329,18 +361,19 @@ export default function CozyHero() {
 
         <div className="cozy-photos">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
-            <img src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} />
+            <SmartImage src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1000">
               <StatOverlay />
             </div>
           </div>
           <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
-            <img src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} fetchPriority="high" />
+            <SmartImage src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} loading="eager" sizes="(max-width: 768px) 40vw, 40vw" />
             <div className="cozy-overlay cozy-fade-up cozy-delay-1100">
               <h2 className="cozy-overlay__heading">
                 Best Products for Your Pet
               </h2>
               <a
+                ref={exploreRef}
                 href="/shop"
                 className="cozy-btn-orange"
                 style={POINTER_CURSOR}
@@ -351,7 +384,7 @@ export default function CozyHero() {
             </div>
           </div>
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-900">
-            <img src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} />
+            <SmartImage src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1200">
               <RatingOverlay />
             </div>
@@ -378,9 +411,9 @@ export default function CozyHero() {
         </div>
 
         <div className="cozy-mobile__cards">
-          <div className="cozy-mcard cozy-scale-in cozy-delay-500">
+          <div className="cozy-mcard cozy-card-in">
             <div className="cozy-card__img-wrap cozy-mcard__img--square">
-              <img src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} />
+              <SmartImage src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} fetchPriority="high" sizes="(max-width: 768px) 45vw, 210px" />
               <a
                 href="/shop"
                 className="cozy-card__arrow-btn"
@@ -393,9 +426,9 @@ export default function CozyHero() {
             <p className="cozy-card__name">Cozy Dog House</p>
             <p className="cozy-card__price">$49.99</p>
           </div>
-          <div className="cozy-mcard cozy-scale-in cozy-delay-600">
+          <div className="cozy-mcard cozy-card-in cozy-delay-100">
             <div className="cozy-card__img-wrap cozy-mcard__img--tall">
-              <img src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} />
+              <SmartImage src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} fetchPriority="high" sizes="(max-width: 768px) 45vw, 150px" />
               <div className="cozy-card__video-overlay">
                 <button
                   className="cozy-play-btn"
@@ -418,13 +451,13 @@ export default function CozyHero() {
 
         <div className="cozy-photos cozy-photos--mobile">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
-            <img src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} />
+            <SmartImage src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
           </div>
           <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
-            <img src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} />
+            <SmartImage src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
           </div>
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-800">
-            <img src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} />
+            <SmartImage src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} loading="eager" sizes="(max-width: 768px) 40vw, 33vw" />
           </div>
         </div>
       </div>

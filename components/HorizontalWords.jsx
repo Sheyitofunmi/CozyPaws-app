@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { Fragment, useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "../app/styles/horizontal-words.css";
@@ -14,6 +14,8 @@ gsap.registerPlugin(ScrollTrigger);
 // useEffect cleanup runs too late. Falls back to useEffect on the server.
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+const HEADLINE_WORDS = "We wanna be where the dogs are".split(" ");
 
 const HorizontalWords = () => {
   const sectionRef = useRef(null);
@@ -54,6 +56,11 @@ const HorizontalWords = () => {
               `+=${Math.max(1200, Math.min(window.innerWidth * 2.5, 3000))}`,
             scrub: 1,
             pin: true,
+            // Pin with transforms instead of switching to position:fixed.
+            // The fixed/static swap was reported as a layout shift on every
+            // scroll past this section (CLS ~1.9); transforms don't count.
+            pinType: "transform",
+            anticipatePin: 1,
           },
         },
       );
@@ -301,174 +308,25 @@ const HorizontalWords = () => {
             className="display horizontal-words__h2"
             aria-label="We wanna be where the dogs are"
           >
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              W
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              e
-            </div>{" "}
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              w
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              a
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              n
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              n
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              a
-            </div>{" "}
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              b
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              e
-            </div>{" "}
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              w
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              h
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              e
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              r
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              e
-            </div>{" "}
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              t
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              h
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              e
-            </div>{" "}
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              d
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              o
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              g
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              s
-            </div>{" "}
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              a
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              r
-            </div>
-            <div
-              className="letter"
-              aria-hidden="true"
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              e
-            </div>
+            {/* Letters are grouped per word so a wrapped line never breaks
+                mid-word on small screens ("b where t / he dogs ar"). */}
+            {HEADLINE_WORDS.map((word, w) => (
+              <Fragment key={word + w}>
+                <span className="horizontal-words__word">
+                  {Array.from(word).map((char, i) => (
+                    <div
+                      key={i}
+                      className="letter"
+                      aria-hidden="true"
+                      style={{ position: "relative", display: "inline-block" }}
+                    >
+                      {char}
+                    </div>
+                  ))}
+                </span>
+                {w < HEADLINE_WORDS.length - 1 && " "}
+              </Fragment>
+            ))}
           </h2>
         </div>
       </div>

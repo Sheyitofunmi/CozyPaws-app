@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CARDS_DATA } from "@/lib/data";
+import { useIdleReady } from "@/lib/hooks/useIdleReady";
 
 
 const useIsomorphicLayoutEffect =
@@ -13,7 +14,11 @@ const useIsomorphicLayoutEffect =
 const DESKTOP_MIN = 1441;
 
 export default function ServiceCards() {
+  // Below the fold: wire up animations once the browser is idle.
+  const ready = useIdleReady();
+
   useIsomorphicLayoutEffect(() => {
+    if (!ready) return;
     gsap.registerPlugin(ScrollTrigger);
 
     const mm = gsap.matchMedia();
@@ -48,7 +53,7 @@ export default function ServiceCards() {
     );
 
     return () => mm.revert();
-  }, []);
+  }, [ready]);
 
   return (
     <>

@@ -4,6 +4,8 @@ import gsap from "gsap";
 import React, { useEffect, useRef } from "react";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import SmartImage from "@/components/SmartImage";
+import { useIdleReady } from "@/lib/hooks/useIdleReady";
 
 gsap.registerPlugin(InertiaPlugin, ScrollTrigger);
 
@@ -11,7 +13,11 @@ export default function MotionCards() {
   const sectionRef = useRef(null);
   const containerRef = useRef(null);
 
+  // Below the fold: wire up animations once the browser is idle.
+  const ready = useIdleReady();
+
   useEffect(() => {
+    if (!ready) return;
     // Physics fling + scroll entrances are decorative. Under reduced motion
     // the cards simply render in place (the timeline below never sets them hidden).
     const mm = gsap.matchMedia(sectionRef);
@@ -140,7 +146,7 @@ export default function MotionCards() {
     });
 
     return () => mm.revert();
-  }, []);
+  }, [ready]);
 
   return (
     <section
@@ -158,6 +164,7 @@ export default function MotionCards() {
           from pup to senior.
           <span className="motion-card__sticker motion-card__sticker--top">
             <img
+              loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-hands.svg"
               alt="Green heart hands sticker"
               className="motion-card__sticker-img"
@@ -185,6 +192,7 @@ export default function MotionCards() {
       <div className="motion-card__cards-area">
         <div className="motion-card__blob">
           <img
+              loading="lazy"
             src="/assets/MotionCard SVG/motion-card-blob.svg"
             alt=""
             className="motion-card__blob-svg"
@@ -194,52 +202,56 @@ export default function MotionCards() {
         <div ref={containerRef} className="motion-card__cards">
           <div className="motion-card__card motion-card__card--1">
             <div className="motion-card__card-image">
-              <img
+              <SmartImage
                 src="/assets/pets/dog1.avif"
                 loading="lazy"
                 width={1000}
                 height={1000}
                 alt=""
                 className="cover-image"
+                sizes="(max-width: 768px) 60vw, 360px"
               />
             </div>
           </div>
 
           <div className="motion-card__card motion-card__card--2">
             <div className="motion-card__card-image">
-              <img
+              <SmartImage
                 src="/assets/pets/cat2.avif"
                 loading="lazy"
                 width={1000}
                 height={1000}
                 alt=""
                 className="cover-image"
+                sizes="(max-width: 768px) 60vw, 360px"
               />
             </div>
           </div>
 
           <div className="motion-card__card motion-card__card--3">
             <div className="motion-card__card-image">
-              <img
+              <SmartImage
                 src="/assets/pets/toy3.avif"
                 loading="lazy"
                 width={1000}
                 height={1000}
                 alt=""
                 className="cover-image"
+                sizes="(max-width: 768px) 60vw, 360px"
               />
             </div>
           </div>
 
           <div className="motion-card__card motion-card__card--4">
             <div className="motion-card__card-image">
-              <img
+              <SmartImage
                 src="/assets/pets/gromming.avif"
                 loading="lazy"
                 width={1000}
                 height={1000}
                 alt=""
                 className="cover-image"
+                sizes="(max-width: 768px) 60vw, 360px"
               />
             </div>
           </div>
