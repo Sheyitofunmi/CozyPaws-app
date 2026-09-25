@@ -47,6 +47,9 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 
 ## Craft details
 
+- **Feedback where you're looking.** "Add to cart" turns into "added ✓", the cart badge bumps, and the new line is highlighted in the drawer. On phones a sticky buy bar appears once the main button scrolls away.
+- **Checkout that doesn't punish.** One set of validation rules runs on the client and the server. Fields are checked when you leave them and re-checked as you fix them, so no round trip to find a typo. No example values as placeholders.
+- **A real confirmation page.** `/order/confirmed` survives a refresh and "back" never re-shows the filled checkout. The receipt has items, totals, the ship-to address, a delivery window and what happens next.
 - **No flicker on fast networks.** "Saving…" only appears if a request takes longer than 300ms (`useDelayedFlag`).
 - **Accessible drawers.** Real modal dialogs: focus moves in and returns to the trigger, Tab is trapped, Esc closes, and the page behind is `inert`.
 - **Announced changes.** Toasts, result counts and checkout errors use live regions. Validation errors set `aria-invalid` and focus the first bad field.
