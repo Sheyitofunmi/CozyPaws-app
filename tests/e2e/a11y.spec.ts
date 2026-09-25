@@ -21,6 +21,22 @@ test("cart drawer is a real modal dialog", async ({ page }) => {
   await expect(trigger).toBeFocused();
 });
 
+test("no serious axe violations on the order confirmation", async ({ page }) => {
+  await page.goto("/shop/cozy-dog-house");
+  await page.getByRole("button", { name: /add to cart/ }).click();
+  await page.getByRole("link", { name: "go to checkout" }).click();
+  await page.getByLabel("Full name").fill("Jane Doe");
+  await page.getByLabel("Email").fill("jane@example.com");
+  await page.getByLabel("Address").fill("12 Maple Street");
+  await page.getByLabel("City").fill("London");
+  await page.getByLabel("Postal code").fill("N1 7GU");
+  await page.getByRole("button", { name: /place order/ }).click();
+  await expect(page.getByRole("heading", { name: /Thank you/ })).toBeVisible();
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  expect(serious.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
+});
+
 for (const path of ["/shop", "/shop/cozy-dog-house", "/cart"]) {
   test(`no serious axe violations on ${path}`, async ({ page }) => {
     await page.goto(path);
