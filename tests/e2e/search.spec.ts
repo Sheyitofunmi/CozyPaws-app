@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("live search filters as you type and syncs the URL", async ({ page }) => {
   await page.goto("/shop");
+  await page.waitForLoadState("networkidle"); // shortcut listener attaches on hydration
   await page.keyboard.press("/");
   const input = page.getByRole("searchbox", { name: "Search products" });
   await expect(input).toBeFocused();

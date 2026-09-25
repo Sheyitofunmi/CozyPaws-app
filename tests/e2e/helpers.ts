@@ -5,6 +5,7 @@ export interface Demo {
   failNextCart?: boolean;
   priceBump?: { id: string; percent: number };
   stockDrop?: { id: string; stock: number };
+  walletLow?: boolean;
 }
 
 /** Sets the same cookie the in-app demo panel writes (see lib/server/demo.ts). */

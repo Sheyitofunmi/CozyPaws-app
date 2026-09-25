@@ -3,15 +3,16 @@ import { cartDialog, setDemo } from "./helpers";
 
 test.describe("optimistic cart", () => {
   test("updates instantly, before the server answers", async ({ page, context, baseURL }) => {
-    await setDemo(context, baseURL!, { latencyMs: 1500 });
+    await setDemo(context, baseURL!, { latencyMs: 3000 });
     await page.goto("/shop/cloud-nine-bed");
 
     const confirmed = page.waitForResponse("**/api/cart");
     await page.getByRole("button", { name: /add to cart/ }).click();
 
-    // Visible immediately, while the request is still in flight.
-    await expect(cartDialog(page).getByText("cloud nine bed")).toBeVisible({ timeout: 500 });
+    // The count updates immediately, while the request is still in flight.
     await expect(page.getByRole("button", { name: "Open cart" })).toContainText("1", { timeout: 500 });
+    // The drawer opens once the image has flown into the cart icon.
+    await expect(cartDialog(page).getByText("cloud nine bed")).toBeVisible();
 
     // Slow network: the "saving…" hint appears after the 300ms threshold.
     await expect(cartDialog(page).getByText("saving…")).toBeVisible();
@@ -82,4 +83,25 @@ test.describe("add to cart feedback", () => {
     await expect(cartDialog(page).getByText("cloud nine bed")).toBeVisible();
     await context.close();
   });
+});
+
+test("fly-to-cart: a copy of the photo flies, then the drawer opens", async ({ page }) => {
+  await page.goto("/shop/cloud-nine-bed");
+  await page.waitForLoadState("networkidle");
+  const flying = page.locator("body > div[aria-hidden=true][style*='position: fixed']");
+  await page.getByRole("button", { name: /add to cart/ }).click();
+  await expect(flying).toHaveCount(1);
+  await expect(cartDialog(page)).toBeVisible();
+  await expect(flying).toHaveCount(0); // cleaned up after landing
+});
+
+test("fly-to-cart is skipped with reduced motion", async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/shop/cloud-nine-bed");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: /add to cart/ }).click();
+  await expect(cartDialog(page)).toBeVisible({ timeout: 500 });
+  await expect(page.locator("body > div[aria-hidden=true][style*='position: fixed']")).toHaveCount(0);
+  await context.close();
 });
