@@ -21,6 +21,7 @@ and a cart → checkout flow built around "instant but never wrong about money".
 - Prefer refs over `document.querySelector` in new code.
 - No new UI libraries.
 - Motion: use the tokens in `app/styles/base.css` (`--dur-*`, `--ease-*`), put hover effects behind `@media (hover: hover)`, and give every animation a reduced-motion fallback.
+- Homepage: gate non-critical GSAP setup behind `useIdleReady`; pin with `pinType: "transform"` (no layout shift); give below-the-fold images `loading="lazy"`. Final homepage polish lives in `app/styles/home-polish.css` (imported last).
 - Images in the flow use `components/SmartImage` (next/image + fade-in); always pass width, height and `sizes`.
 
 ## Commands

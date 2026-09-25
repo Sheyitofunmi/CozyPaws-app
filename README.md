@@ -67,6 +67,8 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 - **No flicker on fast networks.** "Saving…" only appears if a request takes longer than 300ms (`useDelayedFlag`).
 - **Accessible drawers.** Real modal dialogs: focus moves in and returns to the trigger, Tab is trapped, Esc closes, and the page behind is `inert`.
 - **Announced changes.** Toasts, result counts and checkout errors use live regions. Validation errors set `aria-invalid` and focus the first bad field.
+- **A homepage that loads light.** Pet photos go through `next/image` and lazy-load below the fold (image data for a full scroll went from 1.65MB to ~150KB). Scroll-effect setup waits for idle time (`useIdleReady`), and the pinned "we wanna be where the dogs are" section pins with a transform, so there's no layout shift (CLS 1.9 → 0). Throttled mobile LCP is under a second.
+- **Scroll that feels alive, not busy.** Subtle parallax on the hero pets, a navbar that tucks away when you scroll down and comes back (with a blurred backdrop) when you scroll up, service cards that stack as you scroll on phones, a scroll progress bar (CSS scroll-driven animation, skipped where unsupported), a magnetic "Explore Products" button, and a pause button on the brand marquee. The headline wraps by word, never mid-word.
 - **Reduced motion.** Decorative motion (wiggles, marquee, inertia cards, custom cursor, smooth scroll) is skipped. Functional feedback stays, just without movement.
 - **Contrast.** Button and badge orange darkened slightly to reach WCAG AA (4.8:1).
 - **Money as integer cents**, formatted only at the edge with `Intl.NumberFormat`.
@@ -77,7 +79,7 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 | --- | --- | --- |
 | Unit | Vitest | pricing, quote diffs, cart reducer (rollback, stale responses, races) |
 | End-to-end | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
-| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on `/shop`, product pages and `/cart` |
+| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages and `/cart` |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
 
