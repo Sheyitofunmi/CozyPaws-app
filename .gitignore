@@ -47,3 +47,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 CLAUDE.md
+.openvisio
+
+.openvisio/cache/CozyPaws-app
