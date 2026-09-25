@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -23,23 +23,23 @@ const CONTACT_CARDS = [
     color: "var(--color-green)",
   },
   {
-    emoji: "💬",
-    title: "WhatsApp",
-    detail: "we're millennials — please don't call",
-    href: "#",
+    emoji: "📦",
+    title: "Order help",
+    detail: "orders@cozypaws.co",
+    href: "mailto:orders@cozypaws.co?subject=Order%20help",
     color: "var(--color-darkblue)",
   },
   {
     emoji: "📍",
     title: "Visit",
-    detail: "papaverhof 21, 1032 LX amsterdam",
-    href: "#",
+    detail: "12 bark lane, london N1 7GU",
     color: "var(--color-maroon)",
   },
 ];
 
 export default function ContactPage() {
-  useScrollReveal();
+  const pageRef = useRef(null);
+  useScrollReveal(pageRef);
   const [topic, setTopic] = useState("General");
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
   const [errors, setErrors] = useState({});
@@ -85,7 +85,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="cozy-page contact-page">
+    <div className="cozy-page contact-page" ref={pageRef}>
       <SiteHeader />
 
       <section className="contact-hero">
@@ -103,23 +103,27 @@ export default function ContactPage() {
 
       <section className="contact-body">
         <div className="contact-cards">
-          {CONTACT_CARDS.map((card) => (
-            <a
-              key={card.title}
-              href={card.href}
-              className="contact-card"
-              data-reveal
-              style={{ "--accent": card.color }}
-            >
-              <span className="contact-card__emoji" aria-hidden="true">
-                {card.emoji}
-              </span>
-              <div>
-                <p className="contact-card__title">{card.title}</p>
-                <p className="contact-card__detail">{card.detail}</p>
-              </div>
-            </a>
-          ))}
+          {CONTACT_CARDS.map((card) => {
+            // No dead "#" links: cards without a destination aren't links.
+            const Card = card.href ? "a" : "div";
+            return (
+              <Card
+                key={card.title}
+                href={card.href}
+                className="contact-card"
+                data-reveal
+                style={{ "--accent": card.color }}
+              >
+                <span className="contact-card__emoji" aria-hidden="true">
+                  {card.emoji}
+                </span>
+                <div>
+                  <p className="contact-card__title">{card.title}</p>
+                  <p className="contact-card__detail">{card.detail}</p>
+                </div>
+              </Card>
+            );
+          })}
           <p className="contact-hours" data-reveal>
             <strong>Hours:</strong> Mon–Fri, 9–6 CET. We reply within one
             business day.

@@ -6,7 +6,7 @@ import { ANIMATION_CONFIG } from "@/lib/data";
 
 export default function TransitionScribble() {
   useEffect(() => {
-    const logoTruusClickable = document.querySelector(".logo-truus");
+    const logoClickable = document.querySelector(".cozy-logo");
     const transitionScribblePath = document.querySelector(
       ".transition-scribble path",
     );
@@ -15,7 +15,7 @@ export default function TransitionScribble() {
     );
 
     if (
-      !logoTruusClickable ||
+      !logoClickable ||
       !transitionScribblePath ||
       !transitionScribbleSvg
     )
@@ -66,7 +66,7 @@ export default function TransitionScribble() {
         transitionLogo.className = "transition-logo";
         transitionLogo.style.cssText =
           "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10000; pointer-events:none; opacity:0; display:flex; justify-content:center; align-items:center; transition: color 0.1s;";
-        const svgClone = document.querySelector(".logo-truus").cloneNode(true);
+        const svgClone = document.querySelector(".cozy-logo").cloneNode(true);
         svgClone.style.width = "150px";
         svgClone.style.height = "auto";
         transitionLogo.appendChild(svgClone);
@@ -173,7 +173,7 @@ export default function TransitionScribble() {
       );
     };
 
-    logoTruusClickable.addEventListener("click", runScribbleAnimation);
+    logoClickable.addEventListener("click", runScribbleAnimation);
 
     // Auto-run on load — desktop pointers only. On phones/tablets the ~5s
     // screen-covering scribble reads as a glitch, and reduced-motion users
@@ -186,7 +186,7 @@ export default function TransitionScribble() {
       : null;
 
     return () => {
-      logoTruusClickable.removeEventListener("click", runScribbleAnimation);
+      logoClickable.removeEventListener("click", runScribbleAnimation);
       clearTimeout(timer);
     };
   }, []);

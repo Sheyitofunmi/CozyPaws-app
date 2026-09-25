@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
+import { REMOTE_ASSETS } from "@/lib/remote-assets";
+import { useBump } from "@/lib/hooks/useBump";
 import { IconCart, IconStar, IconMenu, IconClose } from "@/components/icons";
 
-const LOGO_SRC =
-  "https://polo-pecan-73837341.figma.site/_assets/v11/0ae29d6d9628bede667f90d57bebe81b8f1ec2bf.svg";
+const LOGO_SRC = REMOTE_ASSETS.logo;
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -20,7 +21,8 @@ const NAV_LINKS = [
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const { count, openCart } = useCart();
+  const { count, openCart, hydrated, cartTargetRef } = useCart();
+  const cartBump = useBump(count, hydrated);
   const { count: wishlistCount, openWishlist } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -34,7 +36,7 @@ export default function SiteHeader() {
         className="site-header__logo-link"
         aria-label="CozyPaws home"
       >
-        <img src={LOGO_SRC} alt="CozyPaws" className="site-header__logo" />
+        <img src={LOGO_SRC} alt="CozyPaws" className="site-header__logo" width={140} height={35} />
       </Link>
 
       <nav className="site-header__nav" aria-label="Primary">
@@ -61,12 +63,17 @@ export default function SiteHeader() {
           )}
         </button>
         <button
+          ref={cartTargetRef}
           className="cozy-icon-btn"
-          aria-label="Open cart"
+          aria-label={count > 0 ? `Open cart, ${count} item${count === 1 ? "" : "s"}` : "Open cart"}
           onClick={openCart}
         >
           <IconCart className="cozy-icon" />
-          {count > 0 && <span className="cozy-badge">{count}</span>}
+          {count > 0 && (
+            <span key={cartBump} className={`cozy-badge ${cartBump ? "cozy-badge--bump" : ""}`} aria-hidden="true">
+              {count}
+            </span>
+          )}
         </button>
         <AccountMenu />
         <button

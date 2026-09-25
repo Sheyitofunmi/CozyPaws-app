@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
 import { WIGGLE_CONFIG } from "@/lib/data";
 import MobileNav from "@/components/MobileNav";
 
 function initWiggle(element, intensity) {
+  // Looping wiggles are pure decoration: skip them for reduced-motion users.
+  if (prefersReducedMotion()) return () => {};
   const target = element.querySelector("[data-wiggle-target]") || element;
   gsap.set(target, { transformOrigin: "center center" });
   let tween;
@@ -49,11 +52,6 @@ export default function Navbar() {
       const contentTop =
         contentSection.getBoundingClientRect().top + window.scrollY;
 
-      const showreelSection = document.querySelector("#showreel-section");
-      const showreelTop = showreelSection
-        ? showreelSection.getBoundingClientRect().top + window.scrollY
-        : Infinity;
-
       const serviceCardsSection = document.querySelector(
         ".service-cards-wrapper",
       );
@@ -76,9 +74,6 @@ export default function Navbar() {
       } else if (scrollPos >= serviceCardsTop) {
         navbar.classList.add("on-light");
         navbar.classList.remove("on-dark");
-      } else if (scrollPos >= showreelTop) {
-        navbar.classList.add("on-dark");
-        navbar.classList.remove("on-light");
       } else if (scrollPos >= contentTop) {
         navbar.classList.add("on-light");
         navbar.classList.remove("on-dark");
@@ -92,9 +87,9 @@ export default function Navbar() {
     updateNavbarColor();
 
     const cleanups = [];
-    const logoTruus = document.querySelector(".logo-truus");
-    if (logoTruus)
-      cleanups.push(initWiggle(logoTruus, WIGGLE_CONFIG.logoTruus));
+    const cozyLogo = document.querySelector(".cozy-logo");
+    if (cozyLogo)
+      cleanups.push(initWiggle(cozyLogo, WIGGLE_CONFIG.cozyLogo));
 
     const overlay = document.querySelector(".nav-overlay");
     if (overlay) {
@@ -285,6 +280,7 @@ export default function Navbar() {
       let wiggleTween;
 
       const onItemEnter = () => {
+        if (prefersReducedMotion()) return;
         if (badge) {
           gsap.set(badge, { transformOrigin: "center center" });
           wiggleTween = gsap.to(badge, {
@@ -329,6 +325,7 @@ export default function Navbar() {
     if (workBtn) {
       let btnWiggle;
       const onBtnEnter = () => {
+        if (prefersReducedMotion()) return;
         const btnText = workBtn.querySelector(".nav-work-btn__text");
         if (btnText) {
           gsap.set(btnText, {
@@ -453,7 +450,7 @@ export default function Navbar() {
           }}
         >
           <svg
-            className="logo-truus"
+            className="cozy-logo"
             width="150"
             height="40"
             viewBox="0 0 170 40"

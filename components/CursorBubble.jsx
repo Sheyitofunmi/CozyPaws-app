@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 
 export default function CursorBubble() {
+    const bubbleRef = useRef(null);
+
     useEffect(() => {
-        const cursorBubble = document.querySelector('.cursor-bubble');
+        // Only for a fine pointer (mouse) and users who are fine with motion.
+        const mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference) and (pointer: fine)', () => {
+        const cursorBubble = bubbleRef.current;
         if (!cursorBubble) return;
 
         const xTo = gsap.quickTo(cursorBubble, 'x', { duration: 0.5, ease: 'power3' });
@@ -20,12 +25,12 @@ export default function CursorBubble() {
         };
 
         const onMouseOver = (e) => {
-            const targetSelector = '.footer-column h3, .footer-map-link span, .footer-email, .footer-whatsapp, .single-social, .logo-truus, .nav-work-btn';
+            const targetSelector = '.footer-column h3, .footer-map-link span, .footer-email, .footer-whatsapp, .single-social, .cozy-logo, .nav-work-btn';
             const found = e.target.closest(targetSelector);
 
             if (found && !isHoveringClickable) {
                 isHoveringClickable = true;
-                if (found.matches('.logo-truus')) cursorBubble.textContent = 'to home';
+                if (found.matches('.cozy-logo')) cursorBubble.textContent = 'to home';
                 else if (found.matches('.nav-work-btn')) cursorBubble.textContent = 'click';
                 else cursorBubble.textContent = 'click';
                 gsap.killTweensOf(cursorBubble, 'opacity,scale,rotation');
@@ -54,7 +59,9 @@ export default function CursorBubble() {
             document.removeEventListener('mouseover', onMouseOver);
             document.removeEventListener('mouseleave', onMouseLeave);
         };
+        });
+        return () => mm.revert();
     }, []);
 
-    return <div className="cursor-bubble">click</div>;
+    return <div ref={bubbleRef} className="cursor-bubble" aria-hidden="true">click</div>;
 }

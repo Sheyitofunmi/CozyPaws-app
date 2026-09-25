@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist";
 import { useCart } from "@/lib/cart";
 import { IconStar, IconCart, IconTruck, IconClose } from "@/components/icons";
+import { REMOTE_ASSETS } from "@/lib/remote-assets";
 
-const AVATAR_SRC =
-  "https://polo-pecan-73837341.figma.site/_assets/v11/e62173d41f91350a59628e8a9a55ae078a886fb9.png?w=128";
+const AVATAR_SRC = REMOTE_ASSETS.avatar;
 
 const STORAGE_KEY = "cozypaws-account";
 

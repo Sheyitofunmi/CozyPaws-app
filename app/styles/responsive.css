@@ -59,7 +59,7 @@
     padding: 14px 16px;
   }
 
-  .logo-truus {
+  .cozy-logo {
     width: 100px;
   }
 
@@ -547,10 +547,6 @@
 
   .vimeo-hero__controls {
     bottom: 20px;
-    left: 24px;
-  }
-
-  .showreel-reel__caption {
     left: 24px;
   }
 }

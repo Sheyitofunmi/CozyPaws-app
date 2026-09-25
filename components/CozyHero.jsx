@@ -6,19 +6,16 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import AccountMenu from "@/components/AccountMenu";
 import MobileNav from "@/components/MobileNav";
+import { REMOTE_ASSETS } from "@/lib/remote-assets";
 
 const ASSETS = {
-  logo: "https://polo-pecan-73837341.figma.site/_assets/v11/0ae29d6d9628bede667f90d57bebe81b8f1ec2bf.svg",
-  avatar:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/e62173d41f91350a59628e8a9a55ae078a886fb9.png?w=128",
+  logo: REMOTE_ASSETS.logo,
+  avatar: REMOTE_ASSETS.avatar,
   productCard: "/assets/pets/house1.avif",
   videoCard: "/assets/pets/dog2.avif",
-  bottomLeft:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/8d44b25186ef45a5789c74668fb781cea4e1ff49.png",
-  bottomCenter:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/96745c4e72ad5c5208e53a885df797fd82cd854a.png?h=1024",
-  bottomRight:
-    "https://polo-pecan-73837341.figma.site/_assets/v11/81bd2e7a66b58f3d8f3ad78fd1ebf01af8dfdee1.png",
+  bottomLeft: REMOTE_ASSETS.heroBottomLeft,
+  bottomCenter: REMOTE_ASSETS.heroBottomCenter,
+  bottomRight: REMOTE_ASSETS.heroBottomRight,
 };
 
 const POINTER_CURSOR = {
@@ -140,7 +137,7 @@ function StatOverlay({ className = "" }) {
   return (
     <div className={`cozy-stat ${className}`}>
       <div className="cozy-avatar-stack">
-        <img src={ASSETS.avatar} alt="" />
+        <img src={ASSETS.avatar} alt="" width={128} height={128} />
         <span className="cozy-avatar-plus">
           <IconPlus />
         </span>
@@ -198,7 +195,7 @@ export default function CozyHero() {
   return (
     <section className="cozy-hero" ref={heroRef}>
       <header className="cozy-header cozy-fade-in cozy-delay-100">
-        <img src={ASSETS.logo} alt="CozyPaws" className="cozy-header__logo" />
+        <img src={ASSETS.logo} alt="CozyPaws" className="cozy-header__logo" width={130} height={33} />
         <nav className="cozy-header__nav">
           <a href="/" className="is-active" style={POINTER_CURSOR}>
             Home
@@ -300,7 +297,7 @@ export default function CozyHero() {
 
         <div className="cozy-card cozy-card--product cozy-slide-in-left cozy-delay-600">
           <div className="cozy-card__img-wrap">
-            <img src={ASSETS.productCard} alt="Cozy Dog House" />
+            <img src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} />
             <a
               href="/shop"
               className="cozy-card__arrow-btn"
@@ -316,7 +313,7 @@ export default function CozyHero() {
 
         <div className="cozy-card cozy-card--video cozy-slide-in-right cozy-delay-700">
           <div className="cozy-card__img-wrap cozy-card__img-wrap--video">
-            <img src={ASSETS.videoCard} alt="Product review videos" />
+            <img src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} />
             <div className="cozy-card__video-overlay">
               <button
                 className="cozy-play-btn"
@@ -332,13 +329,13 @@ export default function CozyHero() {
 
         <div className="cozy-photos">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
-            <img src={ASSETS.bottomLeft} alt="Happy dog" />
+            <img src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1000">
               <StatOverlay />
             </div>
           </div>
           <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
-            <img src={ASSETS.bottomCenter} alt="Dog with owner" />
+            <img src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} fetchPriority="high" />
             <div className="cozy-overlay cozy-fade-up cozy-delay-1100">
               <h2 className="cozy-overlay__heading">
                 Best Products for Your Pet
@@ -354,7 +351,7 @@ export default function CozyHero() {
             </div>
           </div>
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-900">
-            <img src={ASSETS.bottomRight} alt="Playful dog" />
+            <img src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} />
             <div className="cozy-overlay cozy-overlay--side cozy-scale-in cozy-delay-1200">
               <RatingOverlay />
             </div>
@@ -383,7 +380,7 @@ export default function CozyHero() {
         <div className="cozy-mobile__cards">
           <div className="cozy-mcard cozy-scale-in cozy-delay-500">
             <div className="cozy-card__img-wrap cozy-mcard__img--square">
-              <img src={ASSETS.productCard} alt="Cozy Dog House" />
+              <img src={ASSETS.productCard} alt="Cozy Dog House" width={900} height={1350} />
               <a
                 href="/shop"
                 className="cozy-card__arrow-btn"
@@ -398,7 +395,7 @@ export default function CozyHero() {
           </div>
           <div className="cozy-mcard cozy-scale-in cozy-delay-600">
             <div className="cozy-card__img-wrap cozy-mcard__img--tall">
-              <img src={ASSETS.videoCard} alt="Product review videos" />
+              <img src={ASSETS.videoCard} alt="Product review videos" width={834} height={1161} />
               <div className="cozy-card__video-overlay">
                 <button
                   className="cozy-play-btn"
@@ -421,13 +418,13 @@ export default function CozyHero() {
 
         <div className="cozy-photos cozy-photos--mobile">
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-700">
-            <img src={ASSETS.bottomLeft} alt="Happy dog" />
+            <img src={ASSETS.bottomLeft} alt="Happy dog" width={870} height={762} />
           </div>
           <div className="cozy-photos__item cozy-photos__item--center cozy-photo-reveal cozy-delay-600">
-            <img src={ASSETS.bottomCenter} alt="Dog with owner" />
+            <img src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} />
           </div>
           <div className="cozy-photos__item cozy-photos__item--side cozy-photo-reveal cozy-delay-800">
-            <img src={ASSETS.bottomRight} alt="Playful dog" />
+            <img src={ASSETS.bottomRight} alt="Playful dog" width={870} height={816} />
           </div>
         </div>
       </div>
