@@ -81,7 +81,6 @@ npm run dev            # http://localhost:3000 (demo controls show in dev)
 npm run typecheck
 npm test               # unit
 npm run build && npm run test:e2e
-npm run assets:localize   # download hot-linked images into public/assets/remote/
 ```
 
 ## Structure

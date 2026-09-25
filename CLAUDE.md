@@ -24,4 +24,3 @@ and a cart → checkout flow built around "instant but never wrong about money".
 ## Commands
 - `npm run dev` · `npm run build` · `npm run typecheck`
 - `npm test` (Vitest) · `npm run test:e2e` (Playwright; builds must exist: `npm run build` first)
-- `npm run assets:localize`: download hot-linked images into `public/assets/remote/`
