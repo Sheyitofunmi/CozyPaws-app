@@ -45,10 +45,20 @@ Orders carry an `Idempotency-Key`, so a double-click or a retry after a network 
 
 The catalog is local, so live search filters on the client. `useDeferredValue` keeps typing responsive while the grid re-renders. The URL updates with `router.replace` on a 250ms debounce: links are shareable and back-button history stays clean. With a server-side catalog I'd debounce the fetch and cancel stale requests with `AbortController`; here that would be complexity for nothing.
 
+### 4. Wallet checkout as a state machine (simulated)
+
+"Pay with wallet" walks through connect → review → sign → pending (confirmations) → confirmed, plus the paths that matter just as much: **signature rejected** (nothing sent, retry with the same price), **insufficient funds** (caught before asking for a signature) and **price moved** (shown in review before signing).
+
+- The price is locked with `POST /api/quote` **before** the signature, because a wallet user signs an exact amount; a card flow can re-confirm after, a wallet flow can't.
+- The flow is one discriminated union + pure reducer (`lib/wallet-machine.ts`), so impossible states (e.g. "pending" without a signature) can't be represented. Unit-tested.
+- The dialog can't be dismissed while a transaction is confirming.
+- **Everything is simulated** (`lib/sim-wallet.ts`) and labelled as such in the UI. A real build would swap that file for wagmi/viem.
+
 ## Craft details
 
-- **Feedback where you're looking.** "Add to cart" turns into "added ✓", the cart badge bumps, and the new line is highlighted in the drawer. On phones a sticky buy bar appears once the main button scrolls away.
+- **Feedback where you're looking.** The product photo flies into the cart icon (Web Animations API on a throwaway clone, skipped for reduced motion), "add to cart" turns into "added ✓", the cart badge bumps, and the new line is highlighted in the drawer. On phones a sticky buy bar appears once the main button scrolls away.
 - **Checkout that doesn't punish.** One set of validation rules runs on the client and the server. Fields are checked when you leave them and re-checked as you fix them, so no round trip to find a typo. No example values as placeholders.
+- **Every button state is deliberate.** Place order goes idle → placing (spinner, disabled) → "order placed ✓" for a beat → receipt. Failures shake the button (motion only; the reason is always in text next to it) and the label becomes "try again". Totals count to their new value instead of jumping.
 - **A real confirmation page.** `/order/confirmed` survives a refresh and "back" never re-shows the filled checkout. The receipt has items, totals, the ship-to address, a delivery window and what happens next.
 - **No flicker on fast networks.** "Saving…" only appears if a request takes longer than 300ms (`useDelayedFlag`).
 - **Accessible drawers.** Real modal dialogs: focus moves in and returns to the trigger, Tab is trapped, Esc closes, and the page behind is `inert`.
@@ -73,6 +83,7 @@ GitHub Actions runs typecheck, unit and e2e tests on every PR.
 - Put the idempotency store and demo state somewhere shared (Redis) if this ran on real serverless traffic.
 - Measure INP on search and the cart stepper in the field rather than by feel.
 - Add Storybook stories for the cart line states (idle, pending, max stock, rolled back).
+- Replace the simulated wallet with wagmi/viem on a testnet, and verify the transaction on the server (amount, recipient, confirmations) before fulfilling.
 
 ## Stack
 
