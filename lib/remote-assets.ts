@@ -10,7 +10,6 @@ export const REMOTE_ASSETS = {
   heroBottomCenter: "/assets/hero/dog-center.avif",
   heroBottomRight: "/assets/hero/dog-right.avif",
   aboutHero: "/assets/about/happy-dogs.avif",
-  aboutWalk: "/assets/about/dog-walk.avif",
   superfoodKibble: "/assets/products/superfood-kibble.avif",
   dentalChewPack: "/assets/products/dental-chew-pack.avif",
   adventureHarness: "/assets/products/adventure-harness.avif",
