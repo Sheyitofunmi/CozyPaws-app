@@ -30,8 +30,11 @@
   }
 }
 
-/* The site navbar is fixed; CozyHero toggles this class while the viewer
-   is on this screen so the two headers never overlap. */
+/* The site navbar is fixed and would overlap the hero's own header. It is
+   hidden by default on any page with the hero (so the very first paint,
+   before JavaScript, is already right), and CozyHero sets
+   html[data-past-hero] once the visitor scrolls past it. The flag lives on
+   <html>, which React never re-creates, so a re-mounted navbar can't lose it. */
 .navbar {
   transition:
     color 0.5s var(--ease-in-out),
@@ -39,7 +42,7 @@
     visibility 0.35s ease;
 }
 
-.navbar.is-cozy-hidden {
+html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

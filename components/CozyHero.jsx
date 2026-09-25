@@ -235,11 +235,11 @@ export default function CozyHero() {
   };
 
   // The site navbar is fixed (z-index 1000) and would sit on top of this
-  // hero's own header — keep it hidden until the viewer scrolls past.
+  // hero's own header: CSS hides it until html[data-past-hero] is set.
   useEffect(() => {
-    const navbar = document.querySelector(".navbar");
+    const root = document.documentElement;
     const hero = heroRef.current;
-    if (!navbar || !hero) return;
+    if (!hero) return;
 
     // Measure once (and on resize), not on every scroll event.
     let heroBottom = hero.offsetTop + hero.offsetHeight;
@@ -248,7 +248,7 @@ export default function CozyHero() {
       onScroll();
     };
     const onScroll = () => {
-      navbar.classList.toggle("is-cozy-hidden", window.scrollY < heroBottom - 100);
+      root.toggleAttribute("data-past-hero", window.scrollY >= heroBottom - 100);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -256,7 +256,7 @@ export default function CozyHero() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
-      navbar.classList.remove("is-cozy-hidden");
+      root.removeAttribute("data-past-hero");
     };
   }, []);
 
