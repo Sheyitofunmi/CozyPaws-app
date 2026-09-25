@@ -13,7 +13,6 @@ export const REMOTE_ASSETS = {
   superfoodKibble: "/assets/products/superfood-kibble.avif",
   dentalChewPack: "/assets/products/dental-chew-pack.avif",
   adventureHarness: "/assets/products/adventure-harness.avif",
-  everydayLeash: "/assets/products/everyday-leash.avif",
   pawBalmDuo: "/assets/products/paw-balm-duo.avif",
 } as const;
 

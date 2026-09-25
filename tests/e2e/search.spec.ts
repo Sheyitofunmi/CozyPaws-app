@@ -8,12 +8,12 @@ test("live search filters as you type and syncs the URL", async ({ page }) => {
   await expect(input).toBeFocused();
 
   await input.pressSequentially("bed", { delay: 40 });
-  await expect(page.getByRole("status").filter({ hasText: "for “bed”" })).toHaveText("2 products for “bed”");
-  await expect(page.locator(".shop-card__name mark")).toHaveText(["bed"]);
+  await expect(page.getByRole("status").filter({ hasText: "for “bed”" })).toHaveText("3 products for “bed”");
+  await expect(page.locator(".shop-card__name mark")).toHaveText(["bed", "bed"]);
   await expect(page).toHaveURL(/\?q=bed$/);
 
   await input.press("Escape");
-  await expect(page.getByText("12 products", { exact: true })).toBeVisible();
+  await expect(page.getByText("18 products", { exact: true })).toBeVisible();
 });
 
 test("reduced motion: product grid is visible without scroll animations", async ({ browser }) => {

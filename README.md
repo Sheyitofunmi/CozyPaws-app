@@ -125,4 +125,4 @@ tests/unit/  tests/e2e/
 
 ## Credits
 
-Product photos are a mix of the project's own images and Unsplash photos. Map data © OpenStreetMap contributors, tiles by OpenFreeMap; the shop's address is made up and its pin is a placeholder in Islington. Pet-brand logos are fictional. CozyPaws is a demo store, not a real shop: no payments are taken.
+Product photos are a mix of the project's own images and Unsplash photos (Unsplash License). Newer product photos: ceramic slow bowl by FLOUFFY, cloud nine bed by Brett Wharton, everyday leash by Pozva, fetch ball trio by Ethan Richardson, puddle-proof raincoat by charlesdeluvio, quick-dry spa towel by Hayffield L, snuggle travel blanket by Jessica Bulling, woven basket bed by Jordan Bigelow. Map data © OpenStreetMap contributors, tiles by OpenFreeMap; the shop's address is made up and its pin is a placeholder in Islington. Pet-brand logos are fictional. CozyPaws is a demo store, not a real shop: no payments are taken.
