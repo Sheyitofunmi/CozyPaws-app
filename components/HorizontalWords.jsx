@@ -46,16 +46,16 @@ const HorizontalWords = () => {
       const { container, textRef, letters, stickers, arrows } = getEls();
       const headline = container.querySelector(".horizontal-words__h2");
 
-      // Where the headline sits inside the moving track, measured with the
-      // track at x = 0. Recomputed on every refresh (resize, font load).
+      // Where the headline sits inside the moving track. Uses layout offsets
+      // (which ignore transforms) rather than setting x back to 0: a gsap.set
+      // made later in onRefreshInit isn't recorded by gsap.matchMedia, so it
+      // would survive a desktop → mobile resize and leave the text shifted.
+      const wrapper = headline.parentElement;
       let headLeft = 0;
       let headWidth = 0;
       const measure = () => {
-        gsap.set(textRef, { x: 0 });
-        const track = textRef.getBoundingClientRect();
-        const head = headline.getBoundingClientRect();
-        headLeft = head.left - track.left;
-        headWidth = head.width;
+        headLeft = wrapper.offsetLeft + headline.offsetLeft;
+        headWidth = headline.offsetWidth;
       };
       measure();
 
@@ -177,6 +177,9 @@ const HorizontalWords = () => {
           });
         }
       });
+      // Belt and braces: when the screen drops below 1025px, make sure the
+      // track loses the horizontal offset the scrubbed tween gave it.
+      return () => gsap.set(textRef, { clearProps: "transform" });
     });
 
     mm.add("(max-width: 1024px)", () => {
