@@ -163,15 +163,25 @@ export default function MotionCards() {
             },
           });
           const deckMid = deck.offsetWidth / 2;
-          tl.from(cards, {
-            x: (i, el) =>
-              wide ? deckMid - (el.offsetLeft + el.offsetWidth / 2) : 0,
-            y: 40,
-            opacity: 0,
-            duration: 0.9,
-            ease: "back.out(1.3)",
-            stagger: 0.07,
-          });
+          // fromTo with explicit end values, so the cards always land at
+          // x/y 0 even if a previous layout (desktop → phone) left state behind.
+          tl.fromTo(
+            cards,
+            {
+              x: (i, el) =>
+                wide ? deckMid - (el.offsetLeft + el.offsetWidth / 2) : 0,
+              y: 40,
+              opacity: 0,
+            },
+            {
+              x: 0,
+              y: 0,
+              opacity: 1,
+              duration: 0.9,
+              ease: "back.out(1.3)",
+              stagger: 0.07,
+            },
+          );
           const sticker = section.querySelector(".motion-card__sticker img");
           if (sticker) {
             tl.from(
@@ -271,10 +281,14 @@ export default function MotionCards() {
           deck.removeEventListener("pointerdown", clearOnPress, true);
           nextRef.current = null;
           cards.forEach((card) => {
-            card.style.zIndex = "";
             card.classList.remove("is-top");
             card.querySelector("a")?.removeAttribute("tabindex");
           });
+          // Wipe every inline style GSAP/Draggable left (offsets, z-index,
+          // touch-action…) and GSAP's cached transform, so the next layout
+          // starts clean when the screen crosses 768px.
+          gsap.killTweensOf(cards);
+          gsap.set(cards, { clearProps: "all" });
         };
       },
     );

@@ -35,4 +35,23 @@ test.describe("a store built for good dogs", () => {
     await expect(top).toHaveText(/toys & play/);
     await context.close();
   });
+
+  test("resizing from desktop to a phone leaves no desktop offsets behind", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(2500);
+    await page.locator(".mc-deck").evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await page.waitForTimeout(1500);
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.locator(".mc-deck").evaluate((el) => el.scrollIntoView({ block: "center" }));
+    const top = page.locator(".mc-card.is-top");
+    await expect(top).toHaveCount(1, { timeout: 10_000 });
+    // every card sits centred in the pile, not at its old desktop fan position
+    await expect
+      .poll(async () =>
+        page.locator(".mc-card").evaluateAll((cards) =>
+          cards.map((c) => Math.round(c.getBoundingClientRect().left + c.getBoundingClientRect().width / 2)),
+        ),
+      )
+      .toEqual(Array(5).fill(188));
+  });
 });
