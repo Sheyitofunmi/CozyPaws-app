@@ -279,13 +279,13 @@
 @media (min-width: 1025px) and (prefers-reduced-motion: no-preference) {
   /* B: huge type that runs off the screen edges */
   .horizontal-words__h2 {
-    font-size: clamp(9rem, 17vw, 22rem);
+    font-size: clamp(6.5rem, 12vw, 15rem);
     letter-spacing: -0.02em;
   }
 
   /* Stickers and arrows scale with the headline */
   .horizontal-words__sticker-svg {
-    font-size: clamp(1.5rem, 2.1vw, 2.6rem);
+    font-size: clamp(1.2rem, 1.55vw, 1.9rem);
   }
 
   .horizontal-words__relative {
@@ -295,11 +295,11 @@
   /* Park the stickers above / below the giant letters, not on them */
   .horizontal-words__sticker-watch,
   .horizontal-words__sticker-phone {
-    transform: translate(-50%, calc(-100% - 6.5vw)) rotate(-8deg);
+    transform: translate(-50%, calc(-100% - 4.6vw)) rotate(-8deg);
   }
 
   .horizontal-words__sticker-cursor {
-    transform: translate(-50%, 7vw) rotate(6deg);
+    transform: translate(-50%, 5vw) rotate(6deg);
   }
 
   /* The copy sits bottom-left, lined up with where "we" starts */
