@@ -244,3 +244,158 @@
   display: inline-block;
   white-space: nowrap;
 }
+
+/* ─── v2: teal block, huge headline, CTA, progress ─────────────────────────── */
+/* C: a rounded brand-teal block like the video hero above it. On desktop GSAP
+   fades it in from the page colour; everywhere else it is simply teal. */
+.horizontal-words-section {
+  width: calc(100% - 24px);
+  margin-inline: auto;
+  border-radius: 24px;
+  background-color: #1f5a4b;
+  color: #e6fab9;
+}
+
+.horizontal-words__h2,
+.horizontal-words__arrow-svg,
+.horizontal-words__arrow-end-svg {
+  color: inherit;
+}
+
+.horizontal-words__bottom-text-l em {
+  font-family: "Times New Roman", Georgia, serif;
+}
+
+/* E: copy + CTA */
+.horizontal-words__cta {
+  margin-top: 1.25rem;
+  text-decoration: none;
+}
+
+.horizontal-words__progress {
+  display: none;
+}
+
+@media (min-width: 1025px) and (prefers-reduced-motion: no-preference) {
+  /* B: huge type that runs off the screen edges */
+  .horizontal-words__h2 {
+    font-size: clamp(6.5rem, 12vw, 15rem);
+    letter-spacing: -0.02em;
+  }
+
+  /* Stickers and arrows scale with the headline */
+  .horizontal-words__sticker-svg {
+    font-size: clamp(1.2rem, 1.55vw, 1.9rem);
+  }
+
+  .horizontal-words__relative {
+    top: 46%;
+  }
+
+  /* Park the stickers above / below the giant letters, not on them */
+  .horizontal-words__sticker-watch,
+  .horizontal-words__sticker-phone {
+    transform: translate(-50%, calc(-100% - 4.6vw)) rotate(-8deg);
+  }
+
+  .horizontal-words__sticker-cursor {
+    transform: translate(-50%, 5vw) rotate(6deg);
+  }
+
+  /* The copy sits bottom-left, lined up with where "we" starts */
+  .horizontal-words__bottom-text {
+    top: auto;
+    left: 8vw;
+    bottom: clamp(3rem, 9vh, 6rem);
+    transform: none;
+    align-items: flex-start;
+    text-align: left;
+    visibility: hidden; /* GSAP reveals it near the end of the pin */
+  }
+
+  .horizontal-words__bottom-text-l {
+    max-width: 30em;
+    font-size: clamp(1.05rem, 0.8rem + 0.45vw, 1.35rem);
+  }
+
+  .horizontal-words__progress {
+    display: block;
+    position: absolute;
+    left: 8vw;
+    right: 8vw;
+    bottom: 1.5rem;
+    height: 2px;
+    background: rgb(230 250 185 / 0.2);
+    border-radius: 2px;
+  }
+
+  .horizontal-words__progress-fill {
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    border-radius: inherit;
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+
+  .horizontal-words__progress-paw {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+    color: currentColor;
+  }
+
+  .horizontal-words__progress-paw svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* F: on phones and tablets the stickers sit in the margins and behind the
+   words, so they never cover letters. */
+@media (max-width: 1024px) {
+  .horizontal-words__h2 {
+    position: relative;
+    z-index: 2;
+  }
+
+  .horizontal-words__sticker-watch,
+  .horizontal-words__sticker-phone,
+  .horizontal-words__sticker-cursor {
+    z-index: 1;
+    opacity: 0.95;
+  }
+
+  /* Smaller, and parked where the wrapped headline leaves room: one above
+     the first line, two either side of the short last line ("are"). */
+  .horizontal-words__sticker-watch,
+  .horizontal-words__sticker-phone,
+  .horizontal-words__sticker-cursor {
+    width: 3.6em;
+  }
+
+  .horizontal-words__sticker-phone {
+    top: 0;
+    left: 0;
+    transform: translate(0, -95%) rotate(-10deg);
+  }
+
+  .horizontal-words__sticker-watch {
+    top: 100%;
+    left: 2%;
+    transform: translate(0, -110%) rotate(-12deg);
+  }
+
+  .horizontal-words__sticker-cursor {
+    top: 100%;
+    left: 98%;
+    transform: translate(-100%, -105%) rotate(8deg);
+  }
+
+  .horizontal-words-section {
+    padding: 88px 28px 64px;
+  }
+}

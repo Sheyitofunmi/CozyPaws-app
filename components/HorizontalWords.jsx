@@ -1,7 +1,9 @@
 "use client";
 
 import React, { Fragment, useEffect, useLayoutEffect, useRef } from "react";
+import Link from "next/link";
 import gsap from "gsap";
+import { IconArrowRight } from "@/components/icons";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "../app/styles/horizontal-words.css";
 
@@ -42,18 +44,38 @@ const HorizontalWords = () => {
 
     mm.add("(min-width: 1025px)", () => {
       const { container, textRef, letters, stickers, arrows } = getEls();
+      const headline = container.querySelector(".horizontal-words__h2");
+
+      // Where the headline sits inside the moving track. Uses layout offsets
+      // (which ignore transforms) rather than setting x back to 0: a gsap.set
+      // made later in onRefreshInit isn't recorded by gsap.matchMedia, so it
+      // would survive a desktop → mobile resize and leave the text shifted.
+      const wrapper = headline.parentElement;
+      let headLeft = 0;
+      let headWidth = 0;
+      const measure = () => {
+        headLeft = wrapper.offsetLeft + headline.offsetLeft;
+        headWidth = headline.offsetWidth;
+      };
+      measure();
+
+      // Start with "we" already on screen (8% from the left) and stop when
+      // "are" is in view (its end at 80%), so no frame of the pin is empty.
+      const startX = () => window.innerWidth * 0.08 - headLeft;
+      const endX = () => window.innerWidth * 0.8 - (headLeft + headWidth);
+      // Scroll 1:1 with the text's travel, but never less than ~a screen.
+      const distance = () => Math.max(startX() - endX(), window.innerHeight * 0.9);
 
       const scrollTween = gsap.fromTo(
         textRef,
-        { xPercent: 50 },
+        { x: startX },
         {
-          xPercent: -100,
+          x: endX,
           ease: "none",
           scrollTrigger: {
             trigger: container,
             start: "top top",
-            end: () =>
-              `+=${Math.max(1200, Math.min(window.innerWidth * 2.5, 3000))}`,
+            end: () => `+=${distance()}`,
             scrub: 1,
             pin: true,
             // Pin with transforms instead of switching to position:fixed.
@@ -61,36 +83,75 @@ const HorizontalWords = () => {
             // scroll past this section (CLS ~1.9); transforms don't count.
             pinType: "transform",
             anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onRefreshInit: measure,
           },
         },
       );
 
-      letters.forEach((letter) => {
+      // The teal block fades in from the page colour as the section arrives.
+      gsap.fromTo(
+        container,
+        { backgroundColor: "#f0ebe6", color: "#1a1a1a" },
+        {
+          backgroundColor: "#1f5a4b",
+          color: "#e6fab9",
+          ease: "none",
+          scrollTrigger: { trigger: container, start: "top 70%", end: "top 10%", scrub: true },
+        },
+      );
+
+      // The copy and the CTA arrive once the headline has nearly finished
+      // (driven by the pin's progress below, 60% → 90%).
+      const outro = gsap.fromTo(
+        container.querySelector(".horizontal-words__bottom-text"),
+        { autoAlpha: 0, y: 40 },
+        { autoAlpha: 1, y: 0, ease: "power2.out", paused: true },
+      );
+
+      // Paw-print progress line along the bottom.
+      const fill = container.querySelector(".horizontal-words__progress-fill");
+      const paw = container.querySelector(".horizontal-words__progress-paw");
+      ScrollTrigger.create({
+        trigger: container,
+        start: "top top",
+        end: () => `+=${distance()}`,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          outro.progress(gsap.utils.clamp(0, 1, (self.progress - 0.6) / 0.3));
+          gsap.set(fill, { scaleX: self.progress });
+          gsap.set(paw, { left: `${self.progress * 100}%`, rotation: self.progress * 360 });
+        },
+      });
+
+      // Letters rise into place in a wave (deterministic, so it looks the same
+      // on every visit) and are settled by the time they reach the middle of
+      // the screen, instead of still flying around at the left edge.
+      letters.forEach((letter, i) => {
         gsap.from(letter, {
-          yPercent: (Math.random() - 0.5) * 500,
-          rotation: (Math.random() - 0.5) * 60,
-          ease: "elastic.out(1.2, 1)",
+          yPercent: Math.sin(i * 0.55) * 110,
+          rotation: Math.sin(i * 0.9 + 1) * 14,
+          ease: "back.out(1.6)",
           scrollTrigger: {
             trigger: letter,
             containerAnimation: scrollTween,
-            start: "left 90%",
-            end: "left 10%",
+            start: "left 100%",
+            end: "left 60%",
             scrub: 0.5,
           },
         });
       });
 
-      stickers.forEach((sticker) => {
+      stickers.forEach((sticker, i) => {
         gsap.from(sticker, {
           scale: 0,
-          yPercent: (Math.random() - 0.5) * 400,
-          rotation: (Math.random() - 0.5) * 60,
-          ease: "elastic.out(1.2, 1)",
+          rotation: i % 2 ? 24 : -24,
+          ease: "back.out(2)",
           scrollTrigger: {
             trigger: sticker,
             containerAnimation: scrollTween,
-            start: "left 90%",
-            end: "left 10%",
+            start: "left 100%",
+            end: "left 65%",
             scrub: 0.5,
           },
         });
@@ -109,13 +170,16 @@ const HorizontalWords = () => {
             scrollTrigger: {
               trigger: arrowPath.parentElement,
               containerAnimation: scrollTween,
-              start: "left 90%",
-              end: "left 30%",
+              start: "left 100%",
+              end: "left 50%",
               scrub: 0.5,
             },
           });
         }
       });
+      // Belt and braces: when the screen drops below 1025px, make sure the
+      // track loses the horizontal offset the scrubbed tween gave it.
+      return () => gsap.set(textRef, { clearProps: "transform" });
     });
 
     mm.add("(max-width: 1024px)", () => {
@@ -124,7 +188,7 @@ const HorizontalWords = () => {
       gsap.from(letters, {
         opacity: 0,
         yPercent: 60,
-        rotation: () => (Math.random() - 0.5) * 40,
+        rotation: (i) => Math.sin(i * 0.9 + 1) * 14,
         ease: "back.out(1.7)",
         duration: 0.6,
         stagger: { each: 0.03, from: "start" },
@@ -332,13 +396,27 @@ const HorizontalWords = () => {
       </div>
 
       <div className="horizontal-words__bottom-text">
-        <div className="horizontal-words__bottom-text-l">
-          Every dog deserves the good stuff — <em>and</em> then some.
-          <br />
-          We bring the best food, toys and cozy gear
-          <br />
-          straight to your door. Tail wags guaranteed.
-        </div>
+        <p className="horizontal-words__bottom-text-l">
+          Every dog deserves the good stuff — <em>and</em> then some. We bring
+          the best food, toys and cozy gear straight to your door. Tail wags
+          guaranteed.
+        </p>
+        <Link href="/shop" className="cozy-btn-orange horizontal-words__cta">
+          shop the good stuff <IconArrowRight className="cozy-btn-orange__icon" />
+        </Link>
+      </div>
+
+      <div className="horizontal-words__progress" aria-hidden="true">
+        <span className="horizontal-words__progress-fill" />
+        <span className="horizontal-words__progress-paw">
+          <svg viewBox="0 0 512 512" fill="currentColor">
+            <ellipse cx="256" cy="352" rx="120" ry="96" />
+            <ellipse cx="118" cy="220" rx="52" ry="70" />
+            <ellipse cx="212" cy="140" rx="48" ry="66" />
+            <ellipse cx="300" cy="140" rx="48" ry="66" />
+            <ellipse cx="394" cy="220" rx="52" ry="70" />
+          </svg>
+        </span>
       </div>
     </section>
   );

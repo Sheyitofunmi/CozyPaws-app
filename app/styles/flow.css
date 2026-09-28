@@ -1685,10 +1685,7 @@
   .account-menu__trigger:hover,
   .account-menu__signin:hover,
   .related-card:hover .related-card__img img,
-  .about-value:hover,
-  .team-card:hover .team-card__img img,
   .about-cta__btn:hover,
-  .contact-card:hover,
   .site-footer__socials a:hover {
     transform: none;
   }

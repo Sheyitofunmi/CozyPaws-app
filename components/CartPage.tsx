@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { getProduct } from "@/lib/catalog";
 import { saveLastOrder } from "@/lib/last-order";
+import { recordOrder, saveAddress, useAccount } from "@/lib/account";
 import { formatPrice } from "@/lib/money";
 import { buildQuote, FREE_SHIPPING_THRESHOLD_CENTS } from "@/lib/pricing";
 import { CUSTOMER_FIELDS, validateCustomer, validateField, type CustomerField } from "@/lib/validation";
@@ -87,6 +88,21 @@ export default function CartPage() {
   const renderedLines = useExitingItems(items, (line) => line.id);
   const [status, setStatus] = useState<Status>("idle");
   const [values, setValues] = useState<CheckoutCustomer>(emptyCustomer);
+  // Signed in (demo account): fill in what we already know, once, without
+  // overwriting anything the visitor has typed.
+  const { account } = useAccount();
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!account || prefilled.current) return;
+    prefilled.current = true;
+    setValues((v) => ({
+      name: v.name || account.name,
+      email: v.email || account.email,
+      address: v.address || account.address?.address || "",
+      city: v.city || account.address?.city || "",
+      zip: v.zip || account.address?.zip || "",
+    }));
+  }, [account]);
   const [touched, setTouched] = useState<Partial<Record<CustomerField, boolean>>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
   const [announcement, setAnnouncement] = useState("");
@@ -224,13 +240,16 @@ export default function CartPage() {
       const result = (await res.json()) as CheckoutResponse;
 
       if (result.ok) {
-        saveLastOrder({
+        const placed = {
           orderId: result.orderId,
           placedAt: new Date().toISOString(),
           quote: result.quote,
           customer: values,
           payment: result.payment,
-        });
+        };
+        saveLastOrder(placed);
+        recordOrder(placed);
+        if (account) saveAddress({ address: values.address, city: values.city, zip: values.zip });
         // A short "order placed ✓" beat on the button before we move on,
         // so success registers where the user is looking.
         setStatus("success");
