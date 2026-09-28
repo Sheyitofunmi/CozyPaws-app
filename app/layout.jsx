@@ -7,6 +7,7 @@ import CartDrawer from "@/components/CartDrawer";
 import WishlistDrawer from "@/components/WishlistDrawer";
 import CartToast from "@/components/CartToast";
 import DemoPanelGate from "@/components/DemoPanelGate";
+import VitalsReporter from "@/components/VitalsReporter";
 import ViewTransitionListener from "@/components/ViewTransitionListener";
 
 const inter = Inter({
@@ -45,6 +46,7 @@ export default function RootLayout({ children }) {
             <WishlistDrawer />
             <CartToast />
             <DemoPanelGate />
+            <VitalsReporter />
             <ViewTransitionListener />
           </WishlistProvider>
         </CartProvider>

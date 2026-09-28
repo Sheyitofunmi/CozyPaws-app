@@ -192,7 +192,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           )}
 
           <div className="product-info__buy" ref={buyRef}>
-            <div className="product-qty" role="group" aria-label="Quantity">
+            <div className="product-qty" data-inp="cart-stepper" role="group" aria-label="Quantity">
               <button
                 type="button"
                 aria-label="Decrease quantity"

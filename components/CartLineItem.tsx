@@ -59,7 +59,7 @@ export default function CartLineItem({ product, qty, variant, unitCents, onNavig
   const atStock = qty >= product.stock;
 
   const stepper = (
-    <div className="shop-cart__qty" data-pending={showPending || undefined}>
+    <div className="shop-cart__qty" data-inp="cart-stepper" data-pending={showPending || undefined}>
       <button
         type="button"
         aria-label={`Decrease quantity of ${product.name}`}
