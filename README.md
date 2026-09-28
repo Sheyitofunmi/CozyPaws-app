@@ -1,109 +1,130 @@
 # CozyPaws
 
-A playful dog store built with Next.js 15 and React 19, used to explore one question:
+A dog store built with Next.js 15 and React 19 to answer two questions:
 
-**How do you make a checkout feel instant without ever being wrong about money?**
+1. **How do you make a checkout feel instant without ever being wrong about money?**
+2. **How much motion and personality can a store have before it gets slow or inaccessible?**
 
-Live: [cozy-paws-beta.vercel.app](https://cozy-paws-beta.vercel.app). Add `?demo=1` to the URL to get the demo controls (slow network, failed requests, price and stock changes).
+**[Live demo →](https://cozy-paws-beta.vercel.app)** · add [`?demo=1`](https://cozy-paws-beta.vercel.app/?demo=1) to get controls for slow networks, failed requests, and price and stock changes.
+
+| Product-page LCP (throttled mobile) | Homepage layout shift | Image data for a full scroll | Automated tests |
+| :---------------------------------: | :-------------------: | :--------------------------: | :-------------: |
+|          **4.6s → 1.4s**            |    **CLS 1.9 → 0**    |      **1.65MB → 150KB**      | **83** (unit, e2e, axe) |
 
 ---
 
-## The problem
+## Highlights
 
-Shopping flows have two jobs that pull against each other:
+### Correct where money moves
 
-- **Feel instant.** Waiting for a spinner on every "+" tap feels broken.
-- **Be correct.** Prices and stock change on the server. The customer should never be charged an amount they didn't see.
+- **Optimistic cart, server-owned truth.** Every tap updates the UI at once, then the server validates stock. A stock clash snaps the line back and says why ("only 1 left"), and a failed request rolls back. Out-of-order responses are ignored using sequence numbers.
+- **No silent re-pricing.** The checkout sends what the customer _saw_. If the price moved, the server answers `409 quote_changed` with a per-line diff, and the customer confirms the new total themselves.
+- **One order per click.** An `Idempotency-Key` plus a synchronous lock mean a double-click or a retry can't create two orders.
+- **Wallet checkout as a state machine (simulated).** Connect → review → sign → confirming → done, including the rejected-signature, insufficient-funds and price-moved paths. The price is locked _before_ signing, and impossible states can't be represented.
 
-The same tension shows up anywhere money moves: a wallet showing a pending transaction, or a swap quote that moves before you confirm.
+### Craft that stays fast and accessible
 
-## Key decisions
+- **A homepage with real interaction.** Pets react to your cursor, a six-clip video reel crossfades with the next clip preloaded, the headline pins and scrolls sideways, and the photo cards can be grabbed and thrown. All of it is set up at idle time and pins with transforms, with zero layout shift.
+- **Accessible by default.** Real modal dialogs (focus trap, `inert` background), live regions for toasts and errors, keyboard access to everything, 24px+ tap targets and no text under 12px. The axe scan reports no serious WCAG 2.1 AA issues on any page.
+- **Reduced motion respected everywhere.** Decorative motion switches off. Functional feedback stays, just without the movement. The video only loads when you press play.
+- **One design system.** Shared motion tokens, one type system (Epilogue headings with a Times-italic accent, Inter body), one background and one footer across every page, and a branded 404.
+
+---
+
+## Try it (2 minutes)
+
+1. Open the [demo panel](https://cozy-paws-beta.vercel.app/?demo=1) and turn on **price bump**, then check out. You'll see _"Your total changed"_ with the diff instead of a silent charge.
+2. Turn on **fail next request**, then tap **+** on a cart item. The row rolls back and says why.
+3. Remove an item and press **Undo**. It returns to its old position, and focus follows.
+4. Pick **crypto wallet** at checkout and reject the signature. Nothing is sent, and you can retry at the same price.
+5. On the homepage, point at the pets, then grab a photo in _"a store built for good dogs"_ and throw it.
+
+---
+
+<details>
+<summary><strong>Key decisions and trade-offs</strong></summary>
 
 ### 1. Optimistic cart, but the server owns price and stock
 
 Every cart change updates the UI immediately, then `POST /api/cart` validates it against live stock.
 
-- **Confirmed**: the pending value becomes the real one.
-- **Out of stock**: the line drops back to what's actually available and a polite toast explains why ("Only 1 left…").
-- **Network failure**: full rollback plus an error toast. Nothing is persisted until the server agrees.
+- **Confirmed:** the pending value becomes the real one.
+- **Out of stock:** the line drops back to what's available and the row and a toast explain why.
+- **Network failure:** full rollback plus an error message. Nothing is persisted until the server agrees.
 
-State is split into `confirmed` (persisted) and `pending` (in flight) in a pure reducer (`lib/cart-state.ts`). Rapid taps send **absolute** quantities with increasing sequence numbers, so responses that arrive out of order are ignored rather than overwriting newer state.
+State is split into `confirmed` and `pending` in a pure reducer (`lib/cart-state.ts`). Rapid taps send **absolute** quantities with increasing sequence numbers, so responses that arrive out of order are ignored.
 
-_Rejected:_ waiting for the server on every tap (slow), or trusting the client (wrong totals). Also rejected React's `useOptimistic`: it's scoped to a transition, and this cart needs optimistic state that outlives any one request and survives several of them overlapping.
+_Rejected:_ waiting for the server on every tap (slow), trusting the client (wrong totals), and React's `useOptimistic`. It's scoped to one transition, but this cart needs optimistic state that outlives any single request and survives several overlapping ones.
 
 ### 2. A stale-quote review instead of silently re-pricing
 
-The checkout sends what the customer **saw** (lines and total), never a price to charge. The server re-prices from its own catalog. If anything moved, it returns `409 quote_changed` with a per-line diff, and the UI shows **"Your total changed"** with `$49.99 → $57.49` and an explicit _confirm new total_ button.
-
-Orders carry an `Idempotency-Key`, so a double-click or a retry after a network blip can't create two orders. The button is also locked synchronously on the first click.
+The checkout sends the lines and total the customer **saw**, never a price to charge. The server re-prices from its own catalog. If anything moved, it returns `409 quote_changed` with a per-line diff (`$49.99 → $57.49`), and the UI asks the customer to confirm the new total.
 
 _Rejected:_ charging the new price silently (breaks trust), or failing with a generic error (loses the order).
 
 ### 3. Search with no network request
 
-The catalog is local, so live search filters on the client. `useDeferredValue` keeps typing responsive while the grid re-renders. The URL updates with `router.replace` on a 250ms debounce: links are shareable and back-button history stays clean. With a server-side catalog I'd debounce the fetch and cancel stale requests with `AbortController`; here that would be complexity for nothing.
+The catalog is local, so search filters on the client. `useDeferredValue` keeps typing responsive, and the URL updates with `router.replace` on a 250ms debounce, so links are shareable and history stays clean. With a server-side catalog I'd debounce the fetch and cancel stale requests with `AbortController`; here that would add complexity for nothing.
 
-### 4. Wallet checkout as a state machine (simulated)
+### 4. Wallet checkout as a state machine
 
-"Pay with wallet" walks through connect → review → sign → pending (confirmations) → confirmed, plus the paths that matter just as much: **signature rejected** (nothing sent, retry with the same price), **insufficient funds** (caught before asking for a signature) and **price moved** (shown in review before signing).
+One discriminated union and a pure reducer (`lib/wallet-machine.ts`), unit-tested. The price is locked with `POST /api/quote` **before** the signature, because a wallet user signs an exact amount. The dialog can't be dismissed mid-confirmation. **Everything is simulated** (`lib/sim-wallet.ts`) and labelled as such in the UI; a real build would swap in wagmi/viem.
 
-- The price is locked with `POST /api/quote` **before** the signature, because a wallet user signs an exact amount; a card flow can re-confirm after, a wallet flow can't.
-- The flow is one discriminated union + pure reducer (`lib/wallet-machine.ts`), so impossible states (e.g. "pending" without a signature) can't be represented. Unit-tested.
-- The dialog can't be dismissed while a transaction is confirming.
-- **Everything is simulated** (`lib/sim-wallet.ts`) and labelled as such in the UI. A real build would swap that file for wagmi/viem.
+### 5. Motion that doesn't cost performance
 
-## Craft details
+Pointer effects write CSS variables from one rAF-throttled listener (`useHeroPointer`), so React never re-renders on mouse move. GSAP setup waits for idle time (`useIdleReady`). Pinned sections use `pinType: "transform"`, and responsive GSAP code uses `gsap.matchMedia` with full clean-up, so resizing between desktop and mobile never leaves stale offsets.
 
-- **Feedback where you're looking.** The product photo flies into the cart icon (Web Animations API on a throwaway clone, skipped for reduced motion), "add to cart" turns into "added ✓", the cart badge bumps, and the new line is highlighted in the drawer. On phones a sticky buy bar appears once the main button scrolls away.
-- **Pages with a point of view.** The About page swaps the usual stat tiles for "the Biscuit test" (products that failed, stamped REJECTED, with a chew-o-meter), a timeline whose scribble draws itself as you scroll (CSS scroll-driven animation), and team cards that flip to show each dog's file. The Contact page shows whether the team is in right now (in London time, whatever yours is), adds fields for the topic you pick (order number, company, a dog photo), and ends with a stamp.
-- **A map that doesn't cost the page anything.** The Contact map (MapLibre + OpenFreeMap vector tiles, no API key) is recoloured to the brand palette at runtime, only downloads when you scroll near it, doesn't hijack scrolling (Ctrl/⌘ + scroll to zoom), and is driven by an accessible list of places. If the tiles can't load, it says so and keeps the directions link.
-- **A shop that merchandises, not just lists.** Category tiles are the filter (a ring slides to the active one), a sticky toolbar holds search, the result count and a sort that lives in the URL. Cards show a second photo on hover, a "Biscuit-approved" stamp for products that passed testing, and turn into a quantity stepper once the item is in your cart. A "first dinner kit" card adds three products in one tap, and a staff-pick quote links the About story back to a product.
-- **A homepage that sells.** "Biscuit's picks" is a scroll-snap rail of real products with one-tap add and prev/next arrows that disable at the ends, each service card links to its category, "meet the pack" is a masonry wall of customer dogs, and a newsletter signup ends with the paw stamp.
-- **Mistakes are cheap.** Removing an item collapses the row (it slides out and the gap closes, instead of the list jumping) and the toast offers **Undo**, which puts the item back in its old position. Keyboard focus lands on Undo, then back on the restored row. The toast pauses while you hover or focus it and animates out. When the server corrects a row (stock) or a request fails, the row itself flashes and says why ("only 1 left", "not saved, back to 1"), not only the toast.
-- **Checkout that doesn't punish.** One set of validation rules runs on the client and the server. Fields are checked when you leave them and re-checked as you fix them, so no round trip to find a typo. No example values as placeholders.
-- **Every button state is deliberate.** Place order goes idle → placing (spinner, disabled) → "order placed ✓" for a beat → receipt. Failures shake the button (motion only; the reason is always in text next to it) and the label becomes "try again". Totals count to their new value instead of jumping.
-- **One motion system.** Durations and easings are tokens (`--dur-fast/base/slow`, `--ease-out/in-out/spring` in `base.css`). Hover lifts only apply on devices that really hover, so nothing "sticks" after a tap.
-- **Loading that keeps its shape.** Route skeletons (`loading.tsx`), a checkout skeleton until the saved cart is read, and images that fade in over a shimmer. Images go through `next/image`, so phones get right-sized files: product-page LCP on a throttled mobile connection went from ~4.6s to ~1.4s, with zero layout shift.
-- **Transitions with meaning.** The shop photo morphs into the product page (View Transitions API, with a plain navigation as fallback), pages fade in, the filter highlight slides between pills, quantities roll in the direction they changed, the wishlist star pops, and crossing the free-delivery line gets a small celebration. All of it is skipped under reduced motion.
-- **Every screen size.** Checked at 320–1920px: no horizontal scroll, 2-up product grid on phones, 44px tap areas on small links and remove buttons, a sticky "place order" bar wherever checkout is one column, and dialogs that scroll on short landscape phones.
-- **A demo account that does something.** The header avatar opens a real menu (Esc and outside click close it, focus returns to the button). Signing in (name and email, no passwords, stored only in this browser) prefills checkout, saves your address after the first order, and lists past orders on `/account`.
-- **A real confirmation page.** `/order/confirmed` survives a refresh and "back" never re-shows the filled checkout. The receipt has items, totals, the ship-to address, a delivery window and what happens next.
-- **No flicker on fast networks.** "Saving…" only appears if a request takes longer than 300ms (`useDelayedFlag`).
-- **Accessible drawers.** Real modal dialogs: focus moves in and returns to the trigger, Tab is trapped, Esc closes, and the page behind is `inert`.
-- **Announced changes.** Toasts, result counts and checkout errors use live regions. Validation errors set `aria-invalid` and focus the first bad field.
-- **A homepage that loads light.** Pet photos go through `next/image` and lazy-load below the fold (image data for a full scroll went from 1.65MB to ~150KB). Scroll-effect setup waits for idle time (`useIdleReady`), and the pinned "we wanna be where the dogs are" section pins with a transform, so there's no layout shift (CLS 1.9 → 0). Throttled mobile LCP is under a second.
-- **A video hero that earns its bytes.** Six 6-second dog clips play back to back with a crossfade, using two `<video>` elements so the next clip is already loaded when the current one ends (`useHeroReel`). Each clip is ~0.3–1.2MB (H.264, with a VP9 fallback for browsers without it). Nothing downloads until the hero is on screen, it pauses when you scroll away or switch tabs, and with reduced motion or Save-Data it waits for you to press play; until then (or if a clip fails) the illustrated scene underneath stays. Story-style bars show progress and jump to any clip.
-- **A pinned headline with no dead frames.** "We wanna be where the dogs are" runs across a brand-teal block in big type: the scroll length is measured from the text itself, so it starts with "we" on screen and releases as "are" lands, letters rise in a repeatable wave, a paw-print line tracks progress, and the section ends on a "shop the good stuff" button. On phones it's a wrapped, unpinned block with the stickers parked in the margins.
-- **Photos you can throw.** "A store built for good dogs" fans five polaroids, each a way into a shop category. Grab one and fling it (GSAP Draggable + inertia) and it springs back; a drag never counts as a click. On phones they become a pile you swipe through (sideways swipes only, so the page still scrolls), with a "next photo" button for anyone who'd rather tap.
-- **An aisle directory, not a second category list.** "Everything your dog needs" lists the real products in each aisle (most popular first, with prices) as links, so every line leads somewhere. From 1200px it's a gently fanned row that's readable without hovering (hover or tab into a card to lift it); below that it's a scroll-snap row you swipe, with dots that track the card in view and jump to any card.
-- **Scroll that feels alive, not busy.** Subtle parallax on the hero pets, a navbar that tucks away when you scroll down and comes back (with a blurred backdrop) when you scroll up, service cards that stack as you scroll on phones, a scroll progress bar (CSS scroll-driven animation, skipped where unsupported), a magnetic "Explore Products" button, and a pause button on the brand marquee.
-- **A hero that reacts to the mouse.** The pet you point at pops up and "talks" while the others duck, a soft spotlight follows the cursor, the side cards tilt with a glare, headline letters ripple, the 98K+ stat counts up, and the rating star spins. Pointer effects write CSS variables from one rAF-throttled listener (`useHeroPointer`), so React never re-renders on mouse move; they only run with a real mouse and motion allowed. The headline wraps by word, never mid-word.
-- **One design system across pages.** Headings are Epilogue with a Times-italic accent word, body copy is Inter, every page sits on the same warm background and ends on the same blue footer, and the copy is lowercase throughout. A branded 404 ("this page wandered off") keeps people in the store.
-- **Reduced motion.** Decorative motion (wiggles, marquee, inertia cards, custom cursor, smooth scroll) is skipped. Functional feedback stays, just without movement.
-- **Contrast.** Button and badge orange darkened slightly to reach WCAG AA (4.8:1).
-- **Money as integer cents**, formatted only at the edge with `Intl.NumberFormat`.
+</details>
 
-## Testing
+<details>
+<summary><strong>All the details</strong></summary>
 
-| Layer         | Tool       | Covers                                                                                                                                                                                                 |
-| ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Unit          | Vitest     | pricing, quote diffs, cart reducer (rollback, stale responses, races)                                                                                                                                  |
-| End-to-end    | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
-| Accessibility | axe-core   | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages, `/cart`, `/about`, `/contact`, `/account` and the 404 page                                                          |
+**Shop and checkout**
+
+- Category tiles double as the filter, and search, result count and sort live in the URL. Cards show a second photo on hover and turn into a quantity stepper once the item is in the cart.
+- The product photo flies into the cart icon, the button says "added ✓", the badge bumps, and a sticky buy bar appears on phones.
+- Removing an item collapses the row, and **Undo** puts it back in place with focus following.
+- Validation rules are shared by client and server. Fields are checked on blur and re-checked as you fix them.
+- Place order goes idle → placing → "order placed ✓" → receipt, and failures say why in text.
+- `/order/confirmed` survives a refresh, and "back" never re-shows the filled form.
+- A demo account (name and email, stored only in the browser) prefills checkout and lists past orders.
+- "Saving…" only appears after 300ms, so fast networks never flicker.
+
+**Homepage**
+
+- The video reel is six 6s clips (~0.3–1.2MB each, H.264 with a VP9 fallback). They load only on screen, pause off screen, and fall back to an illustrated scene.
+- The pinned headline's scroll length is measured from the text, so there are no empty frames.
+- Photo polaroids use GSAP Draggable and inertia, and a drag never counts as a click. On phones they become a swipeable pile with a "next photo" button.
+- The aisle directory lists real products with prices. It's a fanned row on desktop and a scroll-snap row with carousel dots below 1200px.
+
+**Pages with a point of view**
+
+- About: "the Biscuit test" (products stamped APPROVED or REJECTED), a timeline that draws itself as you scroll, and flip cards for the team dogs.
+- Contact: live "open now" status in London time, fields that adapt to the topic, and a MapLibre map recoloured to the brand. The map loads only when near the viewport and doesn't hijack scrolling.
+
+**Performance and quality**
+
+- `next/image` everywhere, route skeletons, and images that fade in over a shimmer.
+- Checked at 320–1920px with no horizontal scroll.
+- Money is stored as integer cents and formatted only at the edge with `Intl.NumberFormat`.
+
+</details>
+
+<details>
+<summary><strong>Testing</strong></summary>
+
+| Layer         | Tool       | Covers                                                                                                                                                         |
+| ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit          | Vitest     | pricing, quote diffs, cart reducer (rollback, stale responses, races), wallet state machine                                                                   |
+| End-to-end    | Playwright | optimistic updates, stock rollback, network failure, double-submit → one order, price-change review, validation focus, focus traps, search, account, homepage interactions, resize regressions |
+| Accessibility | axe-core   | no serious or critical WCAG 2.1 AA violations on every page, including checkout, the order confirmation and the 404                                           |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
 
-## What I'd do next
+</details>
 
-- Move the rest of the homepage motion components to TypeScript and refs (they still coordinate across sections with `document.querySelector`).
-- Put the idempotency store and demo state somewhere shared (Redis) if this ran on real serverless traffic.
-- Measure INP on search and the cart stepper in the field rather than by feel.
-- Add Storybook stories for the cart line states (idle, pending, max stock, rolled back).
-- Replace the simulated wallet with wagmi/viem on a testnet, and verify the transaction on the server (amount, recipient, confirmations) before fulfilling.
-
-## Stack
-
-Next.js 15 (App Router) · React 19 · TypeScript (strict, for the cart/checkout flow) · GSAP + ScrollTrigger + InertiaPlugin · Lenis · MapLibre GL · plain per-component CSS · Vitest · Playwright · axe-core
+<details>
+<summary><strong>Run it locally</strong></summary>
 
 ```bash
 npm install
@@ -113,22 +134,35 @@ npm test               # unit
 npm run build && npm run test:e2e
 ```
 
-## Structure
+**Stack:** Next.js 15 (App Router) · React 19 · TypeScript (strict for cart and checkout) · GSAP (ScrollTrigger, Draggable, Inertia) · Lenis · MapLibre GL · plain per-section CSS · Vitest · Playwright · axe-core
 
 ```
 app/
   api/cart/          validate one cart change against live stock
   api/checkout/      re-price, detect stale quotes, idempotent orders
-  cart/ shop/ about/ contact/
-  styles/            per-section CSS; flow.css = cart/checkout states
-components/          CartDrawer, CartLineItem, CartPage, CartToast, ShopPage, DemoPanel, homepage motion sections…
+  shop/ cart/ order/ account/ about/ contact/ not-found.tsx
+  styles/            per-section CSS; base.css holds the design tokens
+components/          cart, checkout, shop and homepage sections
 lib/
-  types.ts money.ts catalog.ts pricing.ts cart-state.ts cart.tsx wishlist.tsx motion.ts
-  hooks/             useDialog, useDelayedFlag
+  cart-state.ts pricing.ts wallet-machine.ts   pure, unit-tested logic
+  cart.tsx account.ts wishlist.tsx             client state
+  hooks/             useDialog, useHeroPointer, useHeroReel, useIdleReady…
   server/            server catalog view + demo cookie
 tests/unit/  tests/e2e/
 ```
 
-## Credits
+</details>
 
-Product photos are a mix of the project's own images and Unsplash photos (Unsplash License). Newer photos (products, homepage, the pack wall) by FLOUFFY, Brett Wharton, Pozva, Ethan Richardson, charlesdeluvio, Hayffield L, Jessica Bulling, Jordan Bigelow, Kobi Kadosh, Madalyn Cox, Ayla Verschueren, Dogfluence.com, Gabriella Louw, Mathew Coulton, 龙 赵, Jesper Brouwers, anotherxlife, Mollie Sivaram, Rafaëlla Waasdorp, Andy Powell, Mel Elías, Nahima Aparicio, Vlad D, Joe Caione, Chris Andrawes and Trac Vu. Hero videos from Pexels (Pexels License) by Judas Isariot, Yaroslav Bilgovskiy, Dominik Gryzbon, K, My NATURE'AL life and Michał Robak. Earlier credits: ceramic slow bowl by FLOUFFY, cloud nine bed by Brett Wharton, everyday leash by Pozva, fetch ball trio by Ethan Richardson, puddle-proof raincoat by charlesdeluvio, quick-dry spa towel by Hayffield L, snuggle travel blanket by Jessica Bulling, woven basket bed by Jordan Bigelow. Map data © OpenStreetMap contributors, tiles by OpenFreeMap; the shop's address is made up and its pin is a placeholder in Islington. Pet-brand logos are fictional. CozyPaws is a demo store, not a real shop: no payments are taken.
+## What I'd do next
+
+- Move the remaining homepage motion components to TypeScript and refs.
+- Replace the simulated wallet with wagmi/viem on a testnet, and verify the transaction on the server before fulfilling.
+- Put the idempotency store and demo state in shared storage (Redis) for real serverless traffic.
+- Measure INP on search and the cart stepper in the field.
+
+<details>
+<summary>Credits</summary>
+
+Product and homepage photos are a mix of the project's own images and Unsplash photos (Unsplash License), by FLOUFFY, Brett Wharton, Pozva, Ethan Richardson, charlesdeluvio, Hayffield L, Jessica Bulling, Jordan Bigelow, Kobi Kadosh, Madalyn Cox, Ayla Verschueren, Dogfluence.com, Gabriella Louw, Mathew Coulton, 龙 赵, Jesper Brouwers, anotherxlife, Mollie Sivaram, Rafaëlla Waasdorp, Andy Powell, Mel Elías, Nahima Aparicio, Vlad D, Joe Caione, Chris Andrawes and Trac Vu. Hero videos are from Pexels (Pexels License) by Judas Isariot, Yaroslav Bilgovskiy, Dominik Gryzbon, K, My NATURE'AL life and Michał Robak. Map data © OpenStreetMap contributors, tiles by OpenFreeMap. The shop's address is made up, and pet-brand logos are fictional. CozyPaws is a demo store: no payments are taken.
+
+</details>
