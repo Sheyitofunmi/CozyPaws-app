@@ -6,8 +6,6 @@ A playful dog store built with Next.js 15 and React 19, used to explore one ques
 
 Live: [cozy-paws-beta.vercel.app](https://cozy-paws-beta.vercel.app). Add `?demo=1` to the URL to get the demo controls (slow network, failed requests, price and stock changes).
 
-<!-- TODO: add a GIF of the cart → price-change → confirm flow here -->
-
 ---
 
 ## The problem
@@ -31,15 +29,15 @@ Every cart change updates the UI immediately, then `POST /api/cart` validates it
 
 State is split into `confirmed` (persisted) and `pending` (in flight) in a pure reducer (`lib/cart-state.ts`). Rapid taps send **absolute** quantities with increasing sequence numbers, so responses that arrive out of order are ignored rather than overwriting newer state.
 
-*Rejected:* waiting for the server on every tap (slow), or trusting the client (wrong totals). Also rejected React's `useOptimistic`: it's scoped to a transition, and this cart needs optimistic state that outlives any one request and survives several of them overlapping.
+_Rejected:_ waiting for the server on every tap (slow), or trusting the client (wrong totals). Also rejected React's `useOptimistic`: it's scoped to a transition, and this cart needs optimistic state that outlives any one request and survives several of them overlapping.
 
 ### 2. A stale-quote review instead of silently re-pricing
 
-The checkout sends what the customer **saw** (lines and total), never a price to charge. The server re-prices from its own catalog. If anything moved, it returns `409 quote_changed` with a per-line diff, and the UI shows **"Your total changed"** with `$49.99 → $57.49` and an explicit *confirm new total* button.
+The checkout sends what the customer **saw** (lines and total), never a price to charge. The server re-prices from its own catalog. If anything moved, it returns `409 quote_changed` with a per-line diff, and the UI shows **"Your total changed"** with `$49.99 → $57.49` and an explicit _confirm new total_ button.
 
 Orders carry an `Idempotency-Key`, so a double-click or a retry after a network blip can't create two orders. The button is also locked synchronously on the first click.
 
-*Rejected:* charging the new price silently (breaks trust), or failing with a generic error (loses the order).
+_Rejected:_ charging the new price silently (breaks trust), or failing with a generic error (loses the order).
 
 ### 3. Search with no network request
 
@@ -86,11 +84,11 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 
 ## Testing
 
-| Layer | Tool | Covers |
-| --- | --- | --- |
-| Unit | Vitest | pricing, quote diffs, cart reducer (rollback, stale responses, races) |
-| End-to-end | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
-| Accessibility | axe-core | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages, `/cart`, `/about`, `/contact` and `/account` |
+| Layer         | Tool       | Covers                                                                                                                                                                                                 |
+| ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unit          | Vitest     | pricing, quote diffs, cart reducer (rollback, stale responses, races)                                                                                                                                  |
+| End-to-end    | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
+| Accessibility | axe-core   | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages, `/cart`, `/about`, `/contact` and `/account`                                                                       |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
 
