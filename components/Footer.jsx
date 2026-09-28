@@ -333,7 +333,7 @@ export default function Footer() {
           <a href="mailto:hello@cozypaws.co" className="footer-email">
             hello@cozypaws.co
           </a>
-          <a href="#" className="footer-whatsapp">
+          <a href="/contact" className="footer-whatsapp">
             send us a whatsapp*
           </a>
           <p className="footer-note">

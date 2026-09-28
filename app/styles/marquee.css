@@ -1,12 +1,11 @@
 /* ─── Double Marquee Section ─────────────────────────────────────────────── */
 .Double-marquee {
   background-color: var(--bg-color);
-  padding: 40px 60px;
+  padding: var(--section-space) clamp(24px, 5vw, 60px) 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 60px;
-  min-height: 100vh;
+  gap: clamp(24px, 4vw, 60px);
 }
 
 /* ─── Left Panel ─────────────────────────────────────────────────────────── */
@@ -32,7 +31,7 @@
   line-height: 0.95;
   letter-spacing: -2px;
   color: var(--color-black);
-  margin-bottom: 120px;
+  margin-bottom: 90px;
   margin-right: 50px;
   cursor:
     url("/assets/Cursor SVG/cursor-text.svg") 12 12,
@@ -113,59 +112,37 @@
   stroke-dashoffset: 1000;
 }
 
-/* ─── Right Panel — Scrolling Columns ────────────────────────────────────── */
+/* ─── Right Panel — two rows of logo tiles sliding in opposite directions ── */
 .marquee-right {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
-  gap: 5px;
-  height: 850px;
+  flex-direction: column;
+  gap: 12px;
   position: relative;
-  overflow: hidden;
-  width: 500px;
-  margin-right: 80px;
 }
 
 .marquee-column {
-  flex: 1;
   position: relative;
   overflow: hidden;
-}
-
-.marquee-column::before,
-.marquee-column::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 100px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.marquee-column::before {
-  top: 0;
-  background: linear-gradient(to bottom, var(--bg-color) 0%, transparent 100%);
-}
-
-.marquee-column::after {
-  bottom: 0;
-  background: linear-gradient(to top, var(--bg-color) 0%, transparent 100%);
+  /* soft edges without covering the tiles in a gradient box */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 
 .marquee-track {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+  flex-direction: row;
+  gap: 12px;
+  width: max-content;
 }
 
 .marquee-column:nth-child(1) .marquee-track {
-  animation: marqueeUp 22s linear infinite;
+  animation: marqueeLeft 40s linear infinite;
 }
 
 .marquee-column:nth-child(2) .marquee-track {
-  animation: marqueeDown 22s linear infinite;
+  animation: marqueeRight 40s linear infinite;
 }
 
 @keyframes marqueeUp {
@@ -210,9 +187,11 @@
 
 /* ─── Marquee Items ──────────────────────────────────────────────────────── */
 .marquee-item {
-  width: 90%;
-  height: 240px;
-  border-radius: 10px;
+  flex-shrink: 0;
+  width: clamp(130px, 13vw, 200px);
+  aspect-ratio: 5 / 3;
+  padding: 0 1.25rem;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,4 +236,10 @@
   width: 100%;
   height: auto;
   object-fit: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
 }

@@ -23,6 +23,7 @@ and a cart → checkout flow built around "instant but never wrong about money".
 - Motion: use the tokens in `app/styles/base.css` (`--dur-*`, `--ease-*`), put hover effects behind `@media (hover: hover)`, and give every animation a reduced-motion fallback.
 - Homepage: gate non-critical GSAP setup behind `useIdleReady`; pin with `pinType: "transform"` (no layout shift); give below-the-fold images `loading="lazy"`. Final homepage polish lives in `app/styles/home-polish.css` (imported last).
 - Spacing between page sections uses `--section-space` (base.css): 64px on phones, ~112px on desktop, measured as the *visible* gap. New sections pad with it instead of their own numbers.
+- Type: headings use `var(--font-display)` (Epilogue, weight 800) with the accent word in `.accent` (Times italic); body is Inter. Copy is lowercase. Pages use `var(--bg-color)` and end with `SiteFooter` (blue block). Muted text on the beige background is `#565e6b` or darker (4.5:1).
 - Images in the flow use `components/SmartImage` (next/image + fade-in); always pass width, height and `sizes`.
 
 ## Commands

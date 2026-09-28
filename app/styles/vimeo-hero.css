@@ -123,10 +123,11 @@
 /* ─── ⑤ Smiley — NO animation ─────────────────── */
 .home-header__smiley {
   position: absolute;
-  top: -0.35em;
-  left: 0.4em;
-  width: 1em;
-  height: 1em;
+  /* perched above the word, not on its first letter */
+  top: -0.78em;
+  left: 0.05em;
+  width: 0.72em;
+  height: 0.72em;
   pointer-events: none;
   z-index: 10;
   rotate: calc(-30deg);

@@ -160,7 +160,7 @@ test.describe("removing and correcting rows", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/cart");
     // Wait for hydration: it persists the (empty) cart, which would overwrite the seed.
-    await expect(page.getByRole("heading", { name: "Your cart is empty" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "your cart is empty" })).toBeVisible();
     await page.waitForLoadState("networkidle");
     await page.evaluate((lines) => localStorage.setItem("cozypaws-cart", JSON.stringify(lines)), seed);
     await page.reload();

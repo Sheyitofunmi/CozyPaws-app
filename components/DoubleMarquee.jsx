@@ -203,23 +203,6 @@ export default function DoubleMarquee() {
       {/* Anything that moves for more than 5s needs a way to stop it
           (WCAG 2.2.2). Hovering or focusing inside also pauses it. */}
       <div className="marquee-right" data-paused={paused || undefined}>
-        <button
-          type="button"
-          className="marquee-pause"
-          aria-pressed={paused}
-          aria-label={paused ? "Play brand animation" : "Pause brand animation"}
-          onClick={() => setPaused((p) => !p)}
-        >
-          {paused ? (
-            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-              <path d="M8 5v14l11-7z" fill="currentColor" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-              <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" />
-            </svg>
-          )}
-        </button>
         {tracks.map((trackItems, colIndex) => (
           <div key={colIndex} className="marquee-column">
             <div className="marquee-track">
@@ -227,6 +210,7 @@ export default function DoubleMarquee() {
                 <div
                   key={i}
                   className="marquee-item"
+                  aria-hidden={i >= trackItems.length / 2 || undefined}
                   data-brand={item.brand.name}
                   style={{ backgroundColor: item.color }}
                 >
@@ -244,6 +228,23 @@ export default function DoubleMarquee() {
             </div>
           </div>
         ))}
+        <button
+          type="button"
+          className="marquee-pause"
+          aria-label={paused ? "play the brand logos" : "pause the brand logos"}
+          onClick={() => setPaused((p) => !p)}
+        >
+          {paused ? (
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M8 5v14l11-7z" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" />
+            </svg>
+          )}
+          {paused ? "play" : "pause"}
+        </button>
       </div>
     </>
   );

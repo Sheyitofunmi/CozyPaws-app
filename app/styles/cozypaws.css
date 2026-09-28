@@ -7,7 +7,7 @@
 
 .cozy-page {
   min-height: 100vh;
-  background-color: #effdf0;
+  background-color: var(--bg-color);
   color: #1a3d1a;
   font-family: var(--font-inter), "Inter", sans-serif;
 }
@@ -54,7 +54,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  background: rgba(239, 253, 240, 0.85);
+  background: rgb(240 235 230 / 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(26, 61, 26, 0.08);
@@ -127,7 +127,7 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem 1.5rem 1rem;
-  background: #effdf0;
+  background: var(--bg-color);
   border-bottom: 1px solid rgba(26, 61, 26, 0.1);
   box-shadow: 0 12px 24px rgba(26, 61, 26, 0.08);
   transform: translateY(-8px);
@@ -193,8 +193,8 @@
   }
   .site-header__actions .cozy-badge {
     width: 17px;
-    height: 17px;
-    font-size: 9px;
+    height: 18px;
+    font-size: 11px;
   }
 }
 
@@ -210,10 +210,12 @@
 
 /* ─── Shared footer ────────────────────────────────────────────────────────── */
 .site-footer {
-  background: #1a3d1a;
-  color: #d9efdb;
+  /* Same blue block as the homepage footer, so every page ends the same way */
+  background: var(--color-darkblue);
+  color: #ffffff;
   padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem) 1.5rem;
-  margin-top: 2rem;
+  margin: var(--section-space) 10px 10px;
+  border-radius: 20px;
 }
 
 .site-footer__top {
@@ -230,9 +232,11 @@
 }
 
 .site-footer__wordmark {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
-  font-size: 34px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-size: 40px;
+  line-height: 1;
   color: #ffffff;
 }
 
@@ -240,7 +244,7 @@
   margin-top: 0.75rem;
   font-size: 0.9rem;
   line-height: 1.6;
-  color: #a9cbac;
+  color: #ffffff;
 }
 
 .site-footer__paw {
@@ -248,34 +252,48 @@
   top: -6px;
   right: 0;
   width: 46px;
-  opacity: 0.35;
+  opacity: 0.9;
   transform: rotate(18deg);
-  filter: invert(1);
+  filter: brightness(0) invert(1);
 }
 
 .site-footer__col h3 {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #7fae83;
+  display: inline-block;
   margin-bottom: 1rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--color-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: lowercase;
 }
 
 .site-footer__col a,
 .site-footer__address {
   display: block;
-  color: #d9efdb;
+  color: #ffffff;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
   font-style: normal;
   line-height: 1.5;
-  margin-bottom: 0.6rem;
+  /* 28px+ tall rows: comfortable tap targets */
+  padding: 0.15rem 0;
+  margin-bottom: 0.35rem;
   transition: color 0.2s ease;
   width: fit-content;
 }
 
 .site-footer__col a:hover {
-  color: #f5a15a;
+  color: var(--color-lightgreen);
+}
+
+.site-footer__col a:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .site-footer__email {
@@ -293,7 +311,7 @@
   display: flex;
   gap: 0.75rem;
   margin-top: 0.5rem;
-  color: #d9efdb;
+  color: #ffffff;
 }
 
 .site-footer__socials a {
@@ -303,7 +321,7 @@
 }
 
 .site-footer__socials a:hover {
-  color: #e86a10;
+  color: var(--color-lightgreen);
   transform: translateY(-3px) rotate(-6deg);
 }
 
@@ -320,9 +338,9 @@
   max-width: 1300px;
   margin: 2.5rem auto 0;
   padding-top: 1.25rem;
-  border-top: 1px solid rgba(217, 239, 219, 0.15);
-  font-size: 0.8rem;
-  color: #7fae83;
+  border-top: 1px solid rgb(255 255 255 / 0.25);
+  font-size: 0.85rem;
+  color: #ffffff;
 }
 
 @media (min-width: 720px) {
@@ -475,8 +493,9 @@ a.shop-card__name:hover {
 }
 
 .shop-empty h2 {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(26px, 3.5vw, 38px);
   margin-bottom: 0.6rem;
 }
@@ -669,7 +688,7 @@ a.shop-card__name:hover {
 
 .account-menu__sub {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #565e6b;
 }
 
 .account-menu__item {
@@ -760,11 +779,11 @@ a.shop-card__name:hover {
   margin: 0 auto;
   padding: 1.5rem clamp(1.5rem, 4vw, 3rem) 0;
   font-size: 0.85rem;
-  color: #6b7280;
+  color: #565e6b;
 }
 
 .product-breadcrumb a {
-  color: #6b7280;
+  color: #565e6b;
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -833,12 +852,12 @@ a.shop-card__name:hover {
   padding: 0.3rem 0.85rem;
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: capitalize;
 }
 
 .product-info__name {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(32px, 5vw, 52px);
   line-height: 1.05;
   margin: 0.75rem 0 0.5rem;
@@ -973,8 +992,9 @@ a.shop-card__name:hover {
 }
 
 .product-related__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(24px, 3vw, 38px);
   margin-bottom: 1.5rem;
 }
@@ -1104,7 +1124,9 @@ a.shop-card__name:hover {
 
 .about-stat__value {
   display: block;
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(30px, 4vw, 46px);
   line-height: 1;
 }
@@ -1186,7 +1208,7 @@ a.shop-card__name:hover {
 }
 
 .team-card__role {
-  color: #6b7280;
+  color: #565e6b;
   font-size: 0.85rem;
 }
 
@@ -1201,8 +1223,9 @@ a.shop-card__name:hover {
 }
 
 .about-cta > h2 {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   color: #ffffff;
   font-size: clamp(28px, 4vw, 48px);
   margin-bottom: 1.5rem;
@@ -1296,7 +1319,7 @@ a.shop-card__name:hover {
 }
 
 .contact-card__detail {
-  color: #6b7280;
+  color: #565e6b;
   font-size: 0.88rem;
 }
 
@@ -1432,8 +1455,9 @@ a.shop-card__name:hover {
 }
 
 .contact-success h2 {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: 28px;
   margin-bottom: 0.5rem;
 }
@@ -1458,8 +1482,9 @@ a.shop-card__name:hover {
 }
 
 .cart-main__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(32px, 4.5vw, 56px);
   margin-bottom: 1.5rem;
 }
@@ -1523,7 +1548,7 @@ a.shop-card__name:hover {
 }
 
 .cart-line__category {
-  color: #6b7280;
+  color: #565e6b;
   font-size: 0.82rem;
   margin-top: 2px;
 }
@@ -1572,8 +1597,9 @@ a.shop-card__name:hover {
 }
 
 .cart-shipping__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: 24px;
   margin-bottom: 1.25rem;
 }
@@ -1597,8 +1623,9 @@ a.shop-card__name:hover {
 }
 
 .cart-summary__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: 24px;
   margin-bottom: 1rem;
 }
@@ -1660,7 +1687,7 @@ a.shop-card__name:hover {
 .cart-summary__note {
   text-align: center;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: #565e6b;
   margin-top: 0.6rem;
 }
 
@@ -1695,8 +1722,9 @@ a.shop-card__name:hover {
 
 .cart-empty h1,
 .cart-confirm h1 {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(30px, 4vw, 44px);
   margin-bottom: 0.6rem;
 }

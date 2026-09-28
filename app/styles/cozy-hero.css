@@ -224,7 +224,7 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
   background: #e86a10;
   border: 2px solid #effdf0;
   color: #ffffff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -248,18 +248,23 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
 
 .cozy-hero__heading-wrap {
   position: relative;
-  z-index: 5;
+  /* Above the pets: on short, wide screens the retriever's head reaches the
+     second line, and the words must never be hidden behind it. Pointer events
+     pass through so the pets underneath still react to hover. */
+  z-index: 11;
+  pointer-events: none;
   text-align: center;
-  padding: 5.4rem 3rem 0;
+  padding: 3.25rem 3rem 0;
 }
 
 .cozy-hero__heading {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   color: #1a3d1a;
-  font-size: clamp(60px, 7.5vw, 110px);
-  line-height: 0.95;
-  letter-spacing: -0.02em;
+  /* Sized so the words clear the retriever's head, which peeks up behind them */
+  font-size: clamp(52px, min(6.2vw, 10.5vh), 96px);
+  line-height: 0.92;
 }
 
 .cozy-hero__line {
@@ -336,7 +341,7 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
 .cozy-card__name {
   margin-top: 0.5rem;
   color: #374151;
-  font-size: clamp(11px, 0.95vw, 14px);
+  font-size: clamp(12px, 0.95vw, 14px);
 }
 
 .cozy-card__price {
@@ -360,7 +365,7 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
 
 .cozy-card__video-overlay p {
   color: #ffffff;
-  font-size: clamp(9px, 0.75vw, 11px);
+  font-size: clamp(12px, 0.9vw, 13px);
   line-height: 1.35;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
@@ -452,8 +457,9 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
 }
 
 .cozy-overlay__heading {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(22px, 2.6vw, 40px);
   line-height: 1.05;
 }
@@ -567,8 +573,9 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
 }
 
 .cozy-mobile__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: 36px;
   line-height: 1.05;
   color: #1a3d1a;

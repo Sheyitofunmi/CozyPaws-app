@@ -52,30 +52,25 @@
 }
 
 .marquee-pause {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 9999px;
-  background: rgba(26, 26, 26, 0.72);
-  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  min-height: 36px;
+  margin-top: 0.75rem;
+  padding: 0 0.9rem;
+  border: 1.5px solid var(--color-dark);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-dark);
+  font: 700 0.85rem "Epilogue", sans-serif;
   cursor: pointer;
-  opacity: 0.85;
-  transition: opacity var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
-.marquee-pause:hover,
-.marquee-pause:focus-visible {
-  opacity: 1;
-}
-
-.marquee-pause:active {
-  transform: scale(0.92);
+.marquee-pause:hover {
+  background: var(--color-dark);
+  color: #ffffff;
 }
 
 .marquee-pause:focus-visible {

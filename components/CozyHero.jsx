@@ -377,14 +377,14 @@ export default function CozyHero() {
 
       <div className="cozy-hero__stage" ref={stageRef}>
         <div className="cozy-hero__heading-wrap">
-          <h1 className="cozy-hero__heading" aria-label="Everything Your Pets Love">
+          <h1 className="cozy-hero__heading" aria-label="everything your pets love">
             <span className="cozy-hero__line">
-              <span className="cozy-word cozy-delay-200"><Letters word="Everything" /></span>
+              <span className="cozy-word cozy-delay-200"><Letters word="everything" /></span>
             </span>
             <span className="cozy-hero__line">
-              <span className="cozy-word cozy-delay-400"><Letters word="Your" /></span>{" "}
-              <span className="cozy-word cozy-delay-500"><Letters word="Pets" /></span>{" "}
-              <span className="cozy-word cozy-delay-600"><Letters word="Love" /></span>
+              <span className="cozy-word cozy-delay-400"><Letters word="your" /></span>{" "}
+              <span className="cozy-word cozy-delay-500"><Letters word="pets" /></span>{" "}
+              <span className="cozy-word cozy-delay-600 accent"><Letters word="love" /></span>
             </span>
           </h1>
         </div>
@@ -416,7 +416,7 @@ export default function CozyHero() {
               >
                 <IconPlay />
               </button>
-              <p>Watch Product Reviews on TikTok and YouTube</p>
+              <p>reviews on tiktok & youtube</p>
             </div>
           </div>
         </div>
@@ -432,7 +432,7 @@ export default function CozyHero() {
             <SmartImage src={ASSETS.bottomCenter} alt="Dog with owner" width={977} height={1024} loading="eager" sizes="(max-width: 768px) 40vw, 40vw" />
             <div className="cozy-overlay cozy-fade-up cozy-delay-1100">
               <h2 className="cozy-overlay__heading">
-                Best Products for Your Pet
+                the good stuff, dog-tested
               </h2>
               <a
                 ref={exploreRef}
@@ -440,7 +440,7 @@ export default function CozyHero() {
                 className="cozy-btn-orange"
                 style={POINTER_CURSOR}
               >
-                Explore Products{" "}
+                explore products{" "}
                 <IconArrowRight className="cozy-btn-orange__icon" />
               </a>
             </div>
@@ -457,7 +457,7 @@ export default function CozyHero() {
       <div className="cozy-mobile">
         <div className="cozy-mobile__top">
           <h1 className="cozy-mobile__title cozy-fade-up cozy-delay-200">
-            Everything Your Pets Love
+            everything your pets <em className="accent">love</em>
           </h1>
           <p className="cozy-mobile__subtitle cozy-fade-up cozy-delay-300">
             Toys, treats and cozy essentials for your best friend.
@@ -467,7 +467,7 @@ export default function CozyHero() {
             className="cozy-btn-orange cozy-fade-up cozy-delay-400"
             style={POINTER_CURSOR}
           >
-            Explore Products{" "}
+            explore products{" "}
             <IconArrowRight className="cozy-btn-orange__icon" />
           </a>
         </div>
@@ -499,7 +499,7 @@ export default function CozyHero() {
                 >
                   <IconPlay />
                 </button>
-                <p>Watch Product Reviews on TikTok and YouTube</p>
+                <p>reviews on tiktok & youtube</p>
               </div>
             </div>
           </div>

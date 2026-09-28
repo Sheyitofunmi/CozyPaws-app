@@ -159,7 +159,7 @@ export default function MotionCards() {
             scrollTrigger: {
               trigger: section,
               start: "top 70%",
-              toggleActions: "play none none reverse",
+              once: true,
             },
           });
           const deckMid = deck.offsetWidth / 2;

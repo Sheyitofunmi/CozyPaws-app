@@ -418,7 +418,7 @@
 }
 
 .demo-panel__state {
-  color: #6b7280;
+  color: #565e6b;
   font-size: 12px;
 }
 
@@ -955,8 +955,9 @@
 }
 
 .order-confirm__hero h1 {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(34px, 5vw, 56px);
   color: var(--flow-ink);
   animation: flow-rise var(--dur-slow) var(--flow-ease-out) 0.1s both;
@@ -1281,7 +1282,7 @@
   border-radius: 9999px;
   background: #eef2ff;
   color: #3730a3;
-  font-size: 10px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1354,7 +1355,7 @@
   margin: 0.9rem 0 1.1rem;
   padding: 0;
   list-style: none;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--flow-muted);
 }
@@ -1376,9 +1377,10 @@
 
 .wallet-dialog__body h2 {
   margin-bottom: 0.75rem;
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
+  font-family: var(--font-display);
   font-size: 26px;
-  font-weight: 400;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   color: var(--flow-ink);
   animation: flow-rise var(--dur-base) var(--flow-ease-out);
 }
@@ -1649,7 +1651,7 @@
   margin-top: 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(26, 61, 26, 0.1);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--flow-muted);
 }
 
@@ -1861,7 +1863,7 @@ img[data-img-state="error"] {
   .shop-card__badge {
     top: 8px;
     left: 8px;
-    font-size: 10px;
+    font-size: 0.75rem;
   }
 }
 
