@@ -475,6 +475,12 @@
   scroll-padding-inline: clamp(1.25rem, 4vw, 3rem);
   list-style: none;
   overscroll-behavior-x: contain;
+  /* No scrollbar: the arrows (and swipe / trackpad / keyboard) move the rail */
+  scrollbar-width: none;
+}
+
+.picks__rail::-webkit-scrollbar {
+  display: none;
 }
 
 .pick {
