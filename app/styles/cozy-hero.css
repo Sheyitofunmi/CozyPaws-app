@@ -943,8 +943,8 @@ html:not([data-past-hero]) body:has(.cozy-hero) .navbar {
 
 /* The ledge is part of each pet photo, so when a pet lifts, this strip of the
    same colour fills the gap underneath instead of showing the background. */
-.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item--side { --ledge: #a7e8b0; }
-.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item--center { --ledge: #003c08; }
+.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item--side { --ledge: #e6fab9; }
+.cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item--center { --ledge: #1f5a4b; }
 .cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item::after {
   content: "";
   position: absolute;
