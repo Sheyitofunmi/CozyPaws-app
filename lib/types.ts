@@ -17,6 +17,14 @@ export interface Product {
   /** Units the warehouse can actually ship. The server enforces this. */
   stock: number;
   badge?: string;
+  /** A second photo, shown when the card is hovered. */
+  img2?: string;
+  /** Passed the Biscuit test (see the About page). */
+  approved?: boolean;
+  /** Relative popularity, used by the "popular" sort (higher first). */
+  popularity: number;
+  /** Arrived recently, used by the "new" sort. */
+  isNew?: boolean;
 }
 
 /** What the client stores: just an id and a quantity. Never a price. */

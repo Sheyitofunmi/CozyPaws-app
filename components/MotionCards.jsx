@@ -203,7 +203,7 @@ export default function MotionCards() {
           <div className="motion-card__card motion-card__card--1">
             <div className="motion-card__card-image">
               <SmartImage
-                src="/assets/pets/dog1.avif"
+                src="/assets/home/flowers.jpg"
                 loading="lazy"
                 width={1000}
                 height={1000}
@@ -217,7 +217,7 @@ export default function MotionCards() {
           <div className="motion-card__card motion-card__card--2">
             <div className="motion-card__card-image">
               <SmartImage
-                src="/assets/pets/cat2.avif"
+                src="/assets/home/sunglasses.jpg"
                 loading="lazy"
                 width={1000}
                 height={1000}
@@ -231,7 +231,7 @@ export default function MotionCards() {
           <div className="motion-card__card motion-card__card--3">
             <div className="motion-card__card-image">
               <SmartImage
-                src="/assets/pets/toy3.avif"
+                src="/assets/home/play.jpg"
                 loading="lazy"
                 width={1000}
                 height={1000}

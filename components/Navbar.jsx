@@ -427,7 +427,7 @@ export default function Navbar() {
                 <div className="nav-work-item">
                   <div className="nav-work-item__img-wrap">
                     <SmartImage
-                      src="/assets/pets/toy1.avif"
+                      src="/assets/products/rope-tug-bundle.jpg"
                       loading="lazy"
                       width={900}
                       height={900}
@@ -446,7 +446,7 @@ export default function Navbar() {
                 <div className="nav-work-item">
                   <div className="nav-work-item__img-wrap">
                     <SmartImage
-                      src="/assets/pets/cat3.avif"
+                      src="/assets/products/peanut-butter-bites.jpg"
                       loading="lazy"
                       width={900}
                       height={900}
