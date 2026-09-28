@@ -13,6 +13,9 @@ import CursorBubble from "@/components/CursorBubble";
 import SmoothScroll from "@/components/SmoothScroll";
 
 import HorizontalWords from "@/components/HorizontalWords";
+import PicksRail from "@/components/PicksRail";
+import PackWall from "@/components/PackWall";
+import Newsletter from "@/components/Newsletter";
 
 export default function Home() {
   return (
@@ -31,13 +34,16 @@ export default function Home() {
         <div className="content-section motion-cards-wrapper">
           <MotionCards />
         </div>
+        <PicksRail />
         <div className="content-section service-cards-wrapper">
           <ServiceCards />
         </div>
+        <PackWall />
       </main>
       <section className="Double-marquee">
         <DoubleMarquee />
       </section>
+      <Newsletter />
       <footer className="main-footer">
         <Footer />
       </footer>

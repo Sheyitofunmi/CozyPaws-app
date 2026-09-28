@@ -1,0 +1,817 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   shop-v2.css — the redesigned /shop page and the homepage's selling sections
+   (Biscuit's picks rail, the pack wall, newsletter). Loaded after the older
+   shop/flow styles, so it only overrides what changed.
+───────────────────────────────────────────────────────────────────────────── */
+
+/* ─── Hero ─────────────────────────────────────────────────────────────── */
+.shop-hero--v2 {
+  text-align: left;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 3rem) 1.25rem;
+}
+
+.shop-hero--v2 .story-title {
+  display: inline-block;
+  font-size: clamp(44px, 7vw, 96px);
+  margin-bottom: 0.75rem;
+}
+
+.shop-hero--v2 .shop-hero__subtitle {
+  max-width: 52ch;
+  color: #4b5563;
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.6;
+}
+
+/* ─── Category tiles (they are the filter) ─────────────────────────────── */
+.shop-cats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(168px, 1fr);
+  gap: 0.75rem;
+  max-width: 1250px;
+  margin: 0.5rem auto 0;
+  padding: 0.5rem clamp(1.25rem, 4vw, 3rem) 0.75rem;
+  justify-content: start; /* centred overflow would clip the first tiles */
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: clamp(1.25rem, 4vw, 3rem);
+  scrollbar-width: none;
+}
+
+.shop-cats::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-tile {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.7rem;
+  align-items: center;
+  min-height: 84px;
+  padding: 0.7rem 0.9rem 0.7rem 0.7rem;
+  border: 0;
+  border-radius: 1.1rem;
+  background: var(--accent);
+  color: var(--tile-ink, #fff);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    translate var(--dur-base) var(--ease-spring),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.cat-tile__img {
+  grid-row: 1 / span 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 0.8rem;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.25);
+  display: grid;
+  place-items: center;
+}
+
+.cat-tile__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cat-tile:first-child .cat-tile__img img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.cat-tile__name {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.cat-tile__count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.cat-tile__count::after {
+  content: " products";
+}
+
+.cat-tile[data-active] {
+  translate: 0 -3px;
+  box-shadow: 0 12px 24px -14px rgb(0 0 0 / 0.5);
+}
+
+.cat-tile:focus-visible {
+  outline: 3px solid var(--color-darkblue);
+  outline-offset: 3px;
+}
+
+/* The sliding ring around the active tile. */
+.shop-cats .shop-filters__indicator {
+  border-radius: 1.1rem;
+  background: transparent !important;
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+  z-index: 2;
+}
+
+/* ─── Sticky toolbar: search, count, sort ──────────────────────────────── */
+.shop-toolbar {
+  position: sticky;
+  top: 70px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  max-width: 1250px;
+  margin: 0.5rem auto 1.25rem;
+  padding: 0.75rem clamp(1.25rem, 4vw, 3rem);
+  background: rgb(239 253 240 / 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 0 0 1.25rem 1.25rem;
+}
+
+@media (min-width: 820px) {
+  .shop-toolbar {
+    grid-template-columns: minmax(260px, 440px) 1fr auto;
+    gap: 1.25rem;
+  }
+}
+
+.shop-toolbar .shop-search {
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: none;
+}
+
+@media (min-width: 820px) {
+  .shop-toolbar .shop-search {
+    grid-column: auto;
+  }
+}
+
+.shop-toolbar .shop-search-status {
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.shop-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-self: end;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+@media (min-width: 820px) {
+  .shop-sort {
+    justify-self: end;
+  }
+}
+
+.shop-sort select {
+  appearance: none;
+  padding: 0.55rem 2.2rem 0.55rem 0.9rem;
+  border: 1.5px solid rgb(26 61 26 / 0.25);
+  border-radius: 999px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a3d1a' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+      no-repeat right 0.85rem center,
+    #ffffff;
+  color: var(--color-dark);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shop-sort select:focus-visible {
+  outline: 3px solid var(--color-darkblue);
+  outline-offset: 2px;
+}
+
+/* ─── Cards ────────────────────────────────────────────────────────────── */
+.shop-page .shop-grid {
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 4vw, 3rem) 3rem;
+}
+
+.shop-page .shop-card {
+  border-top: 5px solid var(--accent);
+}
+
+.shop-card__img-wrap {
+  position: relative;
+}
+
+.shop-card__img2 {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 450ms var(--ease-out) !important;
+}
+
+.shop-card__stamp {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  padding: 0.25rem 0.5rem;
+  border: 2px solid var(--color-green);
+  border-radius: 0.35rem;
+  background: rgb(255 255 255 / 0.92);
+  color: var(--color-green);
+  font-family: "Epilogue", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  rotate: -5deg;
+}
+
+.shop-page .shop-card__name {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.shop-page .shop-card__price {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+/* In-cart stepper replaces the add button. */
+.shop-card__stepper {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  margin: 0.75rem 1rem 1rem;
+  border-radius: 999px;
+  background: var(--color-dark);
+  color: #ffffff;
+  animation: flow-pop var(--dur-base) var(--ease-spring);
+}
+
+.shop-card__stepper button {
+  display: grid;
+  place-items: center;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.shop-card__stepper button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.shop-card__stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.shop-card__stepper button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -3px;
+}
+
+.shop-card__stepper-qty {
+  display: inline-flex;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ─── Merchandising cards in the grid ──────────────────────────────────── */
+.merch-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.5rem 1.4rem;
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+/* Full row on phones (a half-width promo is too cramped), two columns up. */
+.merch-card {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 600px) {
+  .merch-card--kit {
+    grid-column: span 2;
+  }
+  .merch-card--pick {
+    grid-column: auto;
+  }
+}
+
+.merch-card--kit {
+  background: var(--color-green);
+  color: #ffffff;
+  justify-content: center;
+}
+
+.merch-card--pick {
+  background: var(--color-lightgreen);
+  color: var(--color-dark);
+  justify-content: space-between;
+}
+
+.merch-card__sticker {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  width: clamp(56px, 7vw, 84px);
+  rotate: 12deg;
+}
+
+.merch-card__eyebrow {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.merch-card__title {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 3.2vw, 44px);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  max-width: 14ch;
+}
+
+.merch-card__title em {
+  font-family: "Times New Roman", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--color-lightgreen);
+}
+
+.merch-card__body {
+  max-width: 44ch;
+  line-height: 1.55;
+  opacity: 0.92;
+}
+
+.merch-card__btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+  padding: 0.75rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--color-green);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.merch-card__btn svg,
+.merch-card__link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.merch-card__quote {
+  font-family: "Times New Roman", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(22px, 2.3vw, 30px);
+  line-height: 1.2;
+}
+
+.merch-card__cite {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.merch-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-green);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+/* ─── Homepage: Biscuit's picks rail ───────────────────────────────────── */
+.picks {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 6rem) 0 clamp(2rem, 5vw, 4rem);
+}
+
+.picks__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 clamp(1.25rem, 4vw, 3rem);
+  margin-bottom: 1.5rem;
+}
+
+.picks__head .story-title {
+  margin: 0;
+}
+
+.picks__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  background: var(--color-dark);
+  color: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.picks__all svg {
+  width: 16px;
+  height: 16px;
+}
+
+.picks__rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 300px);
+  gap: 1.1rem;
+  padding: 0.5rem clamp(1.25rem, 4vw, 3rem) 1.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(1.25rem, 4vw, 3rem);
+  list-style: none;
+  overscroll-behavior-x: contain;
+}
+
+.pick {
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 16px 34px -24px rgb(26 61 26 / 0.5);
+  border-top: 5px solid var(--accent);
+}
+
+.pick__img {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.pick__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: scale 700ms var(--ease-out);
+}
+
+.pick__body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto 1fr;
+  gap: 0.2rem 0.75rem;
+  padding: 0.9rem 1rem 1rem;
+  align-items: center;
+}
+
+.pick__name {
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-dark);
+  text-decoration: none;
+}
+
+.pick__price {
+  font-weight: 800;
+}
+
+.pick__note {
+  grid-column: 1 / -1;
+  font-family: "Times New Roman", Georgia, serif;
+  font-style: italic;
+  color: #4b5563;
+  font-size: 0.98rem;
+}
+
+.pick__add {
+  grid-column: 1 / -1;
+  align-self: end;
+  margin-top: 0.6rem;
+  padding: 0.65rem;
+  border: 1.5px solid rgb(26 61 26 / 0.25);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-dark);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.pick__add[data-added] {
+  background: var(--color-green);
+  border-color: var(--color-green);
+  color: #ffffff;
+}
+
+.pick__add:focus-visible,
+.pick__name:focus-visible,
+.picks__all:focus-visible {
+  outline: 3px solid var(--color-darkblue);
+  outline-offset: 2px;
+}
+
+/* ─── Homepage: service card links ─────────────────────────────────────── */
+.card-link {
+  display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1.1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: #111111;
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+  position: relative;
+  z-index: 2;
+}
+
+.card-link svg {
+  width: 15px;
+  height: 15px;
+  transition: rotate var(--dur-base) var(--ease-spring);
+}
+
+.card-link:focus-visible {
+  outline: 3px solid #111111;
+  outline-offset: 3px;
+}
+
+/* ─── Homepage: the pack wall ──────────────────────────────────────────── */
+.pack {
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 6rem) clamp(1.25rem, 4vw, 3rem);
+}
+
+.pack__head {
+  max-width: 720px;
+  margin-bottom: 2rem;
+}
+
+.pack__head p {
+  color: #4b5563;
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.6;
+}
+
+.pack__wall {
+  list-style: none;
+  columns: 2 180px;
+  column-gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .pack__wall {
+    columns: 3;
+  }
+}
+
+.pack-photo {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.6rem 0.8rem;
+  background: #ffffff;
+  box-shadow: 0 18px 36px -24px rgb(0 0 0 / 0.45);
+  rotate: var(--tilt, 0deg);
+  transition: rotate var(--dur-base) var(--ease-spring), translate var(--dur-base) var(--ease-spring);
+}
+
+.pack-photo:nth-child(3n + 1) { --tilt: -1.5deg; }
+.pack-photo:nth-child(3n + 2) { --tilt: 1deg; }
+.pack-photo:nth-child(3n) { --tilt: -0.5deg; }
+
+.pack-photo__img {
+  display: block;
+  overflow: hidden;
+}
+
+.pack-photo:nth-child(odd) .pack-photo__img {
+  aspect-ratio: 4 / 5;
+}
+
+.pack-photo:nth-child(even) .pack-photo__img {
+  aspect-ratio: 1;
+}
+
+.pack-photo__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pack-photo figcaption {
+  padding-top: 0.6rem;
+  font-family: "Times New Roman", Georgia, serif;
+  font-style: italic;
+  font-size: 1.02rem;
+  color: #374151;
+}
+
+.pack-photo figcaption strong {
+  font-family: "Epilogue", sans-serif;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--color-dark);
+}
+
+/* ─── Homepage: newsletter ─────────────────────────────────────────────── */
+.newsletter {
+  position: relative;
+  max-width: 1150px;
+  margin: 0 max(1rem, calc((100% - 1150px) / 2)) clamp(3rem, 6vw, 5rem);
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 5vw, 4rem);
+  border-radius: 2rem;
+  background: var(--color-orange);
+  color: #1a1a1a;
+  overflow: hidden;
+  rotate: -0.6deg;
+}
+
+.newsletter__sticker {
+  position: absolute;
+  right: clamp(1rem, 5vw, 4rem);
+  top: -12px;
+  width: clamp(70px, 9vw, 120px);
+  rotate: 14deg;
+  pointer-events: none;
+}
+
+.newsletter .story-title {
+  font-size: clamp(36px, 5.5vw, 76px);
+  margin-bottom: 0.75rem;
+  max-width: 13ch;
+}
+
+.newsletter .story-title em {
+  color: #ffffff;
+}
+
+.newsletter__lede {
+  max-width: 46ch;
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+}
+
+.newsletter__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  max-width: 560px;
+}
+
+.newsletter__form input {
+  flex: 1 1 240px;
+  min-height: 52px;
+  padding: 0 1.2rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #ffffff;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.newsletter__form input:focus-visible {
+  outline: 3px solid var(--color-dark);
+  outline-offset: 2px;
+}
+
+.newsletter__form input[aria-invalid="true"] {
+  border-color: #7a1b10;
+}
+
+.newsletter__form button {
+  min-height: 52px;
+  padding: 0 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-dark);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.newsletter__form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.newsletter__error {
+  width: 100%;
+  font-weight: 700;
+  color: #5c1109;
+}
+
+.newsletter__fine {
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.newsletter__done {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  font-size: clamp(18px, 2vw, 24px);
+}
+
+.newsletter__done .paw-stamp {
+  width: 72px;
+  height: 72px;
+  margin: 0;
+}
+
+.newsletter__done .paw-stamp__ring {
+  stroke: #ffffff;
+}
+
+.newsletter__done .paw-stamp__paw {
+  fill: #ffffff;
+}
+
+/* ─── Hover (real pointers, motion OK) ─────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .cat-tile:not([data-active]):hover {
+    translate: 0 -3px;
+  }
+  .shop-card[data-has-alt]:hover .shop-card__img2 {
+    opacity: 1;
+  }
+  .pick:hover .pick__img img {
+    scale: 1.06;
+  }
+  .card:hover .card-link svg {
+    rotate: 45deg;
+  }
+  .pack-photo:hover {
+    rotate: 0deg;
+    translate: 0 -6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-tile,
+  .shop-card__stepper,
+  .pack-photo {
+    transition: none;
+    animation: none;
+  }
+}

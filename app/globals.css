@@ -37,5 +37,7 @@
 /* Cart/checkout flow states, search, toast, demo panel (loaded last) */
 @import "./styles/story-pages.css";
 /* /about and /contact: stickers, Biscuit test, timeline, map */
+@import "./styles/shop-v2.css";
+/* Redesigned /shop + homepage selling sections (picks, pack wall, newsletter) */
 @import "./styles/home-polish.css";
 /* Landing page: navbar, scroll effects, microinteractions */
