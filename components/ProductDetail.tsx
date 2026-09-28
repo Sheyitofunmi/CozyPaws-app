@@ -281,7 +281,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
       <section className="product-related">
         <h2 className="product-related__title" data-reveal>
-          you may also like
+          you may also <em className="accent">like</em>
         </h2>
         <div className="product-related__grid">
           {related.map((item) => (

@@ -216,11 +216,11 @@
 }
 
 .verdict__meter-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .chew-meter {
@@ -273,19 +273,20 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   rotate: 8deg;
-  opacity: 0.9;
-  mix-blend-mode: multiply;
+  /* solid ink so the word keeps a 4.5:1+ contrast on the card */
+  opacity: 1;
+  background: rgb(255 255 255 / 0.6);
 }
 
 .verdict__stamp[data-approved] {
-  border-color: var(--color-green);
-  color: var(--color-green);
+  border-color: #1f5a4b;
+  color: #1f5a4b;
   rotate: -6deg;
 }
 
 .biscuit-test__foot {
   margin-top: 1.75rem;
-  color: #6b7280;
+  color: #4b5563;
   font-size: 0.9rem;
 }
 
@@ -778,7 +779,7 @@
 
 .contact-hint {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #565e6b;
 }
 
 /* Topic-specific fields slide open (grid-rows 0fr → 1fr, no height maths). */
@@ -1129,7 +1130,7 @@
 @keyframes stamp-thunk {
   0% { opacity: 0; scale: 2.2; }
   60% { opacity: 0.95; scale: 0.94; }
-  100% { opacity: 0.9; scale: 1; }
+  100% { opacity: 1; scale: 1; }
 }
 
 /* ─── Reduced motion ───────────────────────────────────────────────────── */
@@ -1172,4 +1173,68 @@
 }
 .contact-visit__layout {
   padding-bottom: calc(var(--section-space) - 2rem);
+}
+
+/* ─── 404 ──────────────────────────────────────────────────────────────── */
+.not-found__main {
+  position: relative;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--section-space) 1.5rem 0;
+  text-align: center;
+}
+
+.not-found__sticker {
+  width: clamp(72px, 9vw, 110px);
+  margin: 0 auto 0.75rem;
+  rotate: -12deg;
+}
+
+.not-found__code {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  color: #a8350b;
+}
+
+.not-found__title {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 1.4rem + 5vw, 5.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--color-dark);
+}
+
+.not-found__lead {
+  max-width: 28rem;
+  margin: 1.25rem auto 0;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: #3a3a3a;
+}
+
+.not-found__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: 2rem;
+}
+
+.not-found__actions .cozy-btn-orange {
+  text-decoration: none;
+}
+
+.not-found__home {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-dark);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-underline-offset: 4px;
 }

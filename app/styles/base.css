@@ -23,6 +23,10 @@
   --color-maroon: #a0325a;
   --color-pink: #f0befa;
   --bg-color: #f0ebe6;
+  /* One type system: Epilogue for headings, Times italic for the accent word,
+     Inter for body copy. */
+  --font-display: "Epilogue", sans-serif;
+  --font-accent: "Times New Roman", Georgia, serif;
   --color-white: #ffffff;
   --color-black: #000000;
   --color-dark: #1a1a1a;
@@ -97,4 +101,12 @@ html {
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
+}
+
+/* Accent word inside a heading ("everything your dog <em>loves</em>") */
+.accent {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }

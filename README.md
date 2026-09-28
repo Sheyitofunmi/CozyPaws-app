@@ -78,6 +78,7 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 - **An aisle directory, not a second category list.** "Everything your dog needs" lists the real products in each aisle (most popular first, with prices) as links, so every line leads somewhere. From 1200px it's a gently fanned row that's readable without hovering (hover or tab into a card to lift it); below that it's a scroll-snap row you swipe, with dots that track the card in view and jump to any card.
 - **Scroll that feels alive, not busy.** Subtle parallax on the hero pets, a navbar that tucks away when you scroll down and comes back (with a blurred backdrop) when you scroll up, service cards that stack as you scroll on phones, a scroll progress bar (CSS scroll-driven animation, skipped where unsupported), a magnetic "Explore Products" button, and a pause button on the brand marquee.
 - **A hero that reacts to the mouse.** The pet you point at pops up and "talks" while the others duck, a soft spotlight follows the cursor, the side cards tilt with a glare, headline letters ripple, the 98K+ stat counts up, and the rating star spins. Pointer effects write CSS variables from one rAF-throttled listener (`useHeroPointer`), so React never re-renders on mouse move; they only run with a real mouse and motion allowed. The headline wraps by word, never mid-word.
+- **One design system across pages.** Headings are Epilogue with a Times-italic accent word, body copy is Inter, every page sits on the same warm background and ends on the same blue footer, and the copy is lowercase throughout. A branded 404 ("this page wandered off") keeps people in the store.
 - **Reduced motion.** Decorative motion (wiggles, marquee, inertia cards, custom cursor, smooth scroll) is skipped. Functional feedback stays, just without movement.
 - **Contrast.** Button and badge orange darkened slightly to reach WCAG AA (4.8:1).
 - **Money as integer cents**, formatted only at the edge with `Intl.NumberFormat`.
@@ -88,7 +89,7 @@ The catalog is local, so live search filters on the client. `useDeferredValue` k
 | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Unit          | Vitest     | pricing, quote diffs, cart reducer (rollback, stale responses, races)                                                                                                                                  |
 | End-to-end    | Playwright | optimistic update before the response, stock rollback, network failure, rapid clicks, price-change review, double-submit → one order, validation focus, dialog focus trap, live search, reduced motion |
-| Accessibility | axe-core   | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages, `/cart`, `/about`, `/contact` and `/account`                                                                       |
+| Accessibility | axe-core   | no serious/critical WCAG 2.1 AA violations on the homepage, `/shop`, product pages, `/cart`, `/about`, `/contact`, `/account` and the 404 page                                                          |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
 

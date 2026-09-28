@@ -255,7 +255,7 @@
   padding: 0.35rem 0.75rem;
   border-radius: 3px;
   font-family: "Epilogue", sans-serif;
-  font-size: clamp(0.7rem, 0.6rem + 0.25vw, 0.85rem);
+  font-size: clamp(0.75rem, 0.65rem + 0.25vw, 0.88rem);
   font-weight: 700;
   line-height: 1.25;
   text-align: center;

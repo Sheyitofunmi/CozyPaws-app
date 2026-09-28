@@ -313,7 +313,7 @@ export default function CartPage() {
         <SiteHeader />
         <section className="cart-empty">
           <img src="/assets/pets/paw-sticker.svg" alt="" aria-hidden="true" />
-          <h1>Your cart is empty</h1>
+          <h1>your cart is <em className="accent">empty</em></h1>
           <p>Let&apos;s find something your dog will love.</p>
           <Link href="/shop" className="cozy-btn-orange">
             start shopping <IconArrowRight className="cozy-btn-orange__icon" />

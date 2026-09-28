@@ -6,7 +6,7 @@
 
 .shop-page {
   min-height: 100vh;
-  background-color: #effdf0;
+  background-color: var(--bg-color);
   color: #1a3d1a;
   font-family: var(--font-inter), "Inter", sans-serif;
 }
@@ -28,7 +28,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  background: rgba(239, 253, 240, 0.9);
+  background: rgb(240 235 230 / 0.9);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -82,11 +82,11 @@
 }
 
 .shop-hero__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: clamp(40px, 6vw, 84px);
   line-height: 1;
-  letter-spacing: -0.02em;
 }
 
 .shop-hero__subtitle {
@@ -174,7 +174,7 @@
   background: #e86a10;
   color: #ffffff;
   border-radius: 9999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   padding: 0.25rem 0.7rem;
 }
@@ -194,7 +194,7 @@
 
 .shop-card__category {
   margin-top: 2px;
-  color: #6b7280;
+  color: #565e6b;
   font-size: 12px;
 }
 
@@ -290,7 +290,7 @@
   width: min(400px, 92vw);
   display: flex;
   flex-direction: column;
-  background: #effdf0;
+  background: var(--bg-color);
   border-radius: 1.25rem 0 0 1.25rem;
   box-shadow: -12px 0 40px rgba(26, 61, 26, 0.18);
   transform: translateX(105%);
@@ -309,8 +309,9 @@
 }
 
 .shop-cart__title {
-  font-family: var(--font-dm-serif), "DM Serif Display", serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
   font-size: 28px;
 }
 
@@ -500,7 +501,7 @@
   margin-top: 0.6rem;
   text-align: center;
   font-size: 12px;
-  color: #6b7280;
+  color: #565e6b;
 }
 
 /* ─── Breakpoints ──────────────────────────────────────────────────────────── */
