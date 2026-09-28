@@ -111,62 +111,6 @@
   }
 }
 
-/* ─── Cards — static 2-column grid, ≤ 1440px. Keep the breakpoint in sync
-   with DESKTOP_MIN in ServiceCards.jsx (desktop fan needs ~1400px). All
-   cards render in normal document flow — no scroll container, no autoplay,
-   no scroll-triggered animation. ─────────────────────────────────────────── */
-@media (max-width: 1440px) {
-  .cards-wrapper {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    width: 100%;
-    height: auto;
-    margin: 24px auto 0;
-    /* top padding keeps the stickers (which poke ~50px above each card)
-       inside the wrapper, where overflow would otherwise clip them */
-    padding: 64px 24px 32px;
-    gap: 24px 16px;
-  }
-
-  .card {
-    position: relative;
-    left: auto;
-    top: auto;
-    width: 100%;
-    min-height: 380px;
-    height: auto;
-  }
-
-  /* Only show 5 cards on the large-screen fan (DESKTOP_MIN) — below that,
-     hide the 5th so the grid stays a clean 4-card, 2-column layout. */
-  .card:nth-child(5) {
-    display: none;
-  }
-
-  /* gentle alternating tilt keeps the hand-placed look without the fan */
-  .card:nth-child(odd) {
-    transform: rotate(2deg);
-  }
-
-  .card:nth-child(even) {
-    transform: rotate(-2deg);
-  }
-
-  .card-sticker {
-    pointer-events: none;
-  }
-}
-
-/* Single column on phones — a 2-up grid squeezes the list text and wraps
-   awkwardly (e.g. "Puzzle Feeders", "Slow Feeders") even on larger phones
-   like iPhone 14 Pro Max (430px). Keep 2-up for tablet and up. */
-@media (max-width: 768px) {
-  .cards-wrapper {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ─── Mobile (≤ 768px) continued ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   /* ── Double Marquee ─────────────── */

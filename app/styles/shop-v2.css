@@ -560,37 +560,6 @@
   outline-offset: 2px;
 }
 
-/* ─── Homepage: service card links ─────────────────────────────────────── */
-.card-link {
-  display: inline-flex;
-  align-self: flex-start;
-  width: fit-content;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 1.1rem;
-  padding: 0.6rem 1rem;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.92);
-  color: #111111;
-  font-family: "Epilogue", sans-serif;
-  font-weight: 800;
-  font-size: 0.9rem;
-  text-decoration: none;
-  position: relative;
-  z-index: 2;
-}
-
-.card-link svg {
-  width: 15px;
-  height: 15px;
-  transition: rotate var(--dur-base) var(--ease-spring);
-}
-
-.card-link:focus-visible {
-  outline: 3px solid #111111;
-  outline-offset: 3px;
-}
-
 /* ─── Homepage: the pack wall ──────────────────────────────────────────── */
 .pack {
   max-width: 1250px;
@@ -797,9 +766,6 @@
   }
   .pick:hover .pick__img img {
     scale: 1.06;
-  }
-  .card:hover .card-link svg {
-    rotate: 45deg;
   }
   .pack-photo:hover {
     rotate: 0deg;
