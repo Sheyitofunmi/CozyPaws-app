@@ -31,7 +31,7 @@ export default function Home() {
       </header>
       <HorizontalWords />
       <main>
-        <div className="content-section motion-cards-wrapper">
+        <div className=" motion-cards-wrapper">
           <MotionCards />
         </div>
         <PicksRail />
