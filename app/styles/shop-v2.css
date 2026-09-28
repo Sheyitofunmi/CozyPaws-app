@@ -1151,3 +1151,53 @@
   font-weight: 800;
   white-space: nowrap;
 }
+
+/* Account menu: long names and emails wrap inside the panel, and the panel
+   never runs off a narrow screen. */
+.account-menu__dropdown {
+  width: min(280px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.account-menu__who {
+  min-width: 0;
+}
+
+.account-menu__hi,
+.account-menu__sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  /* On phones the trigger sits mid-row (the burger is to its right), so pin
+     the panel to the viewport edges instead of the trigger. */
+  .account-menu__dropdown {
+    position: fixed;
+    top: var(--menu-top, 72px);
+    right: 1rem;
+    left: auto;
+  }
+}
+
+/* Account page on small screens */
+.account-card,
+.account-orders {
+  min-width: 0;
+}
+
+.account-card__email,
+.order-row__items {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .order-row {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}

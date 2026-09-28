@@ -47,6 +47,9 @@ export default function AccountMenu() {
   // Move focus into the panel when it opens from the keyboard.
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    // On phones the panel is fixed to the viewport; line it up under the button.
+    const bottom = triggerRef.current?.getBoundingClientRect().bottom;
+    if (open && bottom !== undefined) panelRef.current?.style.setProperty("--menu-top", `${Math.round(bottom + 10)}px`);
     if (open) panelRef.current?.querySelector<HTMLElement>("a, button")?.focus({ preventScroll: true });
   }, [open]);
 
@@ -86,9 +89,9 @@ export default function AccountMenu() {
           <span className="account-menu__avatar" aria-hidden="true">
             {account ? initials(account.name) : <img src="/assets/pets/paw-sticker.svg" alt="" />}
           </span>
-          <div>
+          <div className="account-menu__who">
             <p className="account-menu__hi">{account ? `Hi, ${account.name.split(" ")[0]}` : "Hey there"}</p>
-            <span className="account-menu__sub">{account ? account.email : "You're browsing as a guest"}</span>
+            <span className="account-menu__sub" title={account?.email}>{account ? account.email : "You're browsing as a guest"}</span>
           </div>
         </div>
 
