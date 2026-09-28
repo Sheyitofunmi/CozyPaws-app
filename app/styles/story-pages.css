@@ -135,7 +135,7 @@
 .contact-visit {
   max-width: 1250px;
   margin: 0 auto;
-  padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 4vw, 3rem) 1rem;
+  padding: var(--section-space) clamp(1.5rem, 4vw, 3rem) 0;
 }
 
 .biscuit-test__head {
@@ -621,7 +621,9 @@
 /* ─── About: CTA ───────────────────────────────────────────────────────── */
 .about-cta {
   position: relative;
-  margin-top: clamp(3rem, 6vw, 5rem);
+  margin-top: var(--section-space);
+  /* the footer adds 2rem of its own */
+  margin-bottom: calc(var(--section-space) + 0.5rem); /* collapses with the footer's 2rem */
   rotate: -1deg;
 }
 
@@ -1156,4 +1158,18 @@
   .contact-map__placeholder {
     transition: none;
   }
+}
+
+/* ─── Spacing rhythm on /about and /contact ────────────────────────────── */
+.promise-strip {
+  margin-block: var(--section-space-sm) 0;
+}
+.contact-body {
+  padding-bottom: 0;
+}
+.contact-visit {
+  padding-top: calc(var(--section-space) - 1.5rem);
+}
+.contact-visit__layout {
+  padding-bottom: calc(var(--section-space) - 2rem);
 }

@@ -211,7 +211,7 @@
 .shop-page .shop-grid {
   max-width: 1250px;
   margin: 0 auto;
-  padding: 0 clamp(1.25rem, 4vw, 3rem) 3rem;
+  padding: 0 clamp(1.25rem, 4vw, 3rem) calc(var(--section-space) - 2rem);
 }
 
 .shop-page .shop-card {
@@ -430,7 +430,7 @@
 .picks {
   max-width: 1400px;
   margin: 0 auto;
-  padding: clamp(3rem, 7vw, 6rem) 0 clamp(2rem, 5vw, 4rem);
+  padding: var(--section-space) 0 0;
 }
 
 .picks__head {
@@ -595,7 +595,7 @@
 .pack {
   max-width: 1250px;
   margin: 0 auto;
-  padding: clamp(3rem, 7vw, 6rem) clamp(1.25rem, 4vw, 3rem);
+  padding: var(--section-space) clamp(1.25rem, 4vw, 3rem) 0;
 }
 
 .pack__head {
@@ -673,7 +673,7 @@
 .newsletter {
   position: relative;
   max-width: 1150px;
-  margin: 0 max(1rem, calc((100% - 1150px) / 2)) clamp(3rem, 6vw, 5rem);
+  margin: var(--section-space) max(1rem, calc((100% - 1150px) / 2));
   padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 5vw, 4rem);
   border-radius: 2rem;
   background: var(--color-orange);
@@ -813,5 +813,36 @@
   .pack-photo {
     transition: none;
     animation: none;
+  }
+}
+
+/* ─── Homepage rhythm between the older sections and the new ones ─────── */
+/* The older sections bring their own inner space, so each boundary is
+   tuned so the *visible* gap is one --section-space (measured, not guessed:
+   64px on phones, ~112px on desktop). */
+.picks {
+  padding-top: calc(var(--section-space) - 2rem);
+}
+.content-section.service-cards-wrapper {
+  padding-top: 2.5rem;
+}
+.pack {
+  padding-top: 0;
+  /* the marquee below starts with its own ~3.5rem of air */
+  padding-bottom: max(0px, calc(var(--section-space) - 3.5rem));
+}
+.newsletter {
+  margin-bottom: var(--section-space);
+}
+
+@media (min-width: 1201px) {
+  .picks {
+    padding-top: 0.75rem;
+  }
+  .content-section.service-cards-wrapper {
+    padding-top: calc(var(--section-space) - 1.5rem);
+  }
+  .pack {
+    padding-top: calc(var(--section-space) - 1.25rem);
   }
 }

@@ -38,6 +38,12 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* default: fast start, soft landing */
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);    /* things moving across the screen */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* playful overshoot, use sparingly */
+
+  /* Spacing rhythm: the visible gap between page sections (64px on phones,
+     ~120px on wide screens). Sections pad themselves with this so the gaps
+     match wherever two sections meet. */
+  --section-space: clamp(4rem, 2.5rem + 5vw, 7.5rem);
+  --section-space-sm: calc(var(--section-space) / 2);
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────────── */
