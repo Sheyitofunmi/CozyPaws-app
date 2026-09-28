@@ -83,25 +83,6 @@
   outline-offset: 2px;
 }
 
-/* ─── Service cards stack as you scroll (phones) ───────────────────────── */
-/* Each card sticks a little lower than the last, so they pile up like a
-   hand of cards instead of scrolling past as a long list. */
-@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
-  .cards-wrapper .card {
-    position: sticky;
-    top: calc(84px + var(--stack-i, 0) * 14px);
-  }
-
-  .cards-wrapper .card:nth-child(1) { --stack-i: 0; }
-  .cards-wrapper .card:nth-child(2) { --stack-i: 1; }
-  .cards-wrapper .card:nth-child(3) { --stack-i: 2; }
-  .cards-wrapper .card:nth-child(4) { --stack-i: 3; }
-
-  .cards-wrapper {
-    padding-bottom: 72px;
-  }
-}
-
 /* ─── Scroll progress: a thin line along the top of the page ───────────── */
 /* Pure CSS (scroll-driven animation), no JS on scroll. Browsers without
    support simply don't show it. */

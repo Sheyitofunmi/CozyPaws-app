@@ -1,236 +1,318 @@
-/* ─── Cards Wrapper ──────────────────────────────────────────────────────── */
-.cards-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 1400px;
-  height: 650px;
-  /* Centered: an asymmetric 100px left margin pushed the full-width wrapper
-       past the right edge of any viewport under ~1500px. */
-  margin: 100px auto;
+/* ─── "everything your dog needs": the aisle directory ─────────────────────
+   ≥1200px: a gently fanned row, every card readable at rest; hovering or
+   tabbing into a card lifts it forward. Below that: a swipeable row with
+   scroll-snap (the next card peeks in so it's obvious there's more).       */
+
+.aisles {
+  --aisle-w: min(280px, calc((100vw - 4rem) / 5));
   display: flex;
   justify-content: center;
-  cursor:
-    url("/assets/Cursor SVG/cursor-text.svg") 12 12,
-    auto;
+  align-items: flex-start;
+  max-width: 1500px;
+  margin: 0 auto;
+  /* room for the stickers poking above the cards and the hover lift */
+  padding: 3.5rem clamp(1rem, 3vw, 2.5rem) 2rem;
+  list-style: none;
+  text-align: left;
 }
 
-/* ─── Base Card ──────────────────────────────────────────────────────────── */
-.card {
-  width: 320px;
-  height: 460px;
-  position: absolute;
+.aisle {
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  gap: 1.5rem;
-  padding: 3.5rem 1.5rem 1.5rem;
-  cursor: pointer;
-  border-radius: 10px;
+  flex: 0 0 var(--aisle-w);
+  min-height: calc(var(--aisle-w) * 1.45);
+  padding: 2.25rem 1.25rem 1.25rem;
+  border-radius: 14px;
   color: var(--color-white);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  transform-origin: center center;
-  cursor:
-    url("/assets/Cursor SVG/cursor-text.svg") 12 12,
-    auto;
+  box-shadow: 0 10px 25px rgb(0 0 0 / 0.14);
+  rotate: var(--tilt, 0deg);
+  translate: 0 var(--drop, 0);
+  transition:
+    rotate var(--dur-base) var(--ease-out),
+    translate var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
 
-.card-title {
-  text-align: left;
-  font-size: 2.2rem;
-  font-family: "Epilogue", sans-serif;
-  font-weight: 800;
-  margin-top: 30px;
-  line-height: 1;
-  letter-spacing: -1px;
+/* Only the tilted corners touch, so no card hides its neighbour's prices */
+.aisle + .aisle {
+  margin-left: -0.4rem;
 }
 
-.card-divider-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
+.aisle--green { background: var(--color-green); --tilt: -4deg; --drop: 1.5rem; z-index: 1; }
+.aisle--darkblue { background: var(--color-lightblue); color: var(--color-dark); --tilt: 3deg; --drop: 0.25rem; z-index: 2; }
+.aisle--orange { background: var(--color-orange); color: var(--color-dark); --tilt: -2deg; --drop: 1.75rem; z-index: 3; }
+.aisle--maroon { background: var(--color-maroon); --tilt: 4deg; --drop: 0.5rem; z-index: 4; }
+.aisle--pink { background: var(--color-pink); color: var(--color-dark); --tilt: -3deg; --drop: 1.25rem; z-index: 5; }
+
+@media (hover: hover) {
+  .aisle:hover {
+    z-index: 10;
+    rotate: 0deg;
+    translate: 0 calc(var(--drop, 0) - 1rem);
+    box-shadow: 0 22px 44px rgb(0 0 0 / 0.22);
+  }
+
+  .aisle:hover .aisle__cta svg {
+    rotate: 45deg;
+  }
 }
 
-/* ─── Card Color Variants ────────────────────────────────────────────────── */
-.card-green {
-  background-color: var(--color-green);
-  left: calc(50% - 700px);
-  top: 50px;
-  transform: rotate(4deg);
-  z-index: 1;
-}
-
-.card-darkblue {
-  background-color: var(--color-lightblue);
-  color: var(--color-dark);
-  left: calc(50% - 430px);
-  top: 100px;
-  transform: rotate(-5deg);
-  z-index: 2;
-}
-
-.card-orange {
-  background-color: var(--color-orange);
-  color: var(--color-dark);
-  left: calc(50% - 220px);
-  top: 20px;
-  transform: rotate(5deg);
-  z-index: 3;
-}
-
-.card-maroon {
-  background-color: var(--color-maroon);
-  left: calc(50% + 50px);
-  top: 30px;
-  transform: rotate(-8deg);
-  z-index: 4;
-}
-
-.card-pink {
-  background-color: var(--color-pink);
-  color: var(--color-dark);
-  left: calc(50% + 320px);
-  top: 70px;
-  transform: rotate(5deg);
-  z-index: 5;
-}
-
-/* Expand hit area for middle cards to bridge gaps */
-.card-darkblue::after,
-.card-orange::after,
-.card-maroon::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -35px;
-  right: -35px;
-}
-
-/* Light card divider overrides */
-.card-pink .card-divider-svg,
-.card-orange .card-divider-svg,
-.card-darkblue .card-divider-svg {
-  color: rgba(0, 0, 0, 0.8);
-}
-
-/* ─── Card List ──────────────────────────────────────────────────────────── */
-.card-list {
-  list-style: none;
-  font-family: "DM Sans", sans-serif;
-  font-weight: 500;
-}
-
-.card-list li {
-  margin-bottom: 8px;
-  font-size: 1.15rem;
-  font-weight: 500;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  line-height: 1.3;
-  letter-spacing: -0.3px;
-}
-
-.services-card__bullet-svg {
-  width: 14px;
-  height: 18px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: currentColor;
-}
-
-/* ─── Card Sticker Variables ─────────────────────────────────────────────── */
-:root {
-  --sticker-camera-w: 160px;
-  --sticker-phone-w: 120px;
-  --sticker-smiley-w: 120px;
-  --sticker-hand-w: 120px;
-  --sticker-heart-w: 140px;
-
-  --sticker-camera-top: -45px;
-  --sticker-camera-left: 120px;
-
-  --sticker-phone-top: -45px;
-  --sticker-phone-left: 155px;
-
-  --sticker-smiley-top: -50px;
-
-  --sticker-hand-top: -40px;
-
-  --sticker-heart-top: -50px;
-  --sticker-heart-right: 15px;
-}
-
-/* ─── Card Stickers ──────────────────────────────────────────────────────── */
-.card-sticker {
-  position: absolute;
+/* Keyboard users get the same lift */
+.aisle:focus-within {
   z-index: 10;
-  pointer-events: none;
+  rotate: 0deg;
+  translate: 0 calc(var(--drop, 0) - 1rem);
+  box-shadow: 0 22px 44px rgb(0 0 0 / 0.22);
 }
 
-.card-sticker svg {
+/* ─── Card content ─────────────────────────────────────────────────────── */
+.aisle__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.aisle__title {
+  margin: 0;
+  font-family: "Epilogue", sans-serif;
+  font-size: clamp(1.5rem, 1rem + 1vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.aisle__count {
+  font-family: "Epilogue", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.aisle__divider {
   display: block;
   width: 100%;
-  height: 100%;
-}
-
-.card-sticker.sticker-camera {
-  width: var(--sticker-camera-w);
   height: auto;
-  top: var(--sticker-camera-top);
-  left: var(--sticker-camera-left);
-  transform: rotate(3deg);
+  margin: 0.9rem 0 0.6rem;
+  color: rgb(255 255 255 / 0.8);
 }
 
-.card-sticker.sticker-phone {
-  width: var(--sticker-phone-w);
+.aisle--darkblue .aisle__divider,
+.aisle--orange .aisle__divider,
+.aisle--pink .aisle__divider {
+  color: rgb(0 0 0 / 0.8);
+}
+
+.aisle__list {
+  margin: 0 0 1.1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.aisle__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  color: inherit;
+  font-family: "DM Sans", sans-serif;
+  font-size: clamp(0.95rem, 0.85rem + 0.25vw, 1.08rem);
+  font-weight: 500;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.aisle__bullet {
+  flex-shrink: 0;
+  width: 13px;
+  height: 16px;
+  translate: 0 2px;
+}
+
+.aisle__name {
+  flex: 1;
+  min-width: 0;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-fast) var(--ease-out);
+}
+
+.aisle__price {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+@media (hover: hover) {
+  .aisle__item:hover .aisle__name {
+    text-decoration-color: currentColor;
+  }
+}
+
+.aisle__item:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.aisle__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  margin-top: auto;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: #111111;
+  font-family: "Epilogue", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.aisle__cta svg {
+  width: 15px;
+  height: 15px;
+  transition: rotate var(--dur-base) var(--ease-spring);
+}
+
+.aisle__cta:focus-visible {
+  outline: 3px solid #111111;
+  outline-offset: 3px;
+}
+
+/* ─── Stickers: tucked on the top-right corner, never over the title ───── */
+.aisle__sticker {
+  position: absolute;
+  top: -2.8rem;
+  right: -1.3rem;
+  z-index: 2;
+  width: clamp(64px, 6vw, 92px);
+  pointer-events: none;
+  rotate: 8deg;
+}
+
+.aisle__sticker img {
+  display: block;
+  width: 100%;
   height: auto;
-  top: var(--sticker-phone-top);
-  left: var(--sticker-phone-left);
-  transform: rotate(1deg);
 }
 
-.card-sticker.sticker-smiley {
-  width: var(--sticker-smiley-w);
-  height: auto;
-  top: var(--sticker-smiley-top);
-  left: 70%;
-  transform: translateX(-50%) rotate(4deg);
+.aisle__sticker--camera { width: clamp(70px, 6.2vw, 96px); rotate: 4deg; }
+.aisle__sticker--heart { rotate: -6deg; }
+
+/* ─── Below 1200px: a swipeable row (five cards get too narrow to read) ─────────────────────────────────────── */
+@media (max-width: 1199px) {
+  .aisles {
+    --aisle-w: min(78vw, 320px);
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 3.25rem 20px 2.75rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 20px;
+    scrollbar-width: none;
+  }
+
+  .aisles::-webkit-scrollbar {
+    display: none;
+  }
+
+  .aisle {
+    scroll-snap-align: start;
+    min-height: 0;
+    --drop: 0;
+  }
+
+  .aisle + .aisle {
+    margin-left: 0;
+  }
+
+  /* a small tilt only, so nothing clips at the scroller's edges */
+  .aisle--green, .aisle--orange, .aisle--pink { --tilt: -1.2deg; }
+  .aisle--darkblue, .aisle--maroon { --tilt: 1.2deg; }
+
+  .aisle:focus-within {
+    translate: 0;
+  }
+
+  .aisle__sticker {
+    right: 0.25rem;
+    top: -2.1rem;
+  }
 }
 
-.card-sticker.sticker-hand {
-  width: var(--sticker-hand-w);
-  height: auto;
-  top: var(--sticker-hand-top);
-  left: 70%;
-  transform: translateX(-50%) rotate(8deg);
+/* ─── Carousel dots (only where the aisles are a swipe row) ────────────── */
+.aisle-dots {
+  display: none;
 }
 
-.card-sticker.sticker-heart {
-  width: var(--sticker-heart-w);
-  height: auto;
-  top: var(--sticker-heart-top);
-  right: var(--sticker-heart-right);
-  transform: rotate(1deg);
+@media (max-width: 1199px) {
+  .aisles {
+    padding-bottom: 1.25rem;
+  }
+
+  .aisle-dots {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin: 0 auto 1.5rem;
+  }
+
+  /* 28px tap target around a small dot */
+  .aisle-dot {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .aisle-dot span {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgb(26 26 26 / 0.45);
+    transition:
+      width var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .aisle-dot[aria-current="true"] span {
+    width: 22px;
+  }
+
+  .aisle-dot--green[aria-current="true"] span { background: var(--color-green); }
+  .aisle-dot--darkblue[aria-current="true"] span { background: var(--color-darkblue); }
+  .aisle-dot--orange[aria-current="true"] span { background: var(--color-orange); }
+  .aisle-dot--maroon[aria-current="true"] span { background: var(--color-maroon); }
+  .aisle-dot--pink[aria-current="true"] span { background: #b25cc4; }
+
+  .aisle-dot:focus-visible {
+    outline: 2px solid var(--color-dark);
+    outline-offset: 1px;
+    border-radius: 999px;
+  }
 }
 
-/* ─── Compact layouts (≤ 1440px — keep in sync with DESKTOP_MIN in
-   ServiceCards.jsx). Layout lives in responsive.css (swipe carousel);
-   here only the sticker tuning. ──────────────────────────────────────────── */
-@media (max-width: 1440px) {
-  /* Sticker offsets are tuned for a 320px card; on fluid-width cards use
-       proportional offsets and cap widths so nothing hangs past the edge. */
-  :root {
-    --sticker-camera-w: min(160px, 48%);
-    --sticker-phone-w: min(120px, 38%);
-    --sticker-smiley-w: min(120px, 38%);
-    --sticker-hand-w: min(120px, 38%);
-    --sticker-heart-w: min(140px, 44%);
+/* The title underline draws in with GSAP; show it at once without motion */
+@media (prefers-reduced-motion: reduce) {
+  .title-underline-svg path {
+    stroke-dashoffset: 0;
+  }
 
-    --sticker-camera-left: 38%;
-    --sticker-phone-left: 48%;
+  .aisle,
+  .aisle-dot span {
+    transition: none;
   }
 }
