@@ -19,6 +19,14 @@ test.describe("everything your dog needs (aisles)", () => {
     const { scrollWidth, clientWidth } = await row.evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
     expect(scrollWidth).toBeGreaterThan(clientWidth * 3);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+
+    // Dots show where you are and jump to a card
+    const current = page.locator(".aisle-dot[aria-current='true']");
+    await expect(current).toHaveAccessibleName("Show food & treats");
+    await page.getByRole("button", { name: "Show comfy beds" }).click();
+    await expect(current).toHaveAccessibleName("Show comfy beds");
+    await row.evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
+    await expect(current).toHaveAccessibleName("Show grooming & care");
     await context.close();
   });
 });

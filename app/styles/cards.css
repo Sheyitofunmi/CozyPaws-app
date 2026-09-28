@@ -248,13 +248,71 @@
   }
 }
 
+/* ─── Carousel dots (only where the aisles are a swipe row) ────────────── */
+.aisle-dots {
+  display: none;
+}
+
+@media (max-width: 1199px) {
+  .aisles {
+    padding-bottom: 1.25rem;
+  }
+
+  .aisle-dots {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin: 0 auto 1.5rem;
+  }
+
+  /* 28px tap target around a small dot */
+  .aisle-dot {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .aisle-dot span {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgb(26 26 26 / 0.45);
+    transition:
+      width var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .aisle-dot[aria-current="true"] span {
+    width: 22px;
+  }
+
+  .aisle-dot--green[aria-current="true"] span { background: var(--color-green); }
+  .aisle-dot--darkblue[aria-current="true"] span { background: var(--color-darkblue); }
+  .aisle-dot--orange[aria-current="true"] span { background: var(--color-orange); }
+  .aisle-dot--maroon[aria-current="true"] span { background: var(--color-maroon); }
+  .aisle-dot--pink[aria-current="true"] span { background: #b25cc4; }
+
+  .aisle-dot:focus-visible {
+    outline: 2px solid var(--color-dark);
+    outline-offset: 1px;
+    border-radius: 999px;
+  }
+}
+
 /* The title underline draws in with GSAP; show it at once without motion */
 @media (prefers-reduced-motion: reduce) {
   .title-underline-svg path {
     stroke-dashoffset: 0;
   }
 
-  .aisle {
+  .aisle,
+  .aisle-dot span {
     transition: none;
   }
 }

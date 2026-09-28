@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CARDS_DATA } from "@/lib/data";
@@ -35,6 +36,51 @@ const shopHref = (category) =>
 export default function ServiceCards() {
   // Below the fold: wire up animations once the browser is idle.
   const ready = useIdleReady();
+
+  // Carousel dots (below 1200px, where the aisles are a swipe row): show
+  // which card is in view, and jump to a card when tapped.
+  const rowRef = useRef(null);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const cards = row.children;
+      const start = row.scrollLeft + parseFloat(getComputedStyle(row).paddingLeft || "0");
+      let best = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < cards.length; i++) {
+        const dist = Math.abs(cards[i].offsetLeft - start);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      }
+      // At the very end the last card can't snap to the start edge.
+      if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 2) best = cards.length - 1;
+      setCurrent(best);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    row.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      row.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const goTo = (i) => {
+    const row = rowRef.current;
+    const card = row?.children[i];
+    if (!row || !card) return;
+    const pad = parseFloat(getComputedStyle(row).paddingLeft || "0");
+    const smooth = !window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    row.scrollTo({ left: card.offsetLeft - pad, behavior: smooth ? "smooth" : "auto" });
+  };
 
   useIsomorphicLayoutEffect(() => {
     if (!ready) return;
@@ -87,7 +133,7 @@ export default function ServiceCards() {
         </svg>
       </div>
 
-      <ul className="aisles" aria-labelledby="aisles-title">
+      <ul ref={rowRef} id="aisles-row" className="aisles" aria-labelledby="aisles-title">
         {AISLES.map((aisle) => (
           <li key={aisle.color} className={`aisle aisle--${aisle.color}`}>
             <span className={`aisle__sticker aisle__sticker--${aisle.sticker}`} aria-hidden="true">
@@ -127,6 +173,22 @@ export default function ServiceCards() {
           </li>
         ))}
       </ul>
+
+      <div className="aisle-dots" aria-label="Aisles">
+        {AISLES.map((aisle, i) => (
+          <button
+            key={aisle.color}
+            type="button"
+            className={`aisle-dot aisle-dot--${aisle.color}`}
+            aria-label={`Show ${aisle.title}`}
+            aria-controls="aisles-row"
+            aria-current={i === current ? "true" : undefined}
+            onClick={() => goTo(i)}
+          >
+            <span />
+          </button>
+        ))}
+      </div>
     </>
   );
 }
