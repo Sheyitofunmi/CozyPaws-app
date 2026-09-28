@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildQuote, diffQuotes } from "@/lib/pricing";
 import { getServerProduct } from "@/lib/server/catalog";
 import { readDemo, sleep } from "@/lib/server/demo";
+import { lockQuote } from "@/lib/server/payments";
 import type { QuoteResponse } from "@/lib/types";
 
 /**
@@ -49,5 +50,8 @@ export async function POST(req: NextRequest) {
   const changes = Array.isArray(expected?.lines)
     ? diffQuotes(expected.lines as Parameters<typeof diffQuotes>[0], quote)
     : [];
-  return NextResponse.json<QuoteResponse>({ ok: true, quote, changes });
+  // The lock is what a wallet payment is checked against later: the server,
+  // not the browser, remembers the amount the customer agreed to sign.
+  const lock = await lockQuote(items, quote);
+  return NextResponse.json<QuoteResponse>({ ok: true, quote, changes, lock });
 }

@@ -14,13 +14,21 @@ import type { Cents, LineChange, Quote } from "./types";
  *                                signing ───┴→ rejected → (retry) review
  */
 
-export const NETWORK_FEE_CENTS: Cents = 2; // shown to the user; paid from the wallet
+/** The simulated wallet's pretend network fee, taken from the same balance. */
+export const NETWORK_FEE_CENTS: Cents = 2;
 export const REQUIRED_CONFIRMATIONS = 2;
 
 export interface WalletAccount {
   walletName: string;
   address: string;
+  /** Spendable balance in the payment token, in cents. */
   balanceCents: Cents;
+  network: "simulated" | "base-sepolia";
+  /**
+   * Fee taken from the same balance as the payment. 0 for real wallets: gas
+   * is paid separately in test ETH, and the USDC sent is exactly the total.
+   */
+  feeCents: Cents;
 }
 
 export type WalletState =
@@ -42,14 +50,15 @@ export type WalletEvent =
   | { type: "SIGN" }
   | { type: "APPROVED"; txHash: string }
   | { type: "REJECTED" }
-  | { type: "CONFIRMATION" }
+  | { type: "CONFIRMATION"; count?: number }
   | { type: "RETRY" }
   | { type: "FAIL"; message: string }
   | { type: "RESET" };
 
 export const initialWalletState: WalletState = { status: "select" };
 
-export const amountDue = (quote: Quote): Cents => quote.totalCents + NETWORK_FEE_CENTS;
+export const amountDue = (quote: Quote, account: Pick<WalletAccount, "feeCents">): Cents =>
+  quote.totalCents + account.feeCents;
 
 export function walletReducer(state: WalletState, event: WalletEvent): WalletState {
   switch (event.type) {
@@ -64,7 +73,7 @@ export function walletReducer(state: WalletState, event: WalletEvent): WalletSta
 
     case "QUOTED": {
       if (state.status !== "quoting") return state;
-      const needed = amountDue(event.quote);
+      const needed = amountDue(event.quote, state.account);
       return state.account.balanceCents < needed
         ? { status: "insufficient", account: state.account, quote: event.quote, neededCents: needed }
         : { status: "review", account: state.account, quote: event.quote, changes: event.changes };
@@ -87,7 +96,8 @@ export function walletReducer(state: WalletState, event: WalletEvent): WalletSta
 
     case "CONFIRMATION": {
       if (state.status !== "pending") return state;
-      const confirmations = state.confirmations + 1;
+      // Real chains can report several blocks at once; never count backwards.
+      const confirmations = Math.max(state.confirmations + 1, event.count ?? 0);
       return confirmations >= REQUIRED_CONFIRMATIONS
         ? { status: "confirmed", account: state.account, quote: state.quote, txHash: state.txHash }
         : { ...state, confirmations };

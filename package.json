@@ -11,13 +11,16 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@upstash/redis": "^1.39.0",
     "gsap": "^3.12.5",
     "lenis": "^1.1.14",
     "maplibre-gl": "^5.24.0",
     "next": "15.2.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "viem": "^2.56.9",
+    "web-vitals": "^6.2.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

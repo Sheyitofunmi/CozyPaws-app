@@ -229,15 +229,24 @@ export default function CartPage() {
     };
 
     try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": idempotency.current.key,
-        },
-        body: JSON.stringify(body),
-      });
-      const result = (await res.json()) as CheckoutResponse;
+      // "payment_pending" (the chain needs another block) and "in_progress"
+      // (a duplicate request is still running) are worth waiting out, with the
+      // SAME key, so the retry can never place a second order.
+      let result: CheckoutResponse;
+      for (let attempt = 0; ; attempt++) {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": idempotency.current.key,
+          },
+          body: JSON.stringify(body),
+        });
+        result = (await res.json()) as CheckoutResponse;
+        const retryable = !result.ok && (result.code === "payment_pending" || result.code === "in_progress");
+        if (!retryable || attempt >= 10) break;
+        await new Promise((r) => setTimeout(r, 2000));
+      }
 
       if (result.ok) {
         const placed = {
@@ -591,9 +600,7 @@ export default function CartPage() {
           setServerQuote(serverPriced);
           replaceLines(serverPriced.lines.map(({ id, qty }) => ({ id, qty })));
         }}
-        onPaid={({ account, txHash, quote: paidQuote }) =>
-          void submitOrder(paidQuote, { method: "wallet", account, txHash })
-        }
+        onPaid={({ quote: paidQuote, payment }) => void submitOrder(paidQuote, payment)}
       />
 
       <SiteFooter />

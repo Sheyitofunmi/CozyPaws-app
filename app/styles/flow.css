@@ -2253,3 +2253,26 @@ html[data-vt] .product-gallery img {
 @keyframes cart-toast-fade {
   to { opacity: 0; }
 }
+
+/* Real (testnet) wallet: a green badge instead of the "simulated" one */
+.wallet-sim-badge--real {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.wallet-options__label {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--flow-muted);
+}
+
+.wallet-options__label:first-child {
+  margin-top: 0;
+}
+
+img.wallet-options__icon {
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid rgb(26 61 26 / 0.12);
+}

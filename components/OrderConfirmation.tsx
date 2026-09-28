@@ -6,6 +6,7 @@ import { getProduct } from "@/lib/catalog";
 import { deliveryWindow } from "@/lib/delivery";
 import { readLastOrder, type PlacedOrder } from "@/lib/last-order";
 import { formatPrice } from "@/lib/money";
+import { PAY_EXPLORER } from "@/lib/payments";
 import { NETWORK_FEE_CENTS, shortAddress } from "@/lib/wallet-machine";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -152,7 +153,16 @@ function Receipt({
             </div>
           </dl>
           <p className="order-paid-with">
-            {order.payment?.method === "wallet" ? (
+            {order.payment?.method === "wallet" && order.payment.network === "base-sepolia" ? (
+              <>
+                paid in test USDC on Base Sepolia from <code>{shortAddress(order.payment.account)}</code> · tx{" "}
+                <a href={`${PAY_EXPLORER}/tx/${order.payment.txHash}`} target="_blank" rel="noopener noreferrer">
+                  <code>{shortAddress(order.payment.txHash)}</code>
+                </a>
+                <br />
+                verified on-chain before we confirmed your order
+              </>
+            ) : order.payment?.method === "wallet" ? (
               <>
                 paid with wallet <code>{shortAddress(order.payment.account)}</code> · tx{" "}
                 <code>{shortAddress(order.payment.txHash)}</code>{" "}

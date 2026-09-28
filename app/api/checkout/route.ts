@@ -2,29 +2,23 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildQuote, diffQuotes } from "@/lib/pricing";
 import { getServerProduct } from "@/lib/server/catalog";
 import { readDemo, sleep } from "@/lib/server/demo";
-import type { CheckoutRequest, CheckoutResponse, Payment } from "@/lib/types";
+import { withIdempotency } from "@/lib/server/idempotency";
+import { verifyOnchainPayment } from "@/lib/server/payments";
+import { isAddress, isTxHash } from "@/lib/payments";
+import type { CheckoutRequest, CheckoutResponse, Payment, Quote } from "@/lib/types";
 import { validateCustomer, type CustomerErrors } from "@/lib/validation";
 
 /*
+ * POST /api/checkout
+ *
  * Idempotency: the client sends an Idempotency-Key per order attempt, so a
  * double-click or a retry after a flaky network returns the SAME order instead
- * of creating two. This in-memory map is fine for a demo; in production it
- * would live in a shared store (Redis/DB) with a TTL, because serverless
- * instances don't share memory.
+ * of creating two. The record lives in the shared KV store (Upstash Redis in
+ * production), claimed atomically, so it holds across serverless instances.
  */
-const completedOrders = new Map<string, CheckoutResponse>();
-
 export async function POST(req: NextRequest) {
   const demo = readDemo(req);
   await sleep(demo.latencyMs);
-
-  const idempotencyKey = req.headers.get("idempotency-key");
-  if (idempotencyKey) {
-    const previous = completedOrders.get(idempotencyKey);
-    if (previous) {
-      return NextResponse.json(previous, { headers: { "idempotent-replay": "true" } });
-    }
-  }
 
   let body: unknown;
   try {
@@ -38,67 +32,108 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  const request = body;
 
+  const result = await withIdempotency<{ status: number; body: CheckoutResponse }>(
+    req.headers.get("idempotency-key"),
+    request,
+    async () => {
+      const outcome = await placeOrder(request, demo);
+      // Only a placed order is remembered; a failure frees the key for a retry.
+      return { response: outcome, keep: outcome.body.ok };
+    },
+  );
+
+  switch (result.kind) {
+    case "fresh":
+      return NextResponse.json(result.response.body, { status: result.response.status });
+    case "replay":
+      return NextResponse.json(result.response.body, {
+        status: result.response.status,
+        headers: { "idempotent-replay": "true" },
+      });
+    case "in_progress":
+      return NextResponse.json<CheckoutResponse>(
+        { ok: false, code: "in_progress", message: "This order is already being placed. One moment…" },
+        { status: 409, headers: { "Retry-After": "1" } },
+      );
+    case "mismatch":
+      return NextResponse.json<CheckoutResponse>(
+        { ok: false, code: "idempotency_mismatch", message: "This order key was already used for a different order." },
+        { status: 422 },
+      );
+  }
+}
+
+async function placeOrder(
+  body: CheckoutRequest,
+  demo: ReturnType<typeof readDemo>,
+): Promise<{ status: number; body: CheckoutResponse }> {
   const errors: CustomerErrors & { items?: string } = validateCustomer(body.customer);
   if (body.items.length === 0) errors.items = "Your cart is empty.";
   if (Object.keys(errors).length > 0) {
-    return NextResponse.json<CheckoutResponse>(
-      { ok: false, code: "validation", errors },
-      { status: 422 },
-    );
-  }
-
-  // Re-price from the server's catalog. The client never tells us a price;
-  // it only tells us what it *showed*, so we can detect a stale quote.
-  const quote = buildQuote(body.items, (id) => getServerProduct(id, demo));
-  if (quote.lines.length === 0) {
-    return NextResponse.json<CheckoutResponse>(
-      { ok: false, code: "empty_cart", message: "Nothing in your cart is available any more." },
-      { status: 409 },
-    );
-  }
-
-  const changes = diffQuotes(body.expected.lines, quote);
-  if (changes.length > 0 || quote.totalCents !== body.expected.totalCents) {
-    // Never silently charge a different amount: hand the new quote back for review.
-    return NextResponse.json<CheckoutResponse>(
-      { ok: false, code: "quote_changed", quote, changes },
-      { status: 409 },
-    );
+    return { status: 422, body: { ok: false, code: "validation", errors } };
   }
 
   const payment: Payment = body.payment ?? { method: "card" };
-  if (payment.method === "wallet" && !isWalletPayment(payment)) {
-    return NextResponse.json<CheckoutResponse>(
-      { ok: false, code: "payment_invalid", message: "We couldn't verify that wallet payment." },
-      { status: 402 },
-    );
+
+  let quote: Quote;
+  if (payment.method === "wallet" && payment.network === "base-sepolia") {
+    // Real money moved: honour the quote we locked before the signature, and
+    // only after checking the chain ourselves.
+    const verified = await verifyOnchainPayment({
+      quoteId: payment.quoteId,
+      items: body.items,
+      account: payment.account,
+      txHash: payment.txHash as `0x${string}`,
+    });
+    if (!verified.ok) {
+      return {
+        status: verified.code === "payment_pending" ? 409 : 402,
+        body: { ok: false, code: verified.code, message: verified.message },
+      };
+    }
+    quote = verified.quote;
+  } else {
+    // Re-price from the server's catalog. The client never tells us a price;
+    // it only tells us what it *showed*, so we can detect a stale quote.
+    quote = buildQuote(body.items, (id) => getServerProduct(id, demo));
+    if (quote.lines.length === 0) {
+      return {
+        status: 409,
+        body: { ok: false, code: "empty_cart", message: "Nothing in your cart is available any more." },
+      };
+    }
+    const changes = diffQuotes(body.expected.lines, quote);
+    if (changes.length > 0 || quote.totalCents !== body.expected.totalCents) {
+      // Never silently charge a different amount: hand the new quote back for review.
+      return { status: 409, body: { ok: false, code: "quote_changed", quote, changes } };
+    }
   }
-  // A real integration would verify the transaction on-chain here (amount,
-  // recipient, confirmations) before fulfilling. This demo only checks shape.
 
   const orderId = `CP-${Date.now().toString(36).toUpperCase()}`;
-  const response: CheckoutResponse = {
-    ok: true,
-    orderId,
-    quote,
-    payment,
-    message: `Order ${orderId} confirmed! A (pretend) confirmation email is on its way.`,
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      orderId,
+      quote,
+      payment,
+      message: `Order ${orderId} confirmed! A (pretend) confirmation email is on its way.`,
+    },
   };
-  if (idempotencyKey) completedOrders.set(idempotencyKey, response);
-  return NextResponse.json(response);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function isWalletPayment(p: Payment): boolean {
-  return (
-    p.method === "wallet" &&
-    /^0x[0-9a-f]{40}$/i.test(p.account) &&
-    /^0x[0-9a-f]{64}$/i.test(p.txHash)
-  );
+function isPayment(p: unknown): p is Payment {
+  if (!isRecord(p)) return false;
+  if (p.method === "card") return true;
+  if (p.method !== "wallet" || !isAddress(p.account) || !isTxHash(p.txHash)) return false;
+  if (p.network === "simulated") return true;
+  return p.network === "base-sepolia" && typeof p.quoteId === "string" && p.quoteId.length <= 64;
 }
 
 function isCheckoutRequest(value: unknown): value is CheckoutRequest {
@@ -111,6 +146,7 @@ function isCheckoutRequest(value: unknown): value is CheckoutRequest {
     items.every((i) => isRecord(i) && typeof i.id === "string" && Number.isInteger(i.qty)) &&
     isRecord(expected) &&
     Array.isArray(expected.lines) &&
-    typeof expected.totalCents === "number"
+    typeof expected.totalCents === "number" &&
+    (value.payment === undefined || isPayment(value.payment))
   );
 }
