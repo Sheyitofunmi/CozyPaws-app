@@ -16,6 +16,8 @@ export interface DemoState {
   priceBump?: { id: string; percent: number };
   /** Live stock for one product drops (someone else bought it). */
   stockDrop?: { id: string; stock: number };
+  /** Simulated wallet connects with a low balance. Read in the browser; kept here so it survives a rewrite. */
+  walletLow?: boolean;
 }
 
 export const DEFAULT_DEMO: DemoState = { latencyMs: 0, failNextCart: false };
@@ -30,20 +32,37 @@ export function readDemo(req: NextRequest): DemoState {
       failNextCart: parsed.failNextCart === true,
       priceBump:
         parsed.priceBump && typeof parsed.priceBump.id === "string"
-          ? { id: parsed.priceBump.id, percent: Math.min(Math.max(Number(parsed.priceBump.percent) || 0, -90), 200) }
+          ? {
+              id: parsed.priceBump.id,
+              percent: Math.min(
+                Math.max(Number(parsed.priceBump.percent) || 0, -90),
+                200,
+              ),
+            }
           : undefined,
       stockDrop:
         parsed.stockDrop && typeof parsed.stockDrop.id === "string"
-          ? { id: parsed.stockDrop.id, stock: Math.max(0, Math.floor(Number(parsed.stockDrop.stock) || 0)) }
+          ? {
+              id: parsed.stockDrop.id,
+              stock: Math.max(
+                0,
+                Math.floor(Number(parsed.stockDrop.stock) || 0),
+              ),
+            }
           : undefined,
+      walletLow: parsed.walletLow === true,
     };
   } catch {
     return DEFAULT_DEMO;
   }
 }
 
+// Plain JSON: `res.cookies.set` URI-encodes the value itself, so encoding here
+// too would double-encode it and neither the panel nor readDemo could parse it.
 export const serializeDemo = (state: DemoState): string =>
-  encodeURIComponent(JSON.stringify(state));
+  JSON.stringify(state);
 
 export const sleep = (ms: number) =>
-  ms > 0 ? new Promise<void>((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
+  ms > 0
+    ? new Promise<void>((resolve) => setTimeout(resolve, ms))
+    : Promise.resolve();
