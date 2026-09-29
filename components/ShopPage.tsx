@@ -317,7 +317,7 @@ export default function ShopPage() {
         </div>
         {inCart > 0 ? (
           // Already in the cart: change the amount right here.
-          <div className="shop-card__stepper" role="group" aria-label={`${product.name} in cart`}>
+          <div className="shop-card__stepper" data-inp="cart-stepper" role="group" aria-label={`${product.name} in cart`}>
             <button
               type="button"
               aria-label={`Remove one ${product.name}`}
@@ -456,7 +456,7 @@ export default function ShopPage() {
       </nav>
 
       <div className="shop-toolbar">
-        <search className="shop-search">
+        <search className="shop-search" data-inp="search">
           <label htmlFor="shop-search-input" className="visually-hidden">
             Search products
           </label>

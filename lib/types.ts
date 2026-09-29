@@ -80,8 +80,14 @@ export interface CheckoutCustomer {
 
 export type Payment =
   | { method: "card" }
-  /** Simulated wallet payment: the tx hash is fake, see components/WalletPayDialog.tsx. */
-  | { method: "wallet"; account: string; txHash: string };
+  /**
+   * Wallet payment.
+   * - "simulated": the demo wallet; the tx hash is fake and labelled as such.
+   * - "base-sepolia": a real USDC transfer on Base Sepolia, verified on-chain
+   *   by the server against the quote it locked (quoteId) before fulfilling.
+   */
+  | { method: "wallet"; network: "simulated"; account: string; txHash: string }
+  | { method: "wallet"; network: "base-sepolia"; account: string; txHash: string; quoteId: string };
 
 export interface CheckoutRequest {
   customer: CheckoutCustomer;
@@ -97,12 +103,33 @@ export interface QuoteRequest {
   expected?: { lines: QuoteLine[]; totalCents: Cents };
 }
 
+/** A server-issued price lock for wallet payments (see app/api/quote). */
+export interface QuoteLock {
+  quoteId: string;
+  /** Unix ms after which the lock is no longer honoured. */
+  expiresAt: number;
+}
+
 export type QuoteResponse =
-  | { ok: true; quote: Quote; changes: LineChange[] }
+  | { ok: true; quote: Quote; changes: LineChange[]; lock: QuoteLock }
   | { ok: false; code: "invalid_request" | "empty_cart"; message: string };
 
 export type CheckoutResponse =
   | { ok: true; orderId: string; quote: Quote; payment: Payment; message: string }
   | { ok: false; code: "validation"; errors: Partial<Record<keyof CheckoutCustomer | "items", string>> }
   | { ok: false; code: "quote_changed"; quote: Quote; changes: LineChange[] }
-  | { ok: false; code: "invalid_request" | "empty_cart" | "unavailable" | "payment_invalid"; message: string };
+  | {
+      ok: false;
+      code:
+        | "invalid_request"
+        | "empty_cart"
+        | "unavailable"
+        | "payment_invalid"
+        /** The transaction exists but doesn't have enough confirmations yet: retry shortly. */
+        | "payment_pending"
+        /** Another request with the same Idempotency-Key is still being processed. */
+        | "in_progress"
+        /** The Idempotency-Key was reused for a different order. */
+        | "idempotency_mismatch";
+      message: string;
+    };

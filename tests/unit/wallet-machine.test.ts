@@ -15,7 +15,7 @@ const quote: Quote = {
   shippingCents: 0,
   totalCents: 7999,
 };
-const rich: WalletAccount = { walletName: "W", address: "0xabc", balanceCents: 100_000 };
+const rich: WalletAccount = { walletName: "W", address: "0xabc", balanceCents: 100_000, network: "simulated", feeCents: 2 };
 const poor: WalletAccount = { ...rich, balanceCents: 500 };
 
 const run = (...events: WalletEvent[]): WalletState => events.reduce(walletReducer, initialWalletState);
@@ -53,5 +53,17 @@ describe("walletReducer", () => {
     expect(walletReducer(initialWalletState, { type: "CONFIRMATION" })).toBe(initialWalletState);
     const insufficient = run(...connectAndQuote(poor));
     expect(walletReducer(insufficient, { type: "SIGN" })).toBe(insufficient); // can't sign without funds
+  });
+
+  it("real wallets send exactly the order total (gas is paid separately)", () => {
+    const real: WalletAccount = { ...rich, network: "base-sepolia", feeCents: 0, balanceCents: 7_999 };
+    const state = run(...connectAndQuote(real));
+    expect(state.status).toBe("review"); // 79.99 USDC covers a 79.99 order exactly
+  });
+
+  it("jumps ahead when a chain reports several confirmations at once, never backwards", () => {
+    let state = run(...connectAndQuote(rich), { type: "SIGN" }, { type: "APPROVED", txHash: "0xtx" });
+    state = walletReducer(state, { type: "CONFIRMATION", count: REQUIRED_CONFIRMATIONS });
+    expect(state.status).toBe("confirmed");
   });
 });

@@ -1238,3 +1238,122 @@
   font-weight: 700;
   text-underline-offset: 4px;
 }
+
+/* ─── /vitals ──────────────────────────────────────────────────────────── */
+.vitals {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--section-space) clamp(1.25rem, 4vw, 3rem) 0;
+}
+
+.vitals__eyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #565e6b;
+}
+
+.vitals__title {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 1.2rem + 4vw, 4.4rem);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--color-dark);
+}
+
+.vitals__lead {
+  max-width: 40rem;
+  margin: 1rem 0 2rem;
+  line-height: 1.6;
+  color: #3a3a3a;
+}
+
+.vitals__table-wrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgb(26 26 26 / 0.06);
+}
+
+.vitals__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.vitals__table th,
+.vitals__table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgb(26 26 26 / 0.08);
+}
+
+.vitals__table thead th {
+  font-size: 0.8rem;
+  color: #565e6b;
+}
+
+.vitals__table tbody th {
+  font-family: var(--font-display);
+  font-weight: 800;
+  vertical-align: top;
+}
+
+.vitals__table small {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: Inter, sans-serif;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #565e6b;
+}
+
+.vitals__pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.vitals__pill--good { background: #dcfce7; color: #14532d; }
+.vitals__pill--needs-improvement { background: #fef3c7; color: #78350f; }
+.vitals__pill--poor { background: #fee2e2; color: #7f1d1d; }
+
+.vitals__subtitle {
+  margin: 2.5rem 0 1rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.vitals__slow {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.vitals__slow span {
+  display: block;
+  font-size: 0.9rem;
+  color: #3a3a3a;
+}
+
+.vitals__target {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.vitals__empty,
+.vitals__note {
+  color: #3a3a3a;
+  line-height: 1.6;
+}
+
+.vitals__note {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+}

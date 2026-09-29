@@ -24,7 +24,7 @@ function pickFormat(v: HTMLVideoElement): "mp4" | "webm" {
 export function useHeroReel(clips: HeroClip[], rootRef: RefObject<HTMLElement | null>) {
   const videoA = useRef<HTMLVideoElement>(null);
   const videoB = useRef<HTMLVideoElement>(null);
-  const progressRef = useRef<HTMLElement>(null);
+  const progressRef = useRef<HTMLOListElement>(null);
 
   const [index, setIndex] = useState(0);
   const [slot, setSlot] = useState<0 | 1>(0);

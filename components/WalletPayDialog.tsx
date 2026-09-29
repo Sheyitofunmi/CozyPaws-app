@@ -4,14 +4,10 @@ import { useEffect, useReducer, useRef, useState, type ReactNode, type RefObject
 import { createPortal } from "react-dom";
 import { useDialog } from "@/lib/hooks/useDialog";
 import { formatPrice } from "@/lib/money";
+import { SIM_WALLETS, connectSimulated } from "@/lib/wallet/simulated";
+import { WalletRejectedError, type ConnectedWallet, type WalletOption } from "@/lib/wallet/types";
+import type { PaymentsConfig } from "@/lib/payments";
 import {
-  CONFIRMATION_INTERVAL_MS,
-  SIM_WALLETS,
-  broadcastTransaction,
-  connectWallet,
-} from "@/lib/sim-wallet";
-import {
-  NETWORK_FEE_CENTS,
   REQUIRED_CONFIRMATIONS,
   amountDue,
   initialWalletState,
@@ -19,7 +15,7 @@ import {
   walletReducer,
   type WalletState,
 } from "@/lib/wallet-machine";
-import type { CartLine, LineChange, Quote, QuoteResponse } from "@/lib/types";
+import type { CartLine, LineChange, Payment, Quote, QuoteLock, QuoteResponse } from "@/lib/types";
 import { IconCheck, IconClose } from "@/components/icons";
 
 interface Props {
@@ -30,7 +26,7 @@ interface Props {
   onClose: () => void;
   /** The server re-priced the cart: let the page show the same numbers. */
   onQuoteChanged: (quote: Quote) => void;
-  onPaid: (payment: { account: string; txHash: string; quote: Quote }) => void;
+  onPaid: (paid: { quote: Quote; payment: Payment }) => void;
 }
 
 const STEPS = ["connect", "review", "sign", "confirm"] as const;
@@ -61,6 +57,15 @@ function describeChange(c: LineChange) {
 export default function WalletPayDialog({ open, items, shownQuote, onClose, onQuoteChanged, onPaid }: Props) {
   const [state, dispatch] = useReducer(walletReducer, initialWalletState);
   const [approving, setApproving] = useState(false);
+
+  // Real wallets are offered only when the store has a payout address set
+  // (GET /api/payments/config) AND a browser wallet announces itself.
+  const [config, setConfig] = useState<PaymentsConfig>({ onchain: false });
+  const [realWallets, setRealWallets] = useState<WalletOption[]>([]);
+  const chosen = useRef<WalletOption | null>(null);
+  const wallet = useRef<ConnectedWallet | null>(null);
+  const lock = useRef<QuoteLock | null>(null);
+  const isReal = state.status !== "select" && chosen.current?.kind === "injected";
   const dialogRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -73,8 +78,31 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
 
   // Fresh start every time the dialog opens.
   useEffect(() => {
-    if (open) dispatch({ type: "RESET" });
+    if (!open) return;
+    dispatch({ type: "RESET" });
+    let cancelled = false;
+    void fetch("/api/payments/config")
+      .then((r) => r.json() as Promise<PaymentsConfig>)
+      .then(async (cfg) => {
+        if (cancelled) return;
+        setConfig(cfg);
+        if (!cfg.onchain) return;
+        const { discoverInjected } = await import("@/lib/wallet/injected");
+        const found = await discoverInjected();
+        if (!cancelled) setRealWallets(found);
+      })
+      .catch(() => {
+        /* no config: the simulated wallet still works */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
+
+  const choose = (option: WalletOption) => {
+    chosen.current = option;
+    dispatch({ type: "CHOOSE", walletName: option.name });
+  };
 
   // Move focus to each step's heading so screen readers hear the new state.
   useEffect(() => {
@@ -85,10 +113,25 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
   useEffect(() => {
     let cancelled = false;
 
-    if (state.status === "connecting") {
-      void connectWallet(state.walletName).then((account) => {
-        if (!cancelled) dispatch({ type: "CONNECTED", account });
-      });
+    if (state.status === "connecting" && chosen.current) {
+      const option = chosen.current;
+      const connect =
+        option.kind === "injected"
+          ? import("@/lib/wallet/injected").then((m) => m.connectInjected(option))
+          : connectSimulated(option);
+      connect
+        .then((connected) => {
+          if (cancelled) return;
+          wallet.current = connected;
+          dispatch({ type: "CONNECTED", account: connected.account });
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          dispatch({
+            type: "FAIL",
+            message: err instanceof WalletRejectedError ? "You declined the connection." : errorText(err),
+          });
+        });
     }
 
     if (state.status === "quoting") {
@@ -102,6 +145,7 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
         .then((result) => {
           if (cancelled) return;
           if (!result.ok) return dispatch({ type: "FAIL", message: result.message });
+          lock.current = result.lock;
           if (result.changes.length > 0 || result.quote.totalCents !== shownQuote.totalCents) {
             onQuoteChanged(result.quote);
           }
@@ -112,17 +156,16 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
         });
     }
 
-    if (state.status === "pending") {
-      const timer = window.setTimeout(() => dispatch({ type: "CONFIRMATION" }), CONFIRMATION_INTERVAL_MS);
-      return () => {
-        cancelled = true;
-        window.clearTimeout(timer);
-      };
-    }
+    // A real wallet opens its own popup as soon as we ask it to pay.
+    if (state.status === "signing" && isReal) void send();
 
     if (state.status === "confirmed") {
       const { account, txHash, quote } = state;
-      const timer = window.setTimeout(() => onPaid({ account: account.address, txHash, quote }), 700);
+      const payment: Payment =
+        account.network === "base-sepolia" && lock.current
+          ? { method: "wallet", network: "base-sepolia", account: account.address, txHash, quoteId: lock.current.quoteId }
+          : { method: "wallet", network: "simulated", account: account.address, txHash };
+      const timer = window.setTimeout(() => onPaid({ quote, payment }), 700);
       return () => {
         cancelled = true;
         window.clearTimeout(timer);
@@ -135,11 +178,37 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
     // Runs once per state transition; the other values are read at that moment.
   }, [state]);
 
-  const approve = async () => {
+  // Follow the transaction until it has enough confirmations. Keyed on the
+  // hash (not the whole state) so each new confirmation doesn't restart it.
+  const watchingHash = state.status === "pending" ? state.txHash : null;
+  useEffect(() => {
+    if (!watchingHash || !wallet.current) return;
+    const controller = new AbortController();
+    wallet.current
+      .watch(
+        watchingHash as `0x${string}`,
+        REQUIRED_CONFIRMATIONS,
+        (count) => dispatch({ type: "CONFIRMATION", count }),
+        controller.signal,
+      )
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted) dispatch({ type: "FAIL", message: errorText(err) });
+      });
+    return () => controller.abort();
+  }, [watchingHash]);
+
+  const send = async () => {
+    if (state.status !== "signing" || !wallet.current) return;
     setApproving(true);
-    const txHash = await broadcastTransaction();
-    setApproving(false);
-    dispatch({ type: "APPROVED", txHash });
+    try {
+      const payTo = config.onchain ? config.payTo : "0x0000000000000000000000000000000000000000";
+      const txHash = await wallet.current.pay({ amountCents: amountDue(state.quote, state.account), payTo });
+      dispatch({ type: "APPROVED", txHash });
+    } catch (err) {
+      dispatch(err instanceof WalletRejectedError ? { type: "REJECTED" } : { type: "FAIL", message: errorText(err) });
+    } finally {
+      setApproving(false);
+    }
   };
 
   const current = stepIndex(state);
@@ -168,7 +237,12 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
       >
         <div className="wallet-dialog__head">
           <p className="wallet-dialog__eyebrow">
-            pay with wallet <span className="wallet-sim-badge">simulated</span>
+            pay with wallet{" "}
+            {isReal ? (
+              <span className="wallet-sim-badge wallet-sim-badge--real">base sepolia testnet</span>
+            ) : (
+              <span className="wallet-sim-badge">simulated</span>
+            )}
           </p>
           <button
             type="button"
@@ -199,21 +273,14 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
               <h2 id="wallet-title" ref={headingRef} tabIndex={-1}>
                 connect a wallet
               </h2>
-              <ul className="wallet-options">
-                {SIM_WALLETS.map((w) => (
-                  <li key={w.name}>
-                    <button type="button" onClick={() => dispatch({ type: "CHOOSE", walletName: w.name })}>
-                      <span className="wallet-options__icon" aria-hidden="true">
-                        {w.name[0]}
-                      </span>
-                      <span>
-                        <strong>{w.name}</strong>
-                        <small>{w.note}</small>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {realWallets.length > 0 && (
+                <>
+                  <p className="wallet-options__label">your wallets · test USDC on Base Sepolia</p>
+                  <WalletList options={realWallets} onChoose={choose} />
+                  <p className="wallet-options__label">or try it without a wallet</p>
+                </>
+              )}
+              <WalletList options={SIM_WALLETS} onChoose={choose} />
             </>
           )}
 
@@ -253,12 +320,15 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
                   <dd>{formatPrice(state.quote.totalCents)}</dd>
                 </div>
                 <div>
-                  <dt>network fee (est.)</dt>
-                  <dd>{formatPrice(NETWORK_FEE_CENTS)}</dd>
+                  <dt>network fee</dt>
+                  <dd>{state.account.feeCents > 0 ? formatPrice(state.account.feeCents) : "paid in test ETH"}</dd>
                 </div>
                 <div className="wallet-amounts__total">
                   <dt>you&apos;ll send</dt>
-                  <dd>{formatPrice(amountDue(state.quote))}</dd>
+                  <dd>
+                    {formatPrice(amountDue(state.quote, state.account))}
+                    {state.account.network === "base-sepolia" && " USDC"}
+                  </dd>
                 </div>
               </dl>
 
@@ -285,7 +355,17 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
               <h2 id="wallet-title" ref={headingRef} tabIndex={-1}>
                 {state.status === "signing" ? "check your wallet" : "signature rejected"}
               </h2>
-              {state.status === "signing" ? (
+              {state.status === "signing" && isReal ? (
+                <div className="wallet-progress">
+                  <span className="wallet-progress__icon" aria-hidden="true">
+                    <span className="btn-spinner" />
+                  </span>
+                  <p>
+                    approve the {formatPrice(amountDue(state.quote, state.account))} USDC transfer in{" "}
+                    {state.account.walletName}. nothing moves until you do.
+                  </p>
+                </div>
+              ) : state.status === "signing" ? (
                 <>
                   <p className="wallet-muted">approve the payment in {state.account.walletName} to continue.</p>
                   {/* Stand-in for the wallet's own popup. In a real app this is the extension, not our UI. */}
@@ -295,13 +375,13 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
                     </p>
                     <p className="sim-wallet__title">payment request</p>
                     <p className="sim-wallet__site">cozypaws.demo</p>
-                    <p className="sim-wallet__amount">{formatPrice(amountDue(state.quote))}</p>
+                    <p className="sim-wallet__amount">{formatPrice(amountDue(state.quote, state.account))}</p>
                     <p className="sim-wallet__from">from {shortAddress(state.account.address)}</p>
                     <div className="sim-wallet__actions">
                       <button type="button" onClick={() => dispatch({ type: "REJECTED" })} disabled={approving}>
                         reject
                       </button>
-                      <button type="button" className="is-primary" onClick={() => void approve()} disabled={approving}>
+                      <button type="button" className="is-primary" onClick={() => void send()} disabled={approving}>
                         {approving ? "sending…" : "approve"}
                       </button>
                     </div>
@@ -337,7 +417,14 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
                 </p>
               </div>
               <p className="wallet-muted">
-                transaction <code>{shortAddress(state.txHash)}</code>
+                transaction{" "}
+                {state.account.network === "base-sepolia" && config.onchain ? (
+                  <a href={`${config.explorer}/tx/${state.txHash}`} target="_blank" rel="noopener noreferrer">
+                    <code>{shortAddress(state.txHash)}</code>
+                  </a>
+                ) : (
+                  <code>{shortAddress(state.txHash)}</code>
+                )}
                 {state.status === "pending" && ". keep this open, it only takes a few seconds."}
               </p>
             </>
@@ -359,11 +446,41 @@ export default function WalletPayDialog({ open, items, shownQuote, onClose, onQu
         </div>
 
         <p id="wallet-sim-note" className="wallet-dialog__foot">
-          This is a simulated wallet for a demo store: no real wallet, network or funds are used.
+          {isReal
+            ? "Testnet only: this sends test USDC on Base Sepolia, which has no real value. The store checks the payment on-chain before confirming your order."
+            : "The simulated wallets use no real wallet, network or funds."}
         </p>
       </div>
     </div>,
     document.body,
+  );
+}
+
+function errorText(err: unknown): string {
+  return err instanceof Error && err.message ? err.message : "Your wallet couldn't complete that.";
+}
+
+function WalletList({ options, onChoose }: { options: WalletOption[]; onChoose: (o: WalletOption) => void }) {
+  return (
+    <ul className="wallet-options">
+      {options.map((w) => (
+        <li key={w.id}>
+          <button type="button" onClick={() => onChoose(w)}>
+            {w.icon ? (
+              <img className="wallet-options__icon" src={w.icon} alt="" width={36} height={36} />
+            ) : (
+              <span className="wallet-options__icon" aria-hidden="true">
+                {w.name[0]}
+              </span>
+            )}
+            <span>
+              <strong>{w.name}</strong>
+              <small>{w.note}</small>
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
