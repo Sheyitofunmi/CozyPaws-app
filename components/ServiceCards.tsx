@@ -30,7 +30,7 @@ const AISLES = CARDS_DATA.map((card) => ({
   ),
 }));
 
-const shopHref = (category) =>
+const shopHref = (category: string) =>
   `/shop?category=${encodeURIComponent(category).replace(/%20/g, "+")}`;
 
 export default function ServiceCards() {
@@ -39,7 +39,9 @@ export default function ServiceCards() {
 
   // Carousel dots (below 1200px, where the aisles are a swipe row): show
   // which card is in view, and jump to a card when tapped.
-  const rowRef = useRef(null);
+  const rowRef = useRef<HTMLUListElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const underlineRef = useRef<SVGSVGElement>(null);
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -48,12 +50,12 @@ export default function ServiceCards() {
     let raf = 0;
     const update = () => {
       raf = 0;
-      const cards = row.children;
+      const cards = row.children as HTMLCollectionOf<HTMLElement>;
       const start = row.scrollLeft + parseFloat(getComputedStyle(row).paddingLeft || "0");
       let best = 0;
       let bestDist = Infinity;
       for (let i = 0; i < cards.length; i++) {
-        const dist = Math.abs(cards[i].offsetLeft - start);
+        const dist = Math.abs(cards[i]!.offsetLeft - start);
         if (dist < bestDist) {
           bestDist = dist;
           best = i;
@@ -73,9 +75,9 @@ export default function ServiceCards() {
     };
   }, []);
 
-  const goTo = (i) => {
+  const goTo = (i: number) => {
     const row = rowRef.current;
-    const card = row?.children[i];
+    const card = row?.children[i] as HTMLElement | undefined;
     if (!row || !card) return;
     const pad = parseFloat(getComputedStyle(row).paddingLeft || "0");
     const smooth = !window.matchMedia(REDUCED_MOTION_QUERY).matches;
@@ -83,19 +85,21 @@ export default function ServiceCards() {
   };
 
   useIsomorphicLayoutEffect(() => {
-    if (!ready) return;
+    const title = titleRef.current;
+    const underline = underlineRef.current;
+    if (!ready || !title || !underline) return;
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       gsap.fromTo(
-        ".title-underline-svg path",
+        underline.querySelectorAll("path"),
         { strokeDashoffset: 200 },
         {
           strokeDashoffset: 0,
           duration: 1.2,
           ease: "power3.out",
           stagger: 0.3,
-          scrollTrigger: { trigger: ".title-container", start: "top 70%", once: true },
+          scrollTrigger: { trigger: title, start: "top 70%", once: true },
         },
       );
     });
@@ -104,7 +108,7 @@ export default function ServiceCards() {
 
   return (
     <>
-      <div className="title-container">
+      <div ref={titleRef} className="title-container">
         <h2 className="main-title" id="aisles-title">
           everything your dog <span className="italic-text">needs:</span>
         </h2>
@@ -114,6 +118,7 @@ export default function ServiceCards() {
           viewBox="0 0 159 17"
           fill="none"
           className="title-underline-svg"
+          ref={underlineRef}
           aria-hidden="true"
         >
           <path

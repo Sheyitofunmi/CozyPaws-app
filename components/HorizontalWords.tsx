@@ -1,10 +1,12 @@
 "use client";
 
-import React, { Fragment, useEffect, useLayoutEffect, useRef } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { IconArrowRight } from "@/components/icons";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { prefersReducedMotion } from "@/lib/motion";
+import { useHomeSections } from "@/lib/home-sections";
 import "../app/styles/horizontal-words.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -20,37 +22,42 @@ const useIsomorphicLayoutEffect =
 const HEADLINE_WORDS = "We wanna be where the dogs are".split(" ");
 
 const HorizontalWords = () => {
-  const sectionRef = useRef(null);
+  const sections = useHomeSections();
+  const localRef = useRef<HTMLElement>(null);
+  // This is the first light section, which the navbar watches for.
+  const sectionRef = sections?.firstLight ?? localRef;
+  const trackRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+  const outroRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLSpanElement>(null);
+  const pawRef = useRef<HTMLSpanElement>(null);
 
   useIsomorphicLayoutEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
+    const container = sectionRef.current;
+    const textRef = trackRef.current;
+    if (!container || !textRef) return;
 
-    const getEls = () => {
-      const container = sectionRef.current;
-      return {
-        container,
-        textRef: container.querySelector(".horizontal-words__relative"),
-        letters: container.querySelectorAll(".letter"),
-        stickers: container.querySelectorAll(
-          ".horizontal-words__sticker-watch, .horizontal-words__sticker-cursor, .horizontal-words__sticker-phone",
-        ),
-        arrows: container.querySelectorAll(
-          ".horizontal-words__arrow-svg path, .horizontal-words__arrow-end-svg path",
-        ),
-      };
-    };
+    // Repeated pieces, scoped to this section.
+    const letters = container.querySelectorAll<HTMLElement>(".letter");
+    const stickers = container.querySelectorAll<HTMLElement>(
+      ".horizontal-words__sticker-watch, .horizontal-words__sticker-cursor, .horizontal-words__sticker-phone",
+    );
+    const arrows = container.querySelectorAll<SVGPathElement>(
+      ".horizontal-words__arrow-svg path, .horizontal-words__arrow-end-svg path",
+    );
 
-    const mm = gsap.matchMedia(sectionRef);
+    const mm = gsap.matchMedia(container);
 
     mm.add("(min-width: 1025px)", () => {
-      const { container, textRef, letters, stickers, arrows } = getEls();
-      const headline = container.querySelector(".horizontal-words__h2");
+      const headline = headlineRef.current;
+      const wrapper = headline?.parentElement;
+      if (!headline || !wrapper) return;
 
       // Where the headline sits inside the moving track. Uses layout offsets
       // (which ignore transforms) rather than setting x back to 0: a gsap.set
       // made later in onRefreshInit isn't recorded by gsap.matchMedia, so it
       // would survive a desktop → mobile resize and leave the text shifted.
-      const wrapper = headline.parentElement;
       let headLeft = 0;
       let headWidth = 0;
       const measure = () => {
@@ -104,14 +111,14 @@ const HorizontalWords = () => {
       // The copy and the CTA arrive once the headline has nearly finished
       // (driven by the pin's progress below, 60% → 90%).
       const outro = gsap.fromTo(
-        container.querySelector(".horizontal-words__bottom-text"),
+        outroRef.current,
         { autoAlpha: 0, y: 40 },
         { autoAlpha: 1, y: 0, ease: "power2.out", paused: true },
       );
 
       // Paw-print progress line along the bottom.
-      const fill = container.querySelector(".horizontal-words__progress-fill");
-      const paw = container.querySelector(".horizontal-words__progress-paw");
+      const fill = fillRef.current;
+      const paw = pawRef.current;
       ScrollTrigger.create({
         trigger: container,
         start: "top top",
@@ -119,8 +126,8 @@ const HorizontalWords = () => {
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           outro.progress(gsap.utils.clamp(0, 1, (self.progress - 0.6) / 0.3));
-          gsap.set(fill, { scaleX: self.progress });
-          gsap.set(paw, { left: `${self.progress * 100}%`, rotation: self.progress * 360 });
+          if (fill) gsap.set(fill, { scaleX: self.progress });
+          if (paw) gsap.set(paw, { left: `${self.progress * 100}%`, rotation: self.progress * 360 });
         },
       });
 
@@ -158,7 +165,7 @@ const HorizontalWords = () => {
       });
 
       arrows.forEach((arrowPath) => {
-        if (arrowPath.getTotalLength) {
+        if (typeof arrowPath.getTotalLength === "function") {
           const pathLen = arrowPath.getTotalLength();
           gsap.set(arrowPath, {
             strokeDasharray: pathLen,
@@ -183,8 +190,6 @@ const HorizontalWords = () => {
     });
 
     mm.add("(max-width: 1024px)", () => {
-      const { container, letters, stickers, arrows } = getEls();
-
       gsap.from(letters, {
         opacity: 0,
         yPercent: 60,
@@ -215,7 +220,7 @@ const HorizontalWords = () => {
       });
 
       arrows.forEach((arrowPath) => {
-        if (arrowPath.getTotalLength) {
+        if (typeof arrowPath.getTotalLength === "function") {
           const pathLen = arrowPath.getTotalLength();
           gsap.set(arrowPath, {
             strokeDasharray: pathLen,
@@ -238,14 +243,14 @@ const HorizontalWords = () => {
     // matchMedia.revert() runs synchronously here (layout effect cleanup),
     // tearing the pin down before React unmounts the node — see the note above.
     return () => mm.revert();
-  }, []);
+  }, [sectionRef]);
 
   return (
     <section
       ref={sectionRef}
       className="horizontal-words-section content-section"
     >
-      <div className="horizontal-words__relative">
+      <div ref={trackRef} className="horizontal-words__relative">
         <div className="horizontal-words__sticker-svg">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -369,6 +374,7 @@ const HorizontalWords = () => {
           </svg>
 
           <h2
+            ref={headlineRef}
             className="display horizontal-words__h2"
             aria-label="We wanna be where the dogs are"
           >
@@ -395,7 +401,7 @@ const HorizontalWords = () => {
         </div>
       </div>
 
-      <div className="horizontal-words__bottom-text">
+      <div ref={outroRef} className="horizontal-words__bottom-text">
         <p className="horizontal-words__bottom-text-l">
           Every dog deserves the good stuff — <em>and</em> then some. We bring
           the best food, toys and cozy gear straight to your door. Tail wags
@@ -407,8 +413,8 @@ const HorizontalWords = () => {
       </div>
 
       <div className="horizontal-words__progress" aria-hidden="true">
-        <span className="horizontal-words__progress-fill" />
-        <span className="horizontal-words__progress-paw">
+        <span ref={fillRef} className="horizontal-words__progress-fill" />
+        <span ref={pawRef} className="horizontal-words__progress-paw">
           <svg viewBox="0 0 512 512" fill="currentColor">
             <ellipse cx="256" cy="352" rx="120" ry="96" />
             <ellipse cx="118" cy="220" rx="52" ry="70" />

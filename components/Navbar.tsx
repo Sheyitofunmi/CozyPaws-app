@@ -1,71 +1,121 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion } from "@/lib/motion";
+import { initWiggle } from "@/lib/wiggle";
 import { WIGGLE_CONFIG } from "@/lib/data";
+import { useHomeSections } from "@/lib/home-sections";
 import MobileNav from "@/components/MobileNav";
 import SmartImage from "@/components/SmartImage";
 
-function initWiggle(element, intensity) {
-  // Looping wiggles are pure decoration: skip them for reduced-motion users.
-  if (prefersReducedMotion()) return () => {};
-  const target = element.querySelector("[data-wiggle-target]") || element;
-  gsap.set(target, { transformOrigin: "center center" });
-  let tween;
+const POINTER_CURSOR = { cursor: "url('/assets/Cursor SVG/cursor-pointer.svg') 12 12, pointer" };
+
+/** Scale-in pop-out anchored on its trigger icon, with a staggered list and a shared dim overlay. */
+function initPopout(
+  trigger: HTMLElement,
+  box: HTMLElement,
+  anchor: Element | null,
+  overlay: HTMLElement | null,
+  extra: { enter?: () => void; leave?: () => void } = {},
+): () => void {
+  const items = Array.from(box.querySelector(".nav-popout-inner")?.children ?? []);
+
+  // Measure the open box once to put the transform origin on the icon.
+  gsap.set(box, { visibility: "visible", scale: 1, opacity: 1 });
+  const boxRect = box.getBoundingClientRect();
+  const iconRect = anchor?.getBoundingClientRect() ?? boxRect;
+  const origin = `${iconRect.left + iconRect.width / 2 - boxRect.left}px ${iconRect.top + iconRect.height / 2 - boxRect.top}px`;
+  gsap.set(box, { visibility: "hidden", scale: 0, opacity: 0, transformOrigin: origin });
+  gsap.set(items, { y: 10, opacity: 0 });
+
   const onEnter = () => {
-    tween = gsap.to(target, {
-      rotation: intensity,
-      duration: 0.17,
-      repeat: -1,
-      yoyo: true,
-      ease: "steps(1)",
-    });
+    gsap.killTweensOf([box, ...items]);
+    if (overlay) {
+      gsap.set(overlay, { visibility: "visible" });
+      gsap.to(overlay, { opacity: 1, duration: 0.35, ease: "power2.out" });
+    }
+    extra.enter?.();
+    gsap.set(box, { visibility: "visible" });
+    gsap.fromTo(box, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.8, ease: "expo.out" });
+    gsap.to(items, { y: 0, opacity: 1, duration: 0.45, stagger: 0.06, ease: "power3.out", delay: 0.18 });
   };
   const onLeave = () => {
-    if (tween) {
-      tween.kill();
-      gsap.to(target, { rotation: 0, duration: 0.3, ease: "power2.out" });
+    gsap.killTweensOf([box, ...items]);
+    if (overlay) {
+      gsap.to(overlay, {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.in",
+        onComplete: () => void gsap.set(overlay, { visibility: "hidden" }),
+      });
     }
+    extra.leave?.();
+    gsap.to(items, { y: 10, opacity: 0, duration: 0.15, ease: "power2.in" });
+    gsap.to(box, {
+      scale: 0,
+      opacity: 0,
+      duration: 0.3,
+      ease: "expo.in",
+      delay: 0.05,
+      onComplete: () => void gsap.set(box, { visibility: "hidden" }),
+    });
   };
-  element.addEventListener("mouseenter", onEnter);
-  element.addEventListener("mouseleave", onLeave);
+  trigger.addEventListener("mouseenter", onEnter);
+  trigger.addEventListener("mouseleave", onLeave);
   return () => {
-    element.removeEventListener("mouseenter", onEnter);
-    element.removeEventListener("mouseleave", onLeave);
+    trigger.removeEventListener("mouseenter", onEnter);
+    trigger.removeEventListener("mouseleave", onLeave);
+  };
+}
+
+/** Stepped hover wiggle on a child plus an optional tween, undone on leave. */
+function onHover(el: Element, enter: () => (() => void) | void): () => void {
+  let undo: (() => void) | void;
+  const onEnter = () => {
+    if (!prefersReducedMotion()) undo = enter();
+  };
+  const onLeave = () => {
+    undo?.();
+    undo = undefined;
+  };
+  el.addEventListener("mouseenter", onEnter);
+  el.addEventListener("mouseleave", onLeave);
+  return () => {
+    el.removeEventListener("mouseenter", onEnter);
+    el.removeEventListener("mouseleave", onLeave);
   };
 }
 
 export default function Navbar() {
-  useEffect(() => {
-    const navbar = document.querySelector(".navbar");
-    const contentSection = document.querySelector(".content-section");
-    const footerEl = document.querySelector(".main-footer");
+  const sections = useHomeSections();
+  const navRef = useRef<HTMLElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const navLeftRef = useRef<HTMLDivElement>(null);
+  const workBoxRef = useRef<HTMLDivElement>(null);
+  const workBlobRef = useRef<HTMLImageElement>(null);
+  const navRightRef = useRef<HTMLDivElement>(null);
+  const waBoxRef = useRef<HTMLDivElement>(null);
+  const waIconRef = useRef<SVGSVGElement>(null);
+  const localLogoRef = useRef<SVGSVGElement>(null);
+  const logoRef = sections?.logo ?? localLogoRef;
 
-    if (navbar) {
-      navbar.classList.add("on-dark");
-      navbar.classList.remove("on-light");
-    }
+  useEffect(() => {
+    const navbar = navRef.current;
+    if (!navbar) return;
+    navbar.classList.add("on-dark");
+    navbar.classList.remove("on-light");
 
     // Section boundaries are measured once (and again on resize / after
     // ScrollTrigger adds pin space), not on every scroll event: reading
     // getBoundingClientRect in a scroll handler forces layout each frame.
     let tops = { content: Infinity, service: Infinity, marquee: Infinity, footer: Infinity };
-    const topOf = (el) => (el ? el.getBoundingClientRect().top + window.scrollY : Infinity);
-    const measure = () => {
-      tops = {
-        content: topOf(contentSection),
-        service: topOf(document.querySelector(".service-cards-wrapper")),
-        marquee: topOf(document.querySelector(".Double-marquee")),
-        footer: topOf(footerEl),
-      };
-      updateNavbar();
-    };
+    const topOf = (el: Element | null | undefined) =>
+      el ? el.getBoundingClientRect().top + window.scrollY : Infinity;
 
     let lastY = window.scrollY;
     const updateNavbar = () => {
-      if (!navbar || !contentSection || !footerEl) return;
       const y = window.scrollY;
       const scrollPos = y + navbar.offsetHeight / 2;
       const onLight =
@@ -84,9 +134,18 @@ export default function Navbar() {
       // A soft backdrop once content scrolls underneath, so labels stay readable.
       navbar.classList.toggle("is-scrolled", y > 40);
     };
+    const measure = () => {
+      tops = {
+        content: topOf(sections?.firstLight.current),
+        service: topOf(sections?.services.current),
+        marquee: topOf(sections?.marquee.current),
+        footer: topOf(sections?.footer.current),
+      };
+      updateNavbar();
+    };
 
     let ticking = false;
-    const updateNavbarColor = () => {
+    const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
@@ -95,304 +154,96 @@ export default function Navbar() {
       });
     };
 
-    window.addEventListener("scroll", updateNavbarColor, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", measure);
     ScrollTrigger.addEventListener("refresh", measure);
     measure();
 
-    const cleanups = [];
-    const cozyLogo = document.querySelector(".cozy-logo");
-    if (cozyLogo)
-      cleanups.push(initWiggle(cozyLogo, WIGGLE_CONFIG.cozyLogo));
+    const cleanups: (() => void)[] = [];
+    if (logoRef.current) cleanups.push(initWiggle(logoRef.current, WIGGLE_CONFIG.cozyLogo));
 
-    const overlay = document.querySelector(".nav-overlay");
-    if (overlay) {
-      gsap.set(overlay, { opacity: 0, visibility: "hidden" });
-    }
-    const showOverlay = () => {
-      if (overlay) {
-        gsap.set(overlay, { visibility: "visible" });
-        gsap.to(overlay, { opacity: 1, duration: 0.35, ease: "power2.out" });
-      }
-    };
-    const hideOverlay = () => {
-      if (overlay) {
-        gsap.to(overlay, {
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.in",
-          onComplete: () => gsap.set(overlay, { visibility: "hidden" }),
-        });
-      }
-    };
+    const overlay = overlayRef.current;
+    if (overlay) gsap.set(overlay, { opacity: 0, visibility: "hidden" });
 
-    const navLeft = document.querySelector(".nav-left");
-    const workBox = document.querySelector(".nav-work-box");
-    const workBlob = document.querySelector(".nav-bar__work-blob-svg");
-
-    if (navLeft && workBox && workBlob) {
-      const workInner = workBox.querySelector(".nav-popout-inner");
-      const workItems = workInner ? Array.from(workInner.children) : [];
-
-      gsap.set(workBox, { visibility: "visible", scale: 1, opacity: 1 });
-      const boxRect = workBox.getBoundingClientRect();
-      const blobRect = workBlob.getBoundingClientRect();
-      const originX = blobRect.left + blobRect.width / 2 - boxRect.left;
-      const originY = blobRect.top + blobRect.height / 2 - boxRect.top;
-      const workOrigin = `${originX}px ${originY}px`;
-
-      gsap.set(workBox, {
-        visibility: "hidden",
-        scale: 0,
-        opacity: 0,
-        transformOrigin: workOrigin,
-      });
-      gsap.set(workItems, { y: 10, opacity: 0 });
+    const workBlob = workBlobRef.current;
+    if (navLeftRef.current && workBoxRef.current && workBlob) {
       gsap.set(workBlob, { transformOrigin: "center center" });
-
-      const onEnterLeft = () => {
-        gsap.killTweensOf(workBox);
-        gsap.killTweensOf(workItems);
-        gsap.killTweensOf(workBlob);
-        showOverlay();
-
-        gsap.to(workBlob, {
-          rotation: "+=360",
-          duration: 0.7,
-          ease: "power3.inOut",
-        });
-
-        gsap.set(workBox, { visibility: "visible" });
-        gsap.fromTo(
-          workBox,
-          { scale: 0, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 0.8, ease: "expo.out" },
-        );
-        gsap.to(workItems, {
-          y: 0,
-          opacity: 1,
-          duration: 0.45,
-          stagger: 0.06,
-          ease: "power3.out",
-          delay: 0.18,
-        });
-      };
-
-      const onLeaveLeft = () => {
-        gsap.killTweensOf(workBox);
-        gsap.killTweensOf(workItems);
-        gsap.killTweensOf(workBlob);
-        hideOverlay();
-
-        gsap.to(workBlob, { rotation: 0, duration: 0.5, ease: "power2.out" });
-
-        gsap.to(workItems, {
-          y: 10,
-          opacity: 0,
-          duration: 0.15,
-          ease: "power2.in",
-        });
-        gsap.to(workBox, {
-          scale: 0,
-          opacity: 0,
-          duration: 0.3,
-          ease: "expo.in",
-          delay: 0.05,
-          onComplete: () => gsap.set(workBox, { visibility: "hidden" }),
-        });
-      };
-
-      navLeft.addEventListener("mouseenter", onEnterLeft);
-      navLeft.addEventListener("mouseleave", onLeaveLeft);
-      cleanups.push(() => {
-        navLeft.removeEventListener("mouseenter", onEnterLeft);
-        navLeft.removeEventListener("mouseleave", onLeaveLeft);
-      });
+      cleanups.push(
+        initPopout(navLeftRef.current, workBoxRef.current, workBlob, overlay, {
+          enter: () => {
+            gsap.killTweensOf(workBlob);
+            gsap.to(workBlob, { rotation: "+=360", duration: 0.7, ease: "power3.inOut" });
+          },
+          leave: () => {
+            gsap.killTweensOf(workBlob);
+            gsap.to(workBlob, { rotation: 0, duration: 0.5, ease: "power2.out" });
+          },
+        }),
+      );
     }
 
-    const navRight = document.querySelector(".nav-right");
-    const waBox = document.querySelector(".nav-wa-box");
-    const waSvgPath = document.querySelector(".nav-bar__whatsapp-svg path");
-
-    if (navRight && waBox) {
-      const waInner = waBox.querySelector(".nav-popout-inner");
-      const waItems = waInner ? Array.from(waInner.children) : [];
-      const waIcon = document.querySelector(".nav-bar__whatsapp-svg");
-
-      gsap.set(waBox, { visibility: "visible", scale: 1, opacity: 1 });
-      const waBoxRect = waBox.getBoundingClientRect();
-      const waIconRect = waIcon ? waIcon.getBoundingClientRect() : waBoxRect;
-      const waOriginX = waIconRect.left + waIconRect.width / 2 - waBoxRect.left;
-      const waOriginY = waIconRect.top + waIconRect.height / 2 - waBoxRect.top;
-      const waOrigin = `${waOriginX}px ${waOriginY}px`;
-
-      gsap.set(waBox, {
-        visibility: "hidden",
-        scale: 0,
-        opacity: 0,
-        transformOrigin: waOrigin,
-      });
-      gsap.set(waItems, { y: 10, opacity: 0 });
-
-      const onEnterRight = () => {
-        gsap.killTweensOf(waBox);
-        gsap.killTweensOf(waItems);
-        showOverlay();
-        if (waSvgPath) gsap.to(waSvgPath, { fill: "#0e6634ff", duration: 0.3 }); // Darker WA green
-
-        gsap.set(waBox, { visibility: "visible" });
-        gsap.fromTo(
-          waBox,
-          { scale: 0, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 0.8, ease: "expo.out" },
-        );
-        gsap.to(waItems, {
-          y: 0,
-          opacity: 1,
-          duration: 0.45,
-          stagger: 0.06,
-          ease: "power3.out",
-          delay: 0.18,
-        });
-      };
-
-      const onLeaveRight = () => {
-        gsap.killTweensOf(waBox);
-        gsap.killTweensOf(waItems);
-        hideOverlay();
-        if (waSvgPath)
-          gsap.to(waSvgPath, { fill: "currentColor", duration: 0.3 });
-
-        gsap.to(waItems, {
-          y: 10,
-          opacity: 0,
-          duration: 0.15,
-          ease: "power2.in",
-        });
-        gsap.to(waBox, {
-          scale: 0,
-          opacity: 0,
-          duration: 0.3,
-          ease: "expo.in",
-          delay: 0.05,
-          onComplete: () => gsap.set(waBox, { visibility: "hidden" }),
-        });
-      };
-
-      navRight.addEventListener("mouseenter", onEnterRight);
-      navRight.addEventListener("mouseleave", onLeaveRight);
-      cleanups.push(() => {
-        navRight.removeEventListener("mouseenter", onEnterRight);
-        navRight.removeEventListener("mouseleave", onLeaveRight);
-      });
+    const waIcon = waIconRef.current;
+    const waPath = waIcon?.querySelector("path");
+    if (navRightRef.current && waBoxRef.current) {
+      cleanups.push(
+        initPopout(navRightRef.current, waBoxRef.current, waIcon, overlay, {
+          enter: () => void (waPath && gsap.to(waPath, { fill: "#0e6634ff", duration: 0.3 })), // darker WA green
+          leave: () => void (waPath && gsap.to(waPath, { fill: "currentColor", duration: 0.3 })),
+        }),
+      );
     }
 
-    const workItems = document.querySelectorAll(".nav-work-item");
-    workItems.forEach((item) => {
+    // Product rows and the "shop all" button in the shop pop-out.
+    const workBox = workBoxRef.current;
+    workBox?.querySelectorAll<HTMLElement>(".nav-work-item").forEach((item) => {
       const badge = item.querySelector(".nav-work-badge");
       const img = item.querySelector(".nav-work-item__img");
-      let wiggleTween;
-
-      const onItemEnter = () => {
-        if (prefersReducedMotion()) return;
-        if (badge) {
-          gsap.set(badge, { transformOrigin: "center center" });
-          wiggleTween = gsap.to(badge, {
-            rotation: 5,
-            duration: 0.15,
-            repeat: -1,
-            yoyo: true,
-            ease: "steps(1)",
-          });
-        }
-        if (img)
-          gsap.to(img, {
-            rotation: 16,
-            scale: 1.15,
-            duration: 0.25,
-            ease: "power2.out",
-          });
-      };
-      const onItemLeave = () => {
-        if (wiggleTween) {
-          wiggleTween.kill();
-        }
-        if (badge)
-          gsap.to(badge, { rotation: 0, duration: 0.3, ease: "power2.out" });
-        if (img)
-          gsap.to(img, {
-            rotation: 0,
-            scale: 1,
-            duration: 0.3,
-            ease: "power2.out",
-          });
-      };
-      item.addEventListener("mouseenter", onItemEnter);
-      item.addEventListener("mouseleave", onItemLeave);
-      cleanups.push(() => {
-        item.removeEventListener("mouseenter", onItemEnter);
-        item.removeEventListener("mouseleave", onItemLeave);
-      });
+      cleanups.push(
+        onHover(item, () => {
+          const wiggle = badge
+            ? gsap.to(badge, { rotation: 5, duration: 0.15, repeat: -1, yoyo: true, ease: "steps(1)", transformOrigin: "center center" })
+            : undefined;
+          if (img) gsap.to(img, { rotation: 16, scale: 1.15, duration: 0.25, ease: "power2.out" });
+          return () => {
+            wiggle?.kill();
+            if (badge) gsap.to(badge, { rotation: 0, duration: 0.3, ease: "power2.out" });
+            if (img) gsap.to(img, { rotation: 0, scale: 1, duration: 0.3, ease: "power2.out" });
+          };
+        }),
+      );
     });
-
-    const workBtn = document.querySelector(".nav-work-btn");
-    if (workBtn) {
-      let btnWiggle;
-      const onBtnEnter = () => {
-        if (prefersReducedMotion()) return;
-        const btnText = workBtn.querySelector(".nav-work-btn__text");
-        if (btnText) {
-          gsap.set(btnText, {
-            transformOrigin: "center center",
-            display: "inline-block",
-          });
-          btnWiggle = gsap.to(btnText, {
-            rotation: 4,
-            duration: 0.12,
-            repeat: -1,
-            yoyo: true,
-            ease: "steps(1)",
-          });
-        }
-      };
-      const onBtnLeave = () => {
-        const btnText = workBtn.querySelector(".nav-work-btn__text");
-        if (btnWiggle) {
-          btnWiggle.kill();
-        }
-        if (btnText)
-          gsap.to(btnText, { rotation: 0, duration: 0.3, ease: "power2.out" });
-      };
-      workBtn.addEventListener("mouseenter", onBtnEnter);
-      workBtn.addEventListener("mouseleave", onBtnLeave);
-      cleanups.push(() => {
-        workBtn.removeEventListener("mouseenter", onBtnEnter);
-        workBtn.removeEventListener("mouseleave", onBtnLeave);
-      });
+    const workBtn = workBox?.querySelector(".nav-work-btn");
+    const btnText = workBtn?.querySelector(".nav-work-btn__text");
+    if (workBtn && btnText) {
+      cleanups.push(
+        onHover(workBtn, () => {
+          gsap.set(btnText, { transformOrigin: "center center", display: "inline-block" });
+          const wiggle = gsap.to(btnText, { rotation: 4, duration: 0.12, repeat: -1, yoyo: true, ease: "steps(1)" });
+          return () => {
+            wiggle.kill();
+            gsap.to(btnText, { rotation: 0, duration: 0.3, ease: "power2.out" });
+          };
+        }),
+      );
     }
 
     return () => {
-      window.removeEventListener("scroll", updateNavbarColor);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", measure);
       ScrollTrigger.removeEventListener("refresh", measure);
-      cleanups.forEach((fn) => fn && fn());
+      cleanups.forEach((fn) => fn());
     };
-  }, []);
+  }, [sections, logoRef]);
 
   return (
     <>
-      <div className="nav-overlay"></div>
-      <nav className="navbar">
-        <div
-          className="nav-left"
-          style={{
-            cursor:
-              "url('/assets/Cursor SVG/cursor-pointer.svg') 12 12, pointer",
-          }}
-        >
+      <div ref={overlayRef} className="nav-overlay"></div>
+      <nav ref={navRef} className="navbar">
+        <div ref={navLeftRef} className="nav-left" style={POINTER_CURSOR}>
           <div className="nav-hover-trigger">
             <div className="logo-work-container">
               <img
+                ref={workBlobRef}
                 src="/assets/Navbar SVG/nav-work-blob.svg"
                 width="60"
                 height="55"
@@ -403,7 +254,7 @@ export default function Navbar() {
               <span className="logo-work-text">shop</span>
             </div>
 
-            <div className="nav-popout nav-work-box">
+            <div ref={workBoxRef} className="nav-popout nav-work-box">
               <div className="nav-popout-inner">
                 <div className="nav-work-item">
                   <div className="nav-work-item__img-wrap">
@@ -467,14 +318,9 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-        <div
-          className="nav-center"
-          style={{
-            cursor:
-              "url('/assets/Cursor SVG/cursor-pointer.svg') 12 12, pointer",
-          }}
-        >
+        <div className="nav-center" style={POINTER_CURSOR}>
           <svg
+            ref={logoRef}
             className="cozy-logo"
             width="150"
             height="40"
@@ -525,13 +371,7 @@ export default function Navbar() {
             </g>
           </svg>
         </div>
-        <div
-          className="nav-right"
-          style={{
-            cursor:
-              "url('/assets/Cursor SVG/cursor-pointer.svg') 12 12, pointer",
-          }}
-        >
+        <div ref={navRightRef} className="nav-right" style={POINTER_CURSOR}>
           <div className="nav-hover-trigger">
             <div className="logo-whatsapp">
               <svg
@@ -541,6 +381,7 @@ export default function Navbar() {
                 viewBox="0 0 25 27"
                 fill="none"
                 className="nav-bar__whatsapp-svg"
+                ref={waIconRef}
               >
                 <path
                   fillRule="evenodd"
@@ -551,7 +392,7 @@ export default function Navbar() {
               </svg>
             </div>
 
-            <div className="nav-popout nav-wa-box">
+            <div ref={waBoxRef} className="nav-popout nav-wa-box">
               <div className="nav-popout-inner">
                 {/* 478KB PNG → resized on demand; lazy, since it lives in a hidden pop-out. */}
                 <SmartImage

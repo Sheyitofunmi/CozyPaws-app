@@ -26,7 +26,7 @@ export default function SiteHeader() {
   const { count: wishlistCount, openWishlist } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isActive = (href) =>
+  const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (

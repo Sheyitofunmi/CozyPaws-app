@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import type { Product } from "@/lib/types";
 import Link from "next/link";
 import { getProduct } from "@/lib/catalog";
 import { formatPrice } from "@/lib/money";
@@ -13,12 +14,12 @@ export default function WishlistDrawer() {
   const { ids, remove, isOpen, closeWishlist } = useWishlist();
   const { addItem, openCart } = useCart();
 
-  const dialogRef = useRef(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, isOpen, closeWishlist);
 
-  const items = ids.map(getProduct).filter(Boolean);
+  const items = ids.map(getProduct).filter((p): p is Product => Boolean(p));
 
-  const moveToCart = (id) => {
+  const moveToCart = (id: string) => {
     addItem(id);
     remove(id);
     closeWishlist();

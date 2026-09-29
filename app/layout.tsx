@@ -1,4 +1,6 @@
 import "./globals.css";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { preload } from "react-dom";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import { CartProvider } from "@/lib/cart";
@@ -22,13 +24,13 @@ const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-dm-serif",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "CozyPaws | Everything Your Dog Loves",
   description:
     "CozyPaws is a pet store for dogs — toys, treats, cozy houses and everything your best friend loves.",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   // Epilogue is the headline font on the landing page: fetch it early.
   preload("/fonts/Epilogue-VariableFont_wght.woff2", {
     as: "font",

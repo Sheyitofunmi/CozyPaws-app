@@ -10,13 +10,13 @@
 // re-renders. Optional `data-reveal-delay` (seconds) staggers items.
 // Only elements inside `rootRef` are observed.
 
-import { useEffect } from "react";
+import { useEffect, type DependencyList, type RefObject } from "react";
 
-export function useScrollReveal(rootRef, deps = []) {
+export function useScrollReveal(rootRef: RefObject<HTMLElement | null>, deps: DependencyList = []) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const els = Array.from(root.querySelectorAll("[data-reveal]"));
+    const els = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
     if (!els.length) return;
 
     const reduceMotion = window.matchMedia(
@@ -32,7 +32,7 @@ export function useScrollReveal(rootRef, deps = []) {
       (entries, obs) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          const el = entry.target;
+          const el = entry.target as HTMLElement;
           const delay = parseFloat(el.dataset.revealDelay || "0");
           if (delay) el.style.transitionDelay = `${delay}s`;
           el.classList.add("is-revealed");

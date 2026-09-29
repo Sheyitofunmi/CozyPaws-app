@@ -1,37 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { prefersReducedMotion } from "@/lib/motion";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { brands, colors } from "@/lib/data";
 import { useIdleReady } from "@/lib/hooks/useIdleReady";
+import { useHomeSections } from "@/lib/home-sections";
 
-function shuffleArray(array) {
+type Brand = (typeof brands)[number];
+interface MarqueeItem {
+  brand: Brand;
+  color: string;
+}
+
+function shuffleArray<T>(array: readonly T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
   }
   return shuffled;
 }
 
-function shuffleNoAdjacentSrc(array) {
-  const arr = shuffleArray([...array]);
+/** Shuffle so the same logo never sits next to itself, including across the loop seam. */
+function shuffleNoAdjacentSrc(array: readonly Brand[]): Brand[] {
+  const arr = shuffleArray(array);
+  const swap = (i: number, j: number) => ([arr[i], arr[j]] = [arr[j]!, arr[i]!]);
   for (let i = 1; i < arr.length; i++) {
-    if (arr[i].src === arr[i - 1].src) {
-      for (let j = i + 1; j < arr.length; j++) {
-        if (arr[j].src !== arr[i - 1].src) {
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-          break;
-        }
+    if (arr[i]!.src !== arr[i - 1]!.src) continue;
+    for (let j = i + 1; j < arr.length; j++) {
+      if (arr[j]!.src !== arr[i - 1]!.src) {
+        swap(i, j);
+        break;
       }
     }
   }
-  if (arr[arr.length - 1].src === arr[0].src) {
-    for (let j = 1; j < arr.length - 1; j++) {
-      if (arr[j].src !== arr[0].src && arr[j].src !== arr[arr.length - 2].src) {
-        [arr[arr.length - 1], arr[j]] = [arr[j], arr[arr.length - 1]];
+  const last = arr.length - 1;
+  if (last > 1 && arr[last]!.src === arr[0]!.src) {
+    for (let j = 1; j < last; j++) {
+      if (arr[j]!.src !== arr[0]!.src && arr[j]!.src !== arr[last - 1]!.src) {
+        swap(last, j);
         break;
       }
     }
@@ -39,101 +48,82 @@ function shuffleNoAdjacentSrc(array) {
   return arr;
 }
 
-function assignColorsNoAdjacent(count, colorPool) {
-  const result = [];
+/** Random tile colours with no two neighbours (or the seam) matching. */
+function assignColorsNoAdjacent(count: number, colorPool: readonly string[]): string[] {
+  const result: string[] = [];
   for (let i = 0; i < count; i++) {
-    const prev = i > 0 ? result[i - 1] : null;
-    const seamColor = i === count - 1 ? result[0] : null;
+    const prev = i > 0 ? result[i - 1] : undefined;
+    const seamColor = i === count - 1 ? result[0] : undefined;
     const available = colorPool.filter((c) => c !== prev && c !== seamColor);
-    const pool =
-      available.length > 0 ? available : colorPool.filter((c) => c !== prev);
-    result.push(pool[Math.floor(Math.random() * pool.length)]);
+    const pool = available.length > 0 ? available : colorPool.filter((c) => c !== prev);
+    result.push(pool[Math.floor(Math.random() * pool.length)]!);
   }
   return result;
 }
 
-function buildMarqueeItems() {
-  const tracks = [[], []];
-  for (let t = 0; t < 2; t++) {
+function buildMarqueeItems(): MarqueeItem[][] {
+  return [0, 1].map(() => {
     const shuffledBrands = shuffleNoAdjacentSrc(brands);
-    const assignedColors = assignColorsNoAdjacent(
-      shuffledBrands.length,
-      colors,
-    );
-    const items = shuffledBrands.map((brand, i) => ({
-      brand,
-      color: assignedColors[i],
-    }));
-    tracks[t] = [...items, ...items]; // duplicate for seamless loop
-  }
-  return tracks;
+    const assignedColors = assignColorsNoAdjacent(shuffledBrands.length, colors);
+    const items = shuffledBrands.map((brand, i) => ({ brand, color: assignedColors[i]! }));
+    return [...items, ...items]; // duplicate for a seamless loop
+  });
 }
 
 export default function DoubleMarquee() {
+  const sections = useHomeSections();
   const [paused, setPaused] = useState(false);
-  const [tracks, setTracks] = useState([[], []]);
+  const [tracks, setTracks] = useState<MarqueeItem[][]>([[], []]);
+  const leftRef = useRef<HTMLDivElement>(null);
 
   // Below the fold: wire up animations once the browser is idle.
   const ready = useIdleReady();
 
   useEffect(() => {
-    if (!ready) return;
+    const left = leftRef.current;
+    if (!ready || !left) return;
     gsap.registerPlugin(ScrollTrigger);
 
+    // Shuffled on the client only, so server and client HTML match.
     setTracks(buildMarqueeItems());
 
-    gsap.set(".marquee-left .marquee-svg-item:nth-child(2) path", {
-      strokeDashoffset: 1000,
-    });
+    // Selector strings below are scoped to the left column by the context.
+    const ctx = gsap.context(() => {
+      gsap.set(".marquee-svg-item:nth-child(2) path", { strokeDashoffset: 1000 });
 
-    const marqueeTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: ".Double-marquee",
-        start: "top 70%",
-        toggleActions: "play none none reverse", // Allow replaying on scroll out/in
-      },
-    });
-
-    marqueeTl
-      .to(".marquee-underline", {
-        scaleX: 1,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out",
-      })
-      .to(
-        ".marquee-left .marquee-svg-item:nth-child(1)",
-        {
-          scale: 1,
-          opacity: 1,
-          rotation: -10,
-          duration: 0.6,
-          ease: "back.out(1.7)",
+      const marqueeTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sections?.marquee.current ?? left,
+          start: "top 70%",
+          toggleActions: "play none none reverse", // replay on scroll out/in
         },
-        "-=0.5",
-      )
-      .to(
-        ".marquee-left .marquee-svg-item:nth-child(2) path",
-        { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" },
-        "-=0.3",
-      );
-
-    // Reduced motion: show the finished state straight away.
-    if (prefersReducedMotion()) {
-      marqueeTl.scrollTrigger?.kill();
-      marqueeTl.progress(1);
-    }
-
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => {
-        if (t.vars.trigger === ".Double-marquee") t.kill();
       });
-    };
-  }, [ready]);
+      marqueeTl
+        .to(".marquee-underline", { scaleX: 1, opacity: 1, duration: 1, ease: "power2.out" })
+        .to(
+          ".marquee-svg-item:nth-child(1)",
+          { scale: 1, opacity: 1, rotation: -10, duration: 0.6, ease: "back.out(1.7)" },
+          "-=0.5",
+        )
+        .to(
+          ".marquee-svg-item:nth-child(2) path",
+          { strokeDashoffset: 0, duration: 1.5, ease: "power2.out" },
+          "-=0.3",
+        );
+
+      // Reduced motion: show the finished state straight away.
+      if (prefersReducedMotion()) {
+        marqueeTl.scrollTrigger?.kill();
+        marqueeTl.progress(1);
+      }
+    }, left);
+
+    return () => ctx.revert();
+  }, [ready, sections]);
 
   return (
     <>
-      <div className="marquee-left">
+      <div ref={leftRef} className="marquee-left">
         <div className="marquee-text-container">
           <h2>
             proud to stock
@@ -157,7 +147,7 @@ export default function DoubleMarquee() {
         </div>
         <div className="marquee-blob-container">
           <img
-              loading="lazy"
+            loading="lazy"
             src="/assets/Marquee-blob SVG/marquee-blob.svg"
             className="marquee-blob"
             alt=""
@@ -166,7 +156,7 @@ export default function DoubleMarquee() {
           <div className="marquee-svg-container">
             <div className="marquee-svg-item">
               <img
-              loading="lazy"
+                loading="lazy"
                 src="/assets/Marquee-blob SVG/marquee-hand.svg"
                 width="100%"
                 alt=""

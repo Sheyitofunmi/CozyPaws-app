@@ -2,7 +2,7 @@
 
 import gsap from "gsap";
 import Link from "next/link";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -17,7 +17,16 @@ gsap.registerPlugin(Draggable, InertiaPlugin, ScrollTrigger);
  * the right. Each photo is a way into a shop category. The photos can be
  * dragged and flung (mouse or touch) and spring back to their spot.
  */
-const CARDS = [
+interface DeckCard {
+  category: string;
+  src: string;
+  w: number;
+  h: number;
+  alt: string;
+  tape?: { text: string; tone: "lime" | "orange" | "pink" };
+}
+
+const CARDS: DeckCard[] = [
   {
     category: "food & treats",
     src: "/assets/products/peanut-butter-bites.jpg",
@@ -60,13 +69,16 @@ const CARDS = [
 
 const HINT_KEY = "cozypaws-threw-a-card";
 
-const shopHref = (category) =>
+const shopHref = (category: string) =>
   `/shop?category=${encodeURIComponent(category).replace(/%20/g, "+")}`;
 
 export default function MotionCards() {
-  const sectionRef = useRef(null);
-  const deckRef = useRef(null);
-  const nextRef = useRef(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
+  const stickerRef = useRef<HTMLImageElement>(null);
+  const underlineRef = useRef<SVGPathElement>(null);
+  /** "next photo" on phones; set while the pile layout is active. */
+  const nextRef = useRef<(() => void) | null>(null);
 
   // Below the fold: wire up animations once the browser is idle.
   const ready = useIdleReady();
@@ -85,7 +97,7 @@ export default function MotionCards() {
       /* storage blocked: keep the hint */
     }
 
-    const cards = gsap.utils.toArray(".mc-card", deck);
+    const cards = gsap.utils.toArray<HTMLElement>(".mc-card", deck);
     const markThrown = () => {
       deck.classList.add("has-thrown");
       try {
@@ -94,7 +106,7 @@ export default function MotionCards() {
         /* ignore */
       }
     };
-    const springBack = (el) =>
+    const springBack = (el: Element) =>
       gsap.to(el, {
         x: 0,
         y: 0,
@@ -111,7 +123,7 @@ export default function MotionCards() {
         motion: "(prefers-reduced-motion: no-preference)",
       },
       (ctx) => {
-        const { wide, phone, motion } = ctx.conditions;
+        const { wide, phone, motion } = ctx.conditions as { wide: boolean; phone: boolean; motion: boolean };
 
         // ── Phones: the photos are a pile. Swipe (or tap "next photo") to send
         // the top one to the back, so every photo gets its turn at full size.
@@ -126,6 +138,7 @@ export default function MotionCards() {
           });
         const sendToBack = (dir = 1) => {
           const card = order[0];
+          if (!card) return;
           const done = () => {
             order = [...order.slice(1), card];
             restack();
@@ -168,7 +181,7 @@ export default function MotionCards() {
           tl.fromTo(
             cards,
             {
-              x: (i, el) =>
+              x: (_i: number, el: HTMLElement) =>
                 wide ? deckMid - (el.offsetLeft + el.offsetWidth / 2) : 0,
               y: 40,
               opacity: 0,
@@ -182,7 +195,7 @@ export default function MotionCards() {
               stagger: 0.07,
             },
           );
-          const sticker = section.querySelector(".motion-card__sticker img");
+          const sticker = stickerRef.current;
           if (sticker) {
             tl.from(
               sticker,
@@ -196,9 +209,7 @@ export default function MotionCards() {
               0.2,
             );
           }
-          const underline = section.querySelector(
-            ".motion-card__underline-path",
-          );
+          const underline = underlineRef.current;
           if (underline) {
             const len = underline.getTotalLength();
             gsap.set(underline, {
@@ -213,7 +224,7 @@ export default function MotionCards() {
           }
         }
 
-        let draggables = [];
+        let draggables: Draggable[] = [];
         if (motion && wide) {
           // Fan: grab any photo and fling it; it springs back to its spot.
           const touch = window.matchMedia("(hover: none)").matches;
@@ -224,18 +235,18 @@ export default function MotionCards() {
             dragClickables: true,
             inertia: true,
             maxDuration: 0.6,
-            onPress() {
+            onPress(this: Draggable) {
               top += 1;
-              this.target.style.zIndex = String(top);
+              (this.target as HTMLElement).style.zIndex = String(top);
             },
-            onDragStart() {
-              this.target.dataset.dragged = "1";
+            onDragStart(this: Draggable) {
+              (this.target as HTMLElement).dataset.dragged = "1";
               markThrown();
             },
-            onRelease() {
+            onRelease(this: Draggable) {
               if (!this.isThrowing) springBack(this.target);
             },
-            onThrowComplete() {
+            onThrowComplete(this: Draggable) {
               springBack(this.target);
             },
           });
@@ -245,10 +256,10 @@ export default function MotionCards() {
             type: "x",
             allowNativeTouchScrolling: true,
             dragClickables: true,
-            onDragStart() {
-              this.target.dataset.dragged = "1";
+            onDragStart(this: Draggable) {
+              (this.target as HTMLElement).dataset.dragged = "1";
             },
-            onRelease() {
+            onRelease(this: Draggable) {
               if (Math.abs(this.x) > 70) {
                 gsap.set(this.target, { x: this.x });
                 sendToBack(this.x > 0 ? 1 : -1);
@@ -260,16 +271,18 @@ export default function MotionCards() {
         }
 
         // A drag shouldn't also count as a click on the photo's link.
-        const blockClickAfterDrag = (e) => {
-          const card = e.target.closest(".mc-card");
+        const cardOf = (e: Event) =>
+          e.target instanceof Element ? e.target.closest<HTMLElement>(".mc-card") : null;
+        const blockClickAfterDrag = (e: MouseEvent) => {
+          const card = cardOf(e);
           if (card?.dataset.dragged) {
             e.preventDefault();
             e.stopPropagation();
           }
           if (card) delete card.dataset.dragged;
         };
-        const clearOnPress = (e) => {
-          const card = e.target.closest(".mc-card");
+        const clearOnPress = (e: PointerEvent) => {
+          const card = cardOf(e);
           if (card) delete card.dataset.dragged;
         };
         deck.addEventListener("click", blockClickAfterDrag, true);
@@ -306,6 +319,7 @@ export default function MotionCards() {
         <div className="mc-copy">
           <span className="motion-card__sticker" aria-hidden="true">
             <img
+              ref={stickerRef}
               loading="lazy"
               src="/assets/Footer-Sticker SVG/footer-sticker-hands.svg"
               alt=""
@@ -326,6 +340,7 @@ export default function MotionCards() {
           >
             <path
               className="motion-card__underline-path"
+              ref={underlineRef}
               d="M2 26C41.0237 23.1556 79.9927 19.9419 118.634 15.5521C169.106 9.98633 227.314 2.42393 275.206 2C280.46 2.57436 264.768 4.99488 262.462 5.55556C257.837 6.43078 252.529 7.47009 247.317 8.59146C239.594 10.3556 212.496 15.8393 226.932 19.8051C239.594 22.6359 263.663 21.9521 280.978 21.3504C314.817 19.9829 349.311 16.7419 383.204 14.7863C465.931 9.5077 549.191 10.547 632 14.1436"
               stroke="currentColor"
               strokeWidth="3"

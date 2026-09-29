@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { prefersReducedMotion } from "@/lib/motion";
 import { gsap } from "gsap";
 import { HERO_REEL } from "@/lib/hero-reel";
 import { useHeroReel } from "@/lib/hooks/useHeroReel";
@@ -218,12 +219,19 @@ const STARS = Array.from({ length: 26 }, (_, i) => ({
   delay: (i % 6) * 0.5,
 }));
 
-export default function VimeoHero({ onAnimalClick } = {}) {
-  const playerRef = useRef(null);
-  const bubbleRef = useRef(null);
-  const titleRef = useRef(null);
-  const controlsRef = useRef(null);
-  const sceneRef = useRef(null);
+type Animal = "dogs" | "cats";
+
+interface VimeoHeroProps {
+  /** Called when a diorama animal is clicked or activated with the keyboard. */
+  onAnimalClick?: (animal: Animal) => void;
+}
+
+export default function VimeoHero({ onAnimalClick }: VimeoHeroProps = {}) {
+  const playerRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const reel = useHeroReel(HERO_REEL, playerRef);
@@ -238,7 +246,7 @@ export default function VimeoHero({ onAnimalClick } = {}) {
   /* Diorama state: night flag (auto by clock) + per-animal click bounce.
      Both start at their SSR-safe defaults and are corrected on the client. */
   const [isNight, setIsNight] = useState(false);
-  const [bounced, setBounced] = useState({});
+  const [bounced, setBounced] = useState<Partial<Record<Animal, boolean>>>({});
 
   useEffect(() => {
     const applyTime = () => {
@@ -254,13 +262,12 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     const scene = sceneRef.current;
     if (!scene) return;
 
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mq.matches) return;
+    if (prefersReducedMotion()) return;
 
     let ticking = false;
     const update = () => {
       ticking = false;
-      const y = window.scrollY || window.pageYOffset || 0;
+      const y = window.scrollY;
       scene.style.setProperty("--p-sky", `${y * 0.08}px`);
       scene.style.setProperty("--p-clouds", `${y * 0.18}px`);
       scene.style.setProperty("--p-trees", `${y * 0.34}px`);
@@ -277,7 +284,7 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const activateAnimal = (category) => {
+  const activateAnimal = (category: Animal) => {
     setBounced((b) => ({ ...b, [category]: true }));
     window.setTimeout(
       () => setBounced((b) => ({ ...b, [category]: false })),
@@ -286,7 +293,7 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     onAnimalClick?.(category);
   };
 
-  const animalKeyDown = (category) => (e) => {
+  const animalKeyDown = (category: Animal) => (e: KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
       e.preventDefault();
       activateAnimal(category);
@@ -303,7 +310,7 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     const xTo = gsap.quickTo(bubble, "x", { duration: 0.5, ease: "power3" });
     const yTo = gsap.quickTo(bubble, "y", { duration: 0.5, ease: "power3" });
 
-    const onMove = (e) => {
+    const onMove = (e: globalThis.MouseEvent) => {
       xTo(e.clientX + 13);
       yTo(e.clientY - 43);
     };
@@ -394,15 +401,15 @@ export default function VimeoHero({ onAnimalClick } = {}) {
     };
   }, []);
 
-  const togglePlay = (e) => {
-    if (e) e.stopPropagation();
+  const togglePlay = (e?: MouseEvent) => {
+    e?.stopPropagation();
     reel.toggle();
   };
 
-  const toggleFullscreen = (e) => {
-    if (e) e.stopPropagation();
-    if (!document.fullscreenElement) playerRef.current?.requestFullscreen?.();
-    else document.exitFullscreen();
+  const toggleFullscreen = (e?: MouseEvent) => {
+    e?.stopPropagation();
+    if (!document.fullscreenElement) void playerRef.current?.requestFullscreen?.();
+    else void document.exitFullscreen();
   };
 
   return (

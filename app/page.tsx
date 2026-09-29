@@ -11,15 +11,17 @@ import Footer from "@/components/Footer";
 import TransitionScribble from "@/components/TransitionScribble";
 import CursorBubble from "@/components/CursorBubble";
 import SmoothScroll from "@/components/SmoothScroll";
-
 import HorizontalWords from "@/components/HorizontalWords";
 import PicksRail from "@/components/PicksRail";
 import PackWall from "@/components/PackWall";
 import Newsletter from "@/components/Newsletter";
+import { HomeSectionsProvider, useCreateHomeSections } from "@/lib/home-sections";
 
 export default function Home() {
+  const sections = useCreateHomeSections();
+
   return (
-    <>
+    <HomeSectionsProvider value={sections}>
       <SvgSymbols />
       <div className="scroll-progress" aria-hidden="true" />
       <SmoothScroll />
@@ -31,23 +33,23 @@ export default function Home() {
       </header>
       <HorizontalWords />
       <main>
-        <div className=" motion-cards-wrapper">
+        <div className="motion-cards-wrapper">
           <MotionCards />
         </div>
         <PicksRail />
-        <div className="content-section service-cards-wrapper">
+        <div ref={sections.services} className="content-section service-cards-wrapper">
           <ServiceCards />
         </div>
         <PackWall />
       </main>
-      <section className="Double-marquee">
+      <section ref={sections.marquee} className="Double-marquee">
         <DoubleMarquee />
       </section>
       <Newsletter />
-      <footer className="main-footer">
+      <footer ref={sections.footer} className="main-footer">
         <Footer />
       </footer>
       <TransitionScribble />
-    </>
+    </HomeSectionsProvider>
   );
 }

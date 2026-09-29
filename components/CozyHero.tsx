@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent, type SVGProps } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
@@ -12,6 +12,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useMagnetic } from "@/lib/hooks/useMagnetic";
 import { useHeroPointer } from "@/lib/hooks/useHeroPointer";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const ASSETS = {
   logo: REMOTE_ASSETS.logo,
@@ -23,11 +24,13 @@ const ASSETS = {
   bottomRight: REMOTE_ASSETS.heroBottomRight,
 };
 
+type IconProps = SVGProps<SVGSVGElement>;
+
 const POINTER_CURSOR = {
   cursor: "url('/assets/Cursor SVG/cursor-pointer.svg') 12 12, pointer",
 };
 
-function IconSearch(props) {
+function IconSearch(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -43,7 +46,7 @@ function IconSearch(props) {
     </svg>
   );
 }
-function IconCart(props) {
+function IconCart(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -60,7 +63,7 @@ function IconCart(props) {
     </svg>
   );
 }
-function IconStar({ filled, ...props }) {
+function IconStar({ filled, ...props }: IconProps & { filled?: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -75,7 +78,7 @@ function IconStar({ filled, ...props }) {
     </svg>
   );
 }
-function IconArrowUpRight(props) {
+function IconArrowUpRight(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -91,7 +94,7 @@ function IconArrowUpRight(props) {
     </svg>
   );
 }
-function IconPlay(props) {
+function IconPlay(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -105,7 +108,7 @@ function IconPlay(props) {
     </svg>
   );
 }
-function IconArrowRight(props) {
+function IconArrowRight(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -121,7 +124,7 @@ function IconArrowRight(props) {
     </svg>
   );
 }
-function IconPlus(props) {
+function IconPlus(props: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -140,12 +143,12 @@ function IconPlus(props) {
 
 // Counts 0 → 98 as the stat fades in. Only runs if the number hasn't been
 // seen yet (on a slow phone that hydrates late, it just stays at 98K+).
-function CountUp({ to, suffix }) {
-  const ref = useRef(null);
+function CountUp({ to, suffix }: { to: number; suffix: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
   const [value, setValue] = useState(to);
   useEffect(() => {
     const el = ref.current;
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || prefersReducedMotion()) return;
     const host = el.closest(".cozy-overlay, .cozy-mobile__stats");
     if (host && Number(getComputedStyle(host).opacity) > 0.1) return;
     let frame = 0;
@@ -153,7 +156,7 @@ function CountUp({ to, suffix }) {
     const delay = 900;
     const duration = 1400;
     setValue(0);
-    const tick = (now) => {
+    const tick = (now: number) => {
       if (!start) start = now + delay;
       const t = Math.min(1, Math.max(0, (now - start) / duration));
       setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
@@ -181,7 +184,7 @@ function CountUp({ to, suffix }) {
 
 // Hero headline split into letters so they can ripple under the cursor.
 // Screen readers get the word from aria-label, not letter by letter.
-function Letters({ word }) {
+function Letters({ word }: { word: string }) {
   return (
     <span aria-hidden="true">
       {Array.from(word).map((ch, i) => (
@@ -193,7 +196,7 @@ function Letters({ word }) {
   );
 }
 
-function StatOverlay({ className = "" }) {
+function StatOverlay({ className = "" }: { className?: string }) {
   return (
     <div className={`cozy-stat ${className}`}>
       <div className="cozy-avatar-stack">
@@ -209,7 +212,7 @@ function StatOverlay({ className = "" }) {
   );
 }
 
-function RatingOverlay({ className = "" }) {
+function RatingOverlay({ className = "" }: { className?: string }) {
   return (
     <div className={`cozy-rating ${className}`}>
       <span className="cozy-rating__star-wrap" aria-hidden="true">
@@ -221,15 +224,15 @@ function RatingOverlay({ className = "" }) {
 }
 
 export default function CozyHero() {
-  const heroRef = useRef(null);
+  const heroRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const { count: cartCount, openCart } = useCart();
   const { count: wishlistCount, openWishlist } = useWishlist();
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const runSearch = (e) => {
+  const runSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const term = e.currentTarget.elements.q.value.trim();
+    const term = String(new FormData(e.currentTarget).get("q") ?? "").trim();
     setSearchOpen(false);
     router.push(term ? `/shop?q=${encodeURIComponent(term)}` : "/shop");
   };
@@ -268,7 +271,7 @@ export default function CozyHero() {
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
     mm.add("(min-width: 769px) and (prefers-reduced-motion: no-preference)", () => {
-      const photos = hero.querySelectorAll(".cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item > img");
+      const photos = hero.querySelectorAll<HTMLImageElement>(".cozy-photos:not(.cozy-photos--mobile) .cozy-photos__item > img");
       const depth = [18, 10, 22];
       photos.forEach((img, i) => {
         gsap.to(img, {
@@ -281,9 +284,9 @@ export default function CozyHero() {
     return () => mm.revert();
   }, []);
 
-  const exploreRef = useRef(null);
+  const exploreRef = useRef<HTMLAnchorElement>(null);
   useMagnetic(exploreRef);
-  const stageRef = useRef(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   useHeroPointer(stageRef);
 
   return (

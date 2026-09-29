@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import ShopPage from "@/components/ShopPage";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Shop — CozyPaws",
   description:
     "Shop toys, treats, cozy beds and everything else your dog loves at CozyPaws.",

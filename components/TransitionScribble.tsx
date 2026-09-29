@@ -1,25 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ANIMATION_CONFIG } from "@/lib/data";
+import { useHomeSections } from "@/lib/home-sections";
 
+/**
+ * Full-screen scribble wipe with the logo, played on load (desktop) and when
+ * the navbar logo is clicked; it scrolls back to the top under cover.
+ */
 export default function TransitionScribble() {
-  useEffect(() => {
-    const logoClickable = document.querySelector(".cozy-logo");
-    const transitionScribblePath = document.querySelector(
-      ".transition-scribble path",
-    );
-    const transitionScribbleSvg = document.querySelector(
-      ".transition-scribble",
-    );
+  const sections = useHomeSections();
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
 
-    if (
-      !logoClickable ||
-      !transitionScribblePath ||
-      !transitionScribbleSvg
-    )
-      return;
+  useEffect(() => {
+    const logoClickable = sections?.logo.current;
+    const transitionScribblePath = pathRef.current;
+    const transitionScribbleSvg = svgRef.current;
+    if (!logoClickable || !transitionScribblePath || !transitionScribbleSvg) return;
 
     const transitionColors = [
       "var(--color-green)",
@@ -34,8 +33,10 @@ export default function TransitionScribble() {
     // `quick` = the automatic intro on page load: ~1.5s instead of ~5s, so
     // visitors aren't staring at a locked screen. Clicking the logo still
     // plays the full-length version.
-    const runScribbleAnimation = (e, quick = false) => {
-      if (e) e.preventDefault();
+    let logoLayer: HTMLDivElement | null = null;
+
+    const runScribbleAnimation = (e: Event | null, quick = false) => {
+      e?.preventDefault();
       if (
         gsap.isTweening(transitionScribblePath) ||
         gsap.isTweening(transitionScribbleSvg) ||
@@ -53,7 +54,7 @@ export default function TransitionScribble() {
       const l = pathLength + 5;
 
       const randomColor =
-        transitionColors[Math.floor(Math.random() * transitionColors.length)];
+        transitionColors[Math.floor(Math.random() * transitionColors.length)] ?? "var(--color-green)";
       transitionScribbleSvg.style.color = randomColor;
 
       const lightColors = [
@@ -63,18 +64,21 @@ export default function TransitionScribble() {
       ];
       const logoColor = lightColors.includes(randomColor) ? "#000" : "#fff";
 
-      let transitionLogo = document.querySelector(".transition-logo");
+      // The logo shown mid-wipe: a clone of the navbar logo, created once.
+      let transitionLogo = logoLayer;
       if (!transitionLogo) {
         transitionLogo = document.createElement("div");
         transitionLogo.className = "transition-logo";
         transitionLogo.style.cssText =
           "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10000; pointer-events:none; opacity:0; display:flex; justify-content:center; align-items:center; transition: color 0.1s;";
-        const svgClone = document.querySelector(".cozy-logo").cloneNode(true);
+        const svgClone = logoClickable.cloneNode(true) as SVGSVGElement;
         svgClone.style.width = "150px";
         svgClone.style.height = "auto";
         transitionLogo.appendChild(svgClone);
         document.body.appendChild(transitionLogo);
+        logoLayer = transitionLogo;
       }
+      const logoSvg = transitionLogo.querySelector("svg");
 
       transitionLogo.style.color = logoColor;
 
@@ -88,7 +92,7 @@ export default function TransitionScribble() {
       gsap.set(transitionLogo, { opacity: 0, scale: 1 });
 
       document.body.classList.add("is-transitioning");
-      const cursorBubble = document.querySelector(".cursor-bubble");
+      const cursorBubble = sections?.cursorBubble.current;
       if (cursorBubble) gsap.to(cursorBubble, { opacity: 0, duration: 0.2 });
 
       const drawTl = gsap.timeline({
@@ -123,13 +127,13 @@ export default function TransitionScribble() {
           if (lenis) lenis.scrollTo(0, { immediate: true });
           else window.scrollTo(0, 0);
         },
-        null,
+        undefined,
         durIn,
       );
 
       // Hand the page back as soon as the scribble starts clearing, not
       // when it has fully gone.
-      drawTl.call(() => document.body.classList.remove("is-transitioning"), null, durIn);
+      drawTl.call(() => document.body.classList.remove("is-transitioning"), undefined, durIn);
 
       drawTl.to(
         transitionScribblePath,
@@ -154,7 +158,7 @@ export default function TransitionScribble() {
           duration: durIn * 0.5,
           ease: "power2.out",
           onStart: () => {
-            gsap.to(transitionLogo.querySelector("svg"), {
+            if (logoSvg) gsap.to(logoSvg, {
               rotation: 5,
               duration: 0.15,
               repeat: -1,
@@ -172,8 +176,9 @@ export default function TransitionScribble() {
         {
           autoAlpha: 0,
           onComplete: () => {
-            gsap.killTweensOf(transitionLogo.querySelector("svg"));
-            gsap.set(transitionLogo.querySelector("svg"), { rotation: 0 });
+            if (!logoSvg) return;
+            gsap.killTweensOf(logoSvg);
+            gsap.set(logoSvg, { rotation: 0 });
           },
         },
         durIn + durOut * 0.48,
@@ -188,15 +193,15 @@ export default function TransitionScribble() {
     const autoRun =
       window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = autoRun
-      ? setTimeout(() => runScribbleAnimation(null, true), 100)
-      : null;
+    const timer = autoRun ? window.setTimeout(() => runScribbleAnimation(null, true), 100) : undefined;
 
     return () => {
       logoClickable.removeEventListener("click", runScribbleAnimation);
-      clearTimeout(timer);
+      window.clearTimeout(timer);
+      logoLayer?.remove();
+      document.body.classList.remove("is-transitioning");
     };
-  }, []);
+  }, [sections]);
 
   return (
     <svg
@@ -206,8 +211,10 @@ export default function TransitionScribble() {
       fill="none"
       preserveAspectRatio="none"
       className="transition-scribble"
+      ref={svgRef}
     >
       <path
+        ref={pathRef}
         d="M299.654 453.865C505.574 319.225 711.494 184.585 836.054 109.945C960.614 35.3048 997.574 24.7448 944.014 110.385C890.454 196.025 745.254 378.185 571.454 634.385C397.654 890.585 199.654 1215.3 110.854 1382.58C22.0544 1549.86 48.4544 1549.86 77.8944 1540.62C107.334 1531.38 139.014 1512.9 367.854 1319.9C596.694 1126.9 1021.73 759.945 1255.21 555.065C1488.69 350.185 1517.73 318.505 1527.41 306.145C1537.09 293.785 1526.53 301.705 1346.85 618.625C1167.17 935.545 818.694 1561.22 635.214 1896.74C451.734 2232.26 443.814 2258.66 447.654 2268.3C451.494 2277.94 467.334 2270.02 511.134 2236.9C554.934 2203.78 626.214 2145.7 966.534 1817.46C1306.85 1489.22 1914.05 892.585 2263.81 557.505C2613.57 222.425 2687.49 166.985 2741.41 129.185C2795.33 91.3848 2827.01 72.9048 2843.33 67.3448C2859.65 61.7848 2859.65 69.7048 2849.09 96.2248C2838.53 122.745 2817.41 167.625 2584.77 544.505C2352.13 921.385 1370.37 2165.43 1139.25 2537.83C908.134 2910.23 902.854 2926.07 902.774 2939.51C902.694 2952.95 907.974 2963.51 1255.21 2613.87C1602.45 2264.23 2829.73 1017.54 2903.53 1071.46C2977.33 1125.38 2176.12 2817.04 2128 3037C2079.88 3256.96 2911.24 2018.56 3172 1793"
         stroke="currentColor"
         strokeLinecap="round"

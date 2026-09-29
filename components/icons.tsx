@@ -1,3 +1,7 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement>;
+
 const base = {
   viewBox: "0 0 24 24",
   fill: "none",
@@ -5,9 +9,9 @@ const base = {
   strokeWidth: 2,
   strokeLinecap: "round",
   strokeLinejoin: "round",
-};
+} as const satisfies IconProps;
 
-export function IconCart(props) {
+export function IconCart(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <circle cx="8" cy="21" r="1" />
@@ -17,7 +21,7 @@ export function IconCart(props) {
   );
 }
 
-export function IconStar(props) {
+export function IconStar(props: IconProps) {
   return (
     <svg {...base} fill="currentColor" {...props}>
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -25,7 +29,7 @@ export function IconStar(props) {
   );
 }
 
-export function IconPlus(props) {
+export function IconPlus(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M5 12h14" />
@@ -34,7 +38,7 @@ export function IconPlus(props) {
   );
 }
 
-export function IconMinus(props) {
+export function IconMinus(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M5 12h14" />
@@ -42,7 +46,7 @@ export function IconMinus(props) {
   );
 }
 
-export function IconClose(props) {
+export function IconClose(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M18 6 6 18" />
@@ -51,7 +55,7 @@ export function IconClose(props) {
   );
 }
 
-export function IconArrowRight(props) {
+export function IconArrowRight(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M5 12h14" />
@@ -60,7 +64,7 @@ export function IconArrowRight(props) {
   );
 }
 
-export function IconArrowLeft(props) {
+export function IconArrowLeft(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M19 12H5" />
@@ -69,7 +73,7 @@ export function IconArrowLeft(props) {
   );
 }
 
-export function IconArrowUpRight(props) {
+export function IconArrowUpRight(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M7 7h10v10" />
@@ -78,7 +82,7 @@ export function IconArrowUpRight(props) {
   );
 }
 
-export function IconCheck(props) {
+export function IconCheck(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M20 6 9 17l-5-5" />
@@ -86,7 +90,7 @@ export function IconCheck(props) {
   );
 }
 
-export function IconMenu(props) {
+export function IconMenu(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M4 6h16" />
@@ -96,7 +100,7 @@ export function IconMenu(props) {
   );
 }
 
-export function IconTruck(props) {
+export function IconTruck(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M14 18V6a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h1" />
@@ -108,7 +112,7 @@ export function IconTruck(props) {
   );
 }
 
-export function IconHeart(props) {
+export function IconHeart(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
@@ -116,7 +120,7 @@ export function IconHeart(props) {
   );
 }
 
-export function IconShield(props) {
+export function IconShield(props: IconProps) {
   return (
     <svg {...base} {...props}>
       <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z" />
