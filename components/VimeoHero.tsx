@@ -441,6 +441,7 @@ export default function VimeoHero({ onAnimalClick }: VimeoHeroProps = {}) {
       </div>
 
       <div
+        id="reel"
         className={`vimeo-hero ${isPlaying ? "is-playing" : "is-paused"}`}
         ref={playerRef}
         onClick={togglePlay}

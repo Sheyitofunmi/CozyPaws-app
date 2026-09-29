@@ -5,7 +5,6 @@
  */
 export const REMOTE_ASSETS = {
   logo: "/assets/brand/cozypaws-logo.svg",
-  avatar: "/assets/hero/avatar.avif",
   heroBottomLeft: "/assets/hero/pet-left.avif",
   heroBottomCenter: "/assets/hero/pet-center.avif",
   heroBottomRight: "/assets/hero/pet-right.avif",

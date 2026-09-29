@@ -25,7 +25,7 @@ and a cart → checkout flow built around "instant but never wrong about money".
 - Use refs, never `document.querySelector`, to reach another component's element: add it to `lib/home-sections.tsx`. Inside a component, query only within its own root (`root.querySelectorAll`, `gsap.context(fn, root)`), never global selector strings in GSAP calls. Every listener and ScrollTrigger is removed in the effect's cleanup.
 - No new UI libraries.
 - Motion: use the tokens in `app/styles/base.css` (`--dur-*`, `--ease-*`), put hover effects behind `@media (hover: hover)`, and give every animation a reduced-motion fallback.
-- Homepage: gate non-critical GSAP setup behind `useIdleReady`; pin with `pinType: "transform"` (no layout shift); give below-the-fold images `loading="lazy"`. Final homepage polish lives in `app/styles/home-polish.css` (imported last).
+- Homepage: gate non-critical GSAP setup behind `useIdleReady`; pin with `pinType: "transform"` (no layout shift); give below-the-fold images `loading="lazy"`. Homepage-wide behaviour (navbar hide-on-scroll, scroll effects, microinteractions) lives in `app/styles/home-polish.css`, imported last so it layers on the section styles.
 - Spacing between page sections uses `--section-space` (base.css): 64px on phones, ~112px on desktop, measured as the *visible* gap. New sections pad with it instead of their own numbers.
 - Type: headings use `var(--font-display)` (Epilogue, weight 800) with the accent word in `.accent` (Times italic); body is Inter. Copy is lowercase. Pages use `var(--bg-color)` and end with `SiteFooter` (blue block). Muted text on the beige background is `#565e6b` or darker (4.5:1).
 - Images in the flow use `components/SmartImage` (next/image + fade-in); always pass width, height and `sizes`.
@@ -34,3 +34,12 @@ and a cart → checkout flow built around "instant but never wrong about money".
 - `npm run dev` · `npm run build` · `npm run typecheck`
 - `npm test` (Vitest) · `npm run test:e2e` (Playwright; builds must exist: `npm run build` first; it starts `tests/e2e/mock-chain.mjs` on :8545)
 - Env: see `.env.example` (`MERCHANT_ADDRESS`, `BASE_SEPOLIA_RPC_URL`, Upstash / `KV_REST_API_*`).
+
+## How to work
+- Anything touching cart, checkout or payments: read the relevant `lib/` files and propose a plan first; wait for approval before editing.
+- Done means `npm run typecheck`, `npm test` and `npm run test:e2e` pass. UI changes also get checked in the browser at phone and desktop widths, with reduced motion on.
+- Money, stock or race-condition bugs get a failing test first (`tests/unit/` for pricing, cart state, idempotency, wallet; `tests/e2e/` for flows).
+- Use the demo panel (latency / failure / price / stock) to exercise optimistic and 409 paths instead of hand-editing state.
+- One concern per commit, with a message that says what changed and why. Work on a branch; never push to main.
+- Keep this file current: when a change adds a convention or moves a file listed here, update it in the same commit.
+- If a rule here blocks you, stop and ask instead of working around it.
