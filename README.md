@@ -19,8 +19,9 @@ A dog store built with Next.js 15 and React 19 to answer two questions:
 
 - **Optimistic cart, server-owned truth.** Every tap updates the UI at once, then the server validates stock. A stock clash snaps the line back and says why ("only 1 left"), and a failed request rolls back. Out-of-order responses are ignored using sequence numbers.
 - **No silent re-pricing.** The checkout sends what the customer _saw_. If the price moved, the server answers `409 quote_changed` with a per-line diff, and the customer confirms the new total themselves.
-- **One order per click.** An `Idempotency-Key` plus a synchronous lock mean a double-click or a retry can't create two orders.
-- **Wallet checkout as a state machine (simulated).** Connect → review → sign → confirming → done, including the rejected-signature, insufficient-funds and price-moved paths. The price is locked _before_ signing, and impossible states can't be represented.
+- **One order per click.** An `Idempotency-Key` stored in Redis means a double-click, a retry or a second serverless instance can't create two orders.
+- **Real wallet checkout, verified on the server.** Any browser wallet pays in test USDC on Base Sepolia. The server reads the transfer on-chain (amount, recipient, sender, confirmations, quote expiry) before it confirms the order, and each transaction can only pay once. No wallet? A clearly labelled simulated one runs the same state machine.
+- **Field INP, measured.** Search and the cart stepper report real interaction latency from visitors' browsers, summarised at [`/vitals`](https://cozy-paws-beta.vercel.app/vitals).
 
 ### Craft that stays fast and accessible
 
@@ -36,7 +37,7 @@ A dog store built with Next.js 15 and React 19 to answer two questions:
 1. Open the [demo panel](https://cozy-paws-beta.vercel.app/?demo=1) and turn on **price bump**, then check out. You'll see _"Your total changed"_ with the diff instead of a silent charge.
 2. Turn on **fail next request**, then tap **+** on a cart item. The row rolls back and says why.
 3. Remove an item and press **Undo**. It returns to its old position, and focus follows.
-4. Pick **crypto wallet** at checkout and reject the signature. Nothing is sent, and you can retry at the same price.
+4. Pick **crypto wallet** at checkout. With MetaMask (or any wallet) on Base Sepolia you pay real test USDC; without one, try the simulated wallet and reject the signature. Nothing is sent, and you can retry at the same price.
 5. On the homepage, point at the pets, then grab a photo in _"a store built for good dogs"_ and throw it.
 
 ---
@@ -66,9 +67,23 @@ _Rejected:_ charging the new price silently (breaks trust), or failing with a ge
 
 The catalog is local, so search filters on the client. `useDeferredValue` keeps typing responsive, and the URL updates with `router.replace` on a 250ms debounce, so links are shareable and history stays clean. With a server-side catalog I'd debounce the fetch and cancel stale requests with `AbortController`; here that would add complexity for nothing.
 
-### 4. Wallet checkout as a state machine
+### 4. Wallet checkout: a state machine, then proof on-chain
 
-One discriminated union and a pure reducer (`lib/wallet-machine.ts`), unit-tested. The price is locked with `POST /api/quote` **before** the signature, because a wallet user signs an exact amount. The dialog can't be dismissed mid-confirmation. **Everything is simulated** (`lib/sim-wallet.ts`) and labelled as such in the UI; a real build would swap in wagmi/viem.
+One discriminated union and a pure reducer (`lib/wallet-machine.ts`), unit-tested, drives both a real and a simulated wallet (`lib/wallet/`). The price is locked with `POST /api/quote` **before** the signature, because a wallet user signs an exact amount, and the lock is stored server-side.
+
+The real path uses **viem** directly, with wallets discovered over EIP-6963. I skipped wagmi: one chain, one token and one write call don't need its connectors, cache or React Query, and it would roughly double the dialog's bundle. The customer sends test USDC on Base Sepolia to `MERCHANT_ADDRESS`.
+
+The client never tells the server "it's paid". Checkout sends the tx hash, and the server (`lib/server/payments.ts`) fetches the receipt and checks: it succeeded, it has 2 confirmations, it contains a USDC `Transfer` from the connected account to the merchant for **exactly** the locked total, and it was mined before the quote expired. The hash is then marked as spent, so one payment can't confirm two orders. Not mined yet? The API answers `409 payment_pending` and the client retries with the same idempotency key. Without `MERCHANT_ADDRESS`, only the simulated wallet is offered.
+
+### 4b. Shared state for serverless
+
+Idempotency keys, quote locks, spent tx hashes and INP samples live in Upstash Redis (`lib/server/kv.ts`), because separate serverless instances don't share memory. Idempotency claims the key atomically (`SET NX`), so concurrent duplicates wait for the first result, and a changed body under the same key is rejected (`422`). Without Redis credentials it falls back to memory, fine for local dev.
+
+The demo panel's state stays in a per-visitor cookie on purpose: in Redis it would be shared, and one visitor's "price bump" would hit everyone.
+
+### 4c. INP from real visits
+
+`components/VitalsReporter.tsx` records page INP (web-vitals, with attribution) plus every interaction with elements tagged `data-inp="search"` or `"cart-stepper"`, measured with the Event Timing API. Samples are beaconed on page hide to `/api/vitals`, and `/vitals` shows p75, p95 and % good per control and device, plus the slowest visits broken down into input delay, processing and presentation.
 
 ### 5. Motion that doesn't cost performance
 
@@ -115,8 +130,8 @@ Pointer effects write CSS variables from one rAF-throttled listener (`useHeroPoi
 
 | Layer         | Tool       | Covers                                                                                                                                                         |
 | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit          | Vitest     | pricing, quote diffs, cart reducer (rollback, stale responses, races), wallet state machine                                                                   |
-| End-to-end    | Playwright | optimistic updates, stock rollback, network failure, double-submit → one order, price-change review, validation focus, focus traps, search, account, homepage interactions, resize regressions |
+| Unit          | Vitest     | pricing, quote diffs, cart reducer (rollback, stale responses, races), wallet state machine, on-chain transfer matching, idempotency (replay, concurrency, mismatch) |
+| End-to-end    | Playwright | optimistic updates, stock rollback, network failure, double-submit → one order, price-change review, real-wallet payment against a local fake chain (underpay, wrong recipient, unmined, reused tx), field INP, focus traps, search, account, homepage interactions, resize regressions |
 | Accessibility | axe-core   | no serious or critical WCAG 2.1 AA violations on every page, including checkout, the order confirmation and the 404                                           |
 
 GitHub Actions runs typecheck, unit and e2e tests on every PR.
@@ -131,23 +146,28 @@ npm install
 npm run dev            # http://localhost:3000 (demo controls show in dev)
 npm run typecheck
 npm test               # unit
-npm run build && npm run test:e2e
+npm run build && npm run test:e2e   # starts a fake Base Sepolia node, no network needed
 ```
 
-**Stack:** Next.js 15 (App Router) · React 19 · TypeScript (strict for cart and checkout) · GSAP (ScrollTrigger, Draggable, Inertia) · Lenis · MapLibre GL · plain per-section CSS · Vitest · Playwright · axe-core
+Copy `.env.example` to `.env.local` to turn on real payments (`MERCHANT_ADDRESS`) and Redis. Test USDC comes from [faucet.circle.com](https://faucet.circle.com) and gas from any Base Sepolia faucet.
+
+**Stack:** Next.js 15 (App Router) · React 19 · TypeScript (strict, everywhere) · viem · Upstash Redis · web-vitals · GSAP (ScrollTrigger, Draggable, Inertia) · Lenis · MapLibre GL · plain per-section CSS · Vitest · Playwright · axe-core
 
 ```
 app/
   api/cart/          validate one cart change against live stock
-  api/checkout/      re-price, detect stale quotes, idempotent orders
+  api/checkout/      re-price, detect stale quotes, verify payment, idempotent orders
+  api/vitals/ vitals/  field INP intake and report
   shop/ cart/ order/ account/ about/ contact/ not-found.tsx
   styles/            per-section CSS; base.css holds the design tokens
 components/          cart, checkout, shop and homepage sections
 lib/
   cart-state.ts pricing.ts wallet-machine.ts   pure, unit-tested logic
   cart.tsx account.ts wishlist.tsx             client state
+  wallet/            real (viem, EIP-6963) and simulated wallet drivers
+  home-sections.tsx  refs shared across homepage sections (no document.querySelector)
   hooks/             useDialog, useHeroPointer, useHeroReel, useIdleReady…
-  server/            server catalog view + demo cookie
+  server/            catalog view, demo cookie, Redis store, idempotency, on-chain checks
 tests/unit/  tests/e2e/
 ```
 
@@ -155,14 +175,13 @@ tests/unit/  tests/e2e/
 
 ## What I'd do next
 
-- Move the remaining homepage motion components to TypeScript and refs.
-- Replace the simulated wallet with wagmi/viem on a testnet, and verify the transaction on the server before fulfilling.
-- Put the idempotency store and demo state in shared storage (Redis) for real serverless traffic.
-- Measure INP on search and the cart stepper in the field.
+- Watch the chain for payments instead of trusting the client to submit the hash, so an order still completes if the tab closes mid-confirmation.
+- Alert when p75 INP on search or the stepper crosses 200ms, instead of checking `/vitals` by hand.
+- Split the homepage into server components where the motion allows, to ship less client JavaScript.
 
 <details>
 <summary>Credits</summary>
 
-Product and homepage photos are a mix of the project's own images and Unsplash photos (Unsplash License), by FLOUFFY, Brett Wharton, Pozva, Ethan Richardson, charlesdeluvio, Hayffield L, Jessica Bulling, Jordan Bigelow, Kobi Kadosh, Madalyn Cox, Ayla Verschueren, Dogfluence.com, Gabriella Louw, Mathew Coulton, 龙 赵, Jesper Brouwers, anotherxlife, Mollie Sivaram, Rafaëlla Waasdorp, Andy Powell, Mel Elías, Nahima Aparicio, Vlad D, Joe Caione, Chris Andrawes and Trac Vu. Hero videos are from Pexels (Pexels License) by Judas Isariot, Yaroslav Bilgovskiy, Dominik Gryzbon, K, My NATURE'AL life and Michał Robak. Map data © OpenStreetMap contributors, tiles by OpenFreeMap. The shop's address is made up, and pet-brand logos are fictional. CozyPaws is a demo store: no payments are taken.
+Product and homepage photos are a mix of the project's own images and Unsplash photos (Unsplash License), by FLOUFFY, Brett Wharton, Pozva, Ethan Richardson, charlesdeluvio, Hayffield L, Jessica Bulling, Jordan Bigelow, Kobi Kadosh, Madalyn Cox, Ayla Verschueren, Dogfluence.com, Gabriella Louw, Mathew Coulton, 龙 赵, Jesper Brouwers, anotherxlife, Mollie Sivaram, Rafaëlla Waasdorp, Andy Powell, Mel Elías, Nahima Aparicio, Vlad D, Joe Caione, Chris Andrawes and Trac Vu. Hero videos are from Pexels (Pexels License) by Judas Isariot, Yaroslav Bilgovskiy, Dominik Gryzbon, K, My NATURE'AL life and Michał Robak. Map data © OpenStreetMap contributors, tiles by OpenFreeMap. The shop's address is made up, and pet-brand logos are fictional. CozyPaws is a demo store: no real payments are taken (wallet payments use testnet USDC).
 
 </details>
